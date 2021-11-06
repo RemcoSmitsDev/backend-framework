@@ -9,8 +9,8 @@ use Framework\Http\Request;
 
 class Route implements RoutesInterface
 {
-    public static array $routes = [];
-    public static array $namedRoutes = [];
+    private static array $routes = [];
+    private static array $namedRoutes = [];
 
     private static string $requestType = '';
     private static string $prefix = '';
