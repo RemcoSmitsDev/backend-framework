@@ -70,7 +70,6 @@ class QueryBuilder
     {
         if (empty($database->data)) {
             throw new \Exception("Je moet een nieuwe waarde invullen", 1);
-            return '';
         }
 
         $setString = '';

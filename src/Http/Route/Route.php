@@ -3,10 +3,9 @@
 namespace Framework\Http\Route;
 
 use Framework\Interfaces\Http\RoutesInterface;
+use Framework\DependencyInjectionContainer;
 use Framework\Http\Route\Middleware;
 use Framework\Http\Request;
-use Framework\DependencyInjectionContainer;
-use Framework\Application;
 
 class Route implements RoutesInterface
 {

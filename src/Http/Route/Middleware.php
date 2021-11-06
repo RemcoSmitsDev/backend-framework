@@ -3,7 +3,6 @@
 namespace Framework\Http\Route;
 
 use Framework\Interfaces\Http\MiddlewareInterface;
-use Framework\Config;
 use Framework\Http\Route\Route;
 
 class Middleware implements MiddlewareInterface

@@ -2,8 +2,6 @@
 
 namespace Framework\Interfaces\Http;
 
-use Framework\http\route\Route;
-
 /**
  *
  */

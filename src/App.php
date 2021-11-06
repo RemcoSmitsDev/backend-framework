@@ -3,7 +3,7 @@
 namespace Framework;
 
 use Framework\Content\Content;
-use Framework\Http\route\Route;
+use Framework\Http\Route\Route;
 use Framework\Http\Api;
 
 class App
