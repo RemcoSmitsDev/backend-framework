@@ -23,6 +23,8 @@ $route->prefix('test')->group(function (Route $route) {
     $route->get('{id}/remco', function (Response $response) {
         // echo "string".$id.'<br><br>';
         $response->json(['test' => 'aksdfjsalkdfjlksadf']);
+
+        // echo request()->test;
     });
 });
 

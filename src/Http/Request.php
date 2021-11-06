@@ -12,12 +12,15 @@ class Request
 
     public function __construct()
     {
+        // set request method
         $this->method = $this->method();
 
+        // set all request data to properties
         foreach ((array)$this->get() as $key => $value) {
             $this->{$key} = $value;
         }
 
+        // set all request data to properties
         foreach ((array)$this->post() as $key => $value) {
             $this->{$key} = $value;
         }
