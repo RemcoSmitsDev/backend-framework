@@ -3,13 +3,25 @@
 namespace Framework\Http;
 
 use Framework\Interfaces\Http\ResponseInterface;
+use Framework\Chain;
 
 class Response implements ResponseInterface
 {
     private static string $responseData = '';
     private static int|string $responseCode = 200;
+    private static bool $isJson = false;
+
     private static string|int $exitStatus = 0;
     private static bool $exit = false;
+
+    private static $chain;
+
+    public function __construct()
+    {
+        self::$chain = new Chain($this, function () {
+            self::handleResponse();
+        });
+    }
 
     /**
     * function json
@@ -22,8 +34,10 @@ class Response implements ResponseInterface
     {
         // set response data
         self::$responseData = is_string($responseData) ? $responseData : json_encode($responseData);
+        // update is json
+        self::$isJson = true;
         // handle if is last method in the chain
-        return new self();
+        return self::$chain->chain();
     }
 
     /**
@@ -37,8 +51,10 @@ class Response implements ResponseInterface
     {
         // set response data
         self::$responseData = $responseData;
+        // update is json
+        self::$isJson = false;
         // handle if is last method in the chain
-        return new self();
+        return self::$chain->chain();
     }
 
     /**
@@ -53,7 +69,7 @@ class Response implements ResponseInterface
         // set response code
         self::$responseCode = $responseCode;
         // handle if is last method in the chain
-        return new self();
+        return self::$chain->chain();
     }
 
     /**
@@ -74,7 +90,7 @@ class Response implements ResponseInterface
             header("{$key}:{$value}");
         }
         // handle if is last method in the chain
-        return new self();
+        return self::$chain->chain();
     }
 
     /**
@@ -91,36 +107,34 @@ class Response implements ResponseInterface
         self::$exitStatus = $status;
 
         // handle if is last method in the chain
-        return new self();
+        return self::$chain->chain();
     }
 
     /**
-    * function __destruct
+    * function handleResponse
     * handles response to client on last function in the chain
+    * @static
     * @return void
     **/
 
-    public function __destruct()
+    public static function handleResponse()
     {
         // set response code
         http_response_code(self::$responseCode);
+        // check if is json
+        if (self::$isJson) {
+            // set content header
+            header('Content-Type: application/json; charset=UTF-8');
+        } else {
+            // set content headers
+            header('Content-Type: text/html; charset=UTF-8');
+        }
         // echo responseData
         echo self::$responseData;
 
-        // set temp data
-        $exit = self::$exit;
-        $exitStatus = self::$exitStatus;
-
-        // Clear data to default properties
-        self::$responseData = '';
-        self::$responseCode = 200;
-
-        self::$exit = false;
-        self::$exitStatus = 0;
-
         // check if exit function need to be set
-        if ($exit) {
-            exit($exitStatus);
+        if (self::$exit) {
+            exit(self::$exitStatus);
         }
     }
 }

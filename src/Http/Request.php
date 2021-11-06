@@ -147,7 +147,7 @@ class Request
     public static function URL(): string
     {
         // krijg de huidige url zonden get waardes
-        return clearInjections(rtrim(explode('?', $_SERVER['REQUEST_URI'], 2)[0], '/') ?: '/');
+        return clearInjections(rtrim(explode('?', self::fullURL(), 2)[0], '/') ?: '/');
     }
 
     public static function fullURL(): string
@@ -156,17 +156,56 @@ class Request
         return clearInjections(rtrim($_SERVER['REQUEST_URI'], '/') ?: '/');
     }
 
-    public static function method()
+    public static function headers()
     {
-        return strtolower($_SERVER['REQUEST_METHOD']);
+        $headers = [];
+
+        // If getallheaders() is available, use that
+        if (function_exists('getallheaders')) {
+            // get all headers
+            $headers = getallheaders();
+
+            // getallheaders() can return false if something went wrong
+            if ($headers !== false) {
+                return $headers;
+            }
+        }
+
+        // Method getallheaders() not available or went wrong: manually extract 'm
+        foreach ($_SERVER as $name => $value) {
+            if ((substr($name, 0, 5) == 'HTTP_') || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH')) {
+                $headers[str_replace([' ', 'Http'], ['-', 'HTTP'], ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+
+        return $headers;
     }
 
-    public static function URLInformation(string $URL = ''): array
+    public static function method()
     {
-        // explode huidige url naar een array
-        if (!empty($URL)) {
-            return explode('/', rtrim($URL, '/'));
+        // Take the method as found in $_SERVER
+        $method = $_SERVER['REQUEST_METHOD'];
+
+        // If it's a HEAD request override it to being GET and prevent any output, as per HTTP Specification
+        // @url http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.4
+        if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
+            // start output buffer
+            ob_start();
+            // set method to get
+            $method = 'GET';
         }
-        return explode('/', self::URL());
+
+        // If it's a POST request, check for a method override header
+        elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            // get all headers
+            $headers = $this->getRequestHeaders();
+            // check if headers exists
+            if (isset($headers['X-HTTP-Method-Override']) && in_array($headers['X-HTTP-Method-Override'], array('PUT', 'DELETE', 'PATCH'))) {
+                $method = $headers['X-HTTP-Method-Override'];
+            }
+        }
+
+        // return method in lowercase
+        return strtolower($method);
     }
 }
