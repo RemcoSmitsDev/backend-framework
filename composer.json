@@ -1,0 +1,16 @@
+{
+    "name": "remcosmits/backend-framework",
+    "description": "Framework for file structure that i work with",
+    "autoload": {
+        "psr-4": {
+            "Remcosmits\\BackendFramework\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Remco Smits",
+            "email": "djsmits12@gmail.com"
+        }
+    ],
+    "require": {}
+}
