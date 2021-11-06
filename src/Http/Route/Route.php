@@ -346,37 +346,67 @@ class Route implements RoutesInterface
     }
 
     /**
+     * replaceRouteURLPatterns function
+     * replace all dynamic routing params to regex
+     * @static
+     * @param string $routeURL
+     * @param array $route
+     * @return string
+     */
+
+    private static function replaceRouteURLPatterns(string $routeURL, array $route): string
+    {
+        // check if there where patterns set
+        if (!empty($route['patterns'])) {
+            // replace dynamic patterns
+            foreach ($route['patterns'] as $key => $regexPattern) {
+                // replace regex pattern
+                $routeURL = str_replace("{{$key}}", "({$regexPattern})", $routeURL);
+            }
+        }
+
+        // make regex string and replace other patterns
+        return "/^" . preg_replace('/'.self::$routeParamPattern.'/', "([^\/]*+)", str_replace('/', '\/', $routeURL)) . "(?!.)/";
+    }
+
+    /**
      * checkParam function
      * kijk of er de route dynamic params heeft
      * als de route dynamic routes heeft en deze matched mat de current url
      * return dan de dynamic params values met de naam als key
      * @static
-     * @param string $route
+     * @param string $routeURL
+     * @param array $route
      * @return boolean|array
      */
 
-    private static function checkParam(string $route): bool|array
+    private static function checkParam(string $routeURL, array $route): bool|array
     {
-        // make regex string
-        $regexString = "/^" . preg_replace('/'.self::$routeParamPattern.'/', "([^\/]*+)", str_replace('/', '\/', $route)) . "(?!.)/";
+        // get regex pattern by routeURL
+        $regexString = self::replaceRouteURLPatterns($routeURL, $route);
 
         // match regex string met current url
         if (preg_match($regexString, request()->URL())) {
             // match all dynamic routes
-            preg_match_all('/'.self::$routeParamPattern.'/', $route, $matches, PREG_OFFSET_CAPTURE);
+            preg_match_all('/'.self::$routeParamPattern.'/', $routeURL, $matches, PREG_OFFSET_CAPTURE);
 
             // check if there where dynamic params found
             if (!isset($matches[0][0][0])) {
                 return false;
             }
 
+            // keep track of all dynamic route params
             $data = [];
 
-            $explodeCurrentURL = explode('/', trim(request()->URL(), '/'));
-            $explodeRouteURL = explode('/', trim($route, '/'));
+            // explode route url into parts to get values from dynamic route
+            $explodeCurrentURL = explode('/', request()->URL());
+            $explodeRouteURL = explode('/', trim($routeURL, '/'));
 
+            // loop trough all url parts
             foreach ($explodeRouteURL as $key => $part) {
+                // check if dynamic parameter was found
                 if (preg_match('/'.self::$routeParamPattern.'/', $part)) {
+                    // add data to globals
                     $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = ($explodeCurrentURL[$key]);
                     $GLOBALS[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = ($explodeCurrentURL[$key]);
                 }
