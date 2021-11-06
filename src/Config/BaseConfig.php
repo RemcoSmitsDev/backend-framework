@@ -4,5 +4,10 @@ namespace Framework\Config;
 
 class BaseConfig
 {
-    private static $serverRoot;
+    private string $serverRoot;
+
+    public function __construct()
+    {
+        $this->serverRoot = $_SERVER['DOCUMENT_ROOT'];
+    }
 }
