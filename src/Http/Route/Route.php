@@ -519,7 +519,7 @@ class Route implements RoutesInterface
                 continue;
             }
             // check if a dynamic route match the current url
-            if (($data = self::checkParam($route)) === false) {
+            if (($data = self::checkParam($route, $routes[$routeKey])) === false) {
                 continue;
             }
             // kijk of de route urls heeft zoja dan kijken of de huidige url bestaat in de array be
