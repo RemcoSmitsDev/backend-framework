@@ -100,14 +100,8 @@ class Content
     {
         // krijg template als die bestaat
         $type = self::$type;
-
-        if (config()::MAINTENANCE_MODE) {
-            self::$template = 'maintenance';
-
-            require_once(realpath($_SERVER['DOCUMENT_ROOT']."/../templates/includeContent.php"));
-        } else {
-            require_once(realpath($_SERVER['DOCUMENT_ROOT']."/../templates/include{$type}Content.php"));
-        }
+        // require wrapper template
+        require_once(realpath($_SERVER['DOCUMENT_ROOT']."/../templates/include{$type}Content.php"));
     }
 
     public static function name(string $routeName): self
