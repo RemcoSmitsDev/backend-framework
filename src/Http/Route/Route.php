@@ -22,7 +22,6 @@ class Route implements RoutesInterface
 
     private static array $currentRoute = [];
 
-
     // helping global patterns
     private static string $routeParamPattern = '\{[A-Za-z_]+\}';
 
@@ -143,8 +142,11 @@ class Route implements RoutesInterface
             throw new \Exception("Je moet een middleware of route prefix gebruiken om de group functie te kunnen gebruiken", 1);
         }
 
+        // call callback function
+        // and clone current class to $groupedRoutes
         call_user_func($callback, $groupedRoutes = clone new self());
 
+        // set middlewares to grouped routes
         self::$middlewares = self::$groupMiddlwares;
 
         // merge nieuwe routes met huidige routes
@@ -407,8 +409,8 @@ class Route implements RoutesInterface
                 // check if dynamic parameter was found
                 if (preg_match('/'.self::$routeParamPattern.'/', $part)) {
                     // add data to globals
-                    $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = ($explodeCurrentURL[$key]);
-                    $GLOBALS[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = ($explodeCurrentURL[$key]);
+                    $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
+                    $GLOBALS[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
                 }
             }
 
