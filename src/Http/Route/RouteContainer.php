@@ -3,7 +3,6 @@
 namespace Framework\Http\Route;
 
 use Framework\DependencyInjectionContainer\DependencyInjectionContainer;
-use Framework\Http\Request;
 
 class RouteContainer
 {
@@ -233,10 +232,10 @@ class RouteContainer
     public function init(): bool
     {
         // krijg current request url
-        $currentURL = Request::URL();
+        $currentURL = request()->URL();
 
         // krijg alle routes bij het huidige requestType
-        $routes = self::getRoutes(Request::method());
+        $routes = self::getRoutes(request()->method());
 
         // check if there are no routes yet
         if (is_null($routes)) {

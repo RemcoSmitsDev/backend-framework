@@ -10,6 +10,19 @@ class Request
     private object $getData;
     private object $postData;
 
+    public function __construct()
+    {
+        $this->method = $this->method();
+
+        foreach ((array)$this->get() as $key => $value) {
+            $this->{$key} = $value;
+        }
+
+        foreach ((array)$this->post() as $key => $value) {
+            $this->{$key} = $value;
+        }
+    }
+
     public function get()
     {
         return $this->getData ?? $this->getData = (object)clearInjections($_GET);
@@ -139,24 +152,24 @@ class Request
         return new self();
     }
 
-    public static function response(): object
+    public function response(): object
     {
         return (object)['data' => self::$response,'info' => (object)self::$curlInfo];
     }
 
-    public static function URL(): string
+    public function URL(): string
     {
         // krijg de huidige url zonden get waardes
         return clearInjections(rtrim(explode('?', self::fullURL(), 2)[0], '/') ?: '/');
     }
 
-    public static function fullURL(): string
+    public function fullURL(): string
     {
         // krijg de huidige url zonden get waardes
         return clearInjections(rtrim($_SERVER['REQUEST_URI'], '/') ?: '/');
     }
 
-    public static function headers()
+    public function headers()
     {
         $headers = [];
 
@@ -181,7 +194,7 @@ class Request
         return $headers;
     }
 
-    public static function method()
+    public function method()
     {
         // Take the method as found in $_SERVER
         $method = $_SERVER['REQUEST_METHOD'];
@@ -198,7 +211,7 @@ class Request
         // If it's a POST request, check for a method override header
         elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // get all headers
-            $headers = self::headers();
+            $headers = $this->headers();
             // check if headers exists
             if (isset($headers['X-HTTP-Method-Override']) && in_array($headers['X-HTTP-Method-Override'], ['PUT', 'DELETE', 'PATCH'])) {
                 $method = $headers['X-HTTP-Method-Override'];

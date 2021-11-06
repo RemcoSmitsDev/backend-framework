@@ -3,7 +3,7 @@
 namespace Framework\Http;
 
 use Framework\Interfaces\Http\ResponseInterface;
-use Framework\Chain;
+use Framework\Chain\Chain;
 
 class Response implements ResponseInterface
 {

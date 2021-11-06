@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework;
+namespace Framework\Chain;
 
 class Chain
 {
