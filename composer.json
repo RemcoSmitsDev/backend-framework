@@ -3,7 +3,7 @@
     "description": "Framework for file structure that i work with",
     "autoload": {
         "psr-4": {
-            "Remcosmits\\BackendFramework\\": "src/"
+            "Framework\\": "src/"
         }
     },
     "authors": [
