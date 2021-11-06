@@ -112,7 +112,7 @@ class Api
         }
 
         // generate random string
-        $newToken = generateToken(50);
+        $newToken = randomString(50);
 
         // voeg token toe aan session om later tegebruiken om te valideren
         $_SESSION['requestToken'] = $newToken;

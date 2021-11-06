@@ -1,5 +1,10 @@
 <?php
 
+use Framework\Content\Content;
+use Framework\Http\Request;
+use Framework\Http\Response;
+use Framework\Content\Seo;
+
 function stripAccents(string $input): string
 {
     //Unwanted array
@@ -12,7 +17,7 @@ function stripAccents(string $input): string
     return $cleanString;
 }
 
-function generateToken(int $length = 15): string
+function randomString(int $length = 15): string
 {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $charactersLength = strlen($characters);
@@ -38,5 +43,36 @@ function clearInjections(string|array $value): string|array
         return $value;
     }
 
-    return htmlspecialchars(htmlentities(trim($value), ENT_XML1, 'utf-8'));
+    return htmlspecialchars(trim($value), ENT_QUOTES, 'utf-8');
+}
+
+function dd($value): void
+{
+    echo "<pre>";
+    print_r($value);
+    echo "</pre>";
+}
+
+function seo(): Seo
+{
+    global $seo;
+    return ($seo instanceof Seo) ? $seo : new Seo();
+}
+
+function request(): Request
+{
+    global $request;
+    return ($request instanceof Request) ? $request : new Request();
+}
+
+function response(): Response
+{
+    global $response;
+    return ($response instanceof Response) ? $response : new Response();
+}
+
+function content(): Content
+{
+    global $content;
+    return ($content instanceof Content) ? $content : new Content();
 }
