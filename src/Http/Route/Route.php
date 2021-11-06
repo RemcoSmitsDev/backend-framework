@@ -9,8 +9,8 @@ use Framework\Http\Request;
 
 class Route implements RoutesInterface
 {
-    private static array $routes = [];
-    private static array $namedRoutes = [];
+    public static array $routes = [];
+    public static array $namedRoutes = [];
 
     private static string $requestType = '';
     private static string $prefix = '';
@@ -156,29 +156,56 @@ class Route implements RoutesInterface
     }
 
     /**
-     * Name function
+     * pattern function
      * Give a route a name
      * @static
      * @param string $routeName
      * @return self
      */
 
-    public static function name(string $routeName): self
+    public static function pattern(array $pattern): self
     {
-        if (empty($routeName)) {
-            throw new \Exception('You must enter a name!', 1);
-            return new self();
+        // check if pattern is empty
+        if (empty($pattern)) {
+            throw new \Exception('You must enter an pattern!', 1);
         }
+        // check if there exist routes
         if (!self::$routes) {
             throw new \Exception('There are no routes to apply the name to!', 1);
-            return new self();
         }
+        // get last route key that is inserted
+        $routeKey = array_key_last(self::$routes[self::$requestType]);
+        // voeg naam toe aan route
+        self::$routes[self::$requestType][$routeKey]['patterns'] = $pattern;
+        // return self
+        return new self();
+    }
 
+    /**
+     * pattern function
+     * Give a route an name to access based on on the given name
+     * @static
+     * @param string $pattern
+     * @return self
+     */
+
+    public static function name(string $routeName): self
+    {
+        // check if routena is empty
+        if (empty($routeName)) {
+            throw new \Exception('You must enter an routeName!', 1);
+        }
+        // check if there exist routes
+        if (!self::$routes) {
+            throw new \Exception('There are no routes to apply the name to!', 1);
+        }
+        // get last route key that is inserted
         $routeKey = array_key_last(self::$routes[self::$requestType]);
         // voeg naam toe aan route
         self::$routes[self::$requestType][$routeKey]['name'] = $routeName;
         // voeg toe aan namedRoutes
         self::$namedRoutes[$routeName] = self::$routes[self::$requestType][$routeKey];
+        // return self
         return new self();
     }
 
@@ -299,7 +326,19 @@ class Route implements RoutesInterface
         $route = rtrim($route, '/') ?: $route;
 
         // voeg de route toe aan bij het request type
-        self::$routes[self::$requestType = $requestType][] = ['route' => $route,'method' => $requestType,'name' => '','urls' => [],'callback' => $callback, 'middlewares' => [...self::$middlewares,...self::$groupMiddlwares]];
+        self::$routes[self::$requestType = $requestType][] = [
+          'route' => $route,
+          'method' => $requestType,
+          'name' => '',
+          'urls' => [],
+          'callback' => $callback,
+          'patterns' => [],
+          'middlewares' => [
+            ...self::$middlewares,
+            ...self::$groupMiddlwares
+          ]
+        ];
+
         // reset alle middlewares
         self::$middlewares = [];
 
@@ -318,9 +357,15 @@ class Route implements RoutesInterface
 
     private static function checkParam(string $route): bool|array
     {
-        if (preg_match("/^" . preg_replace('/'.self::$routeParamPattern.'/', "([^\/]*+)", str_replace('/', '\/', $route)) . "(?!.)/", request()->URL())) {
+        // make regex string
+        $regexString = "/^" . preg_replace('/'.self::$routeParamPattern.'/', "([^\/]*+)", str_replace('/', '\/', $route)) . "(?!.)/";
+
+        // match regex string met current url
+        if (preg_match($regexString, request()->URL())) {
+            // match all dynamic routes
             preg_match_all('/'.self::$routeParamPattern.'/', $route, $matches, PREG_OFFSET_CAPTURE);
 
+            // check if there where dynamic params found
             if (!isset($matches[0][0][0])) {
                 return false;
             }
@@ -332,8 +377,8 @@ class Route implements RoutesInterface
 
             foreach ($explodeRouteURL as $key => $part) {
                 if (preg_match('/'.self::$routeParamPattern.'/', $part)) {
-                    $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
-                    $GLOBALS[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
+                    $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = ($explodeCurrentURL[$key]);
+                    $GLOBALS[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = ($explodeCurrentURL[$key]);
                 }
             }
 
