@@ -26,6 +26,9 @@ class App
         // set session settings
         $this->setSession();
 
+        // require helper functions
+        require_once(__DIR__.'/helperFunctions.php');
+
         // kijk of een van de tokens niet bestaat generate dan een token
         // om later ajax request te kunnen valideren
         if (!isset($_COOKIE['requestToken'],$_SESSION['requestToken'])) {
