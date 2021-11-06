@@ -53,6 +53,20 @@ class Route implements RoutesInterface
         return self::addRoute('post', $route, $callback);
     }
 
+
+    /**
+     * PUT Route
+     * @static
+     * @param string $route
+     * @param \Closure $callback
+     * @return self
+     */
+
+    public static function put(string $route, \Closure $callback): self
+    {
+        return self::addRoute('put', $route, $callback);
+    }
+
     /**
      * UPDATE Route
      * @static
