@@ -14,7 +14,7 @@ class Response implements ResponseInterface
     private static string|int $exitStatus = 0;
     private static bool $exit = false;
 
-    private static $chain;
+    private static Chain $chain;
 
     public function __construct()
     {
