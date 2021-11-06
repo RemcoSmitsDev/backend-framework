@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework;
+namespace Framework\DependencyInjectionContainer;
 
 use Framework\Interfaces\DependencyInjectionContainerInterface;
 
