@@ -4,12 +4,12 @@ namespace Framework\Http\Route;
 
 use Framework\DependencyInjectionContainer\DependencyInjectionContainer;
 
-class RouteContainer
+class Router
 {
     protected static array $routes = [];
     protected static array $namedRoutes = [];
 
-    protected static string $requestType = '';
+    protected static string $requestMethod = '';
     protected static string $prefix = '';
     protected static array $middlewares = [];
 
@@ -84,26 +84,26 @@ class RouteContainer
 
     /**
      * getRoutes function
-     * Get all routes bij a requestType
+     * Get all routes bij a requestMethod
      * @static
-     * @param string $requestType
+     * @param string $requestMethod
      * @return null|array
      */
 
-    public static function getRoutes(string $requestType = 'get'): ?array
+    public static function getRoutes(string $requestMethod = 'GET'): ?array
     {
-        return self::$routes[strtolower($requestType)] ?? null;
+        return self::$routes[strtoupper($requestMethod)] ?? null;
     }
 
     /**
      * addRoute function
-     * add route to routes array based on requestType
-     * @param string $requestType
+     * add route to routes array based on requestMethod
+     * @param string $requestMethod
      * @param string $route
      * @param \Closure|array $callback
      */
 
-    protected static function addRoute(string $requestType, string $route, \Closure|array $callback): self
+    protected static function addRoute(string $requestMethod, string $route, \Closure|array $callback): self
     {
         // replace alle dubbele slashes
         $route = preg_replace("/\/+/", "/", '/'.self::$prefix.'/'.$route);
@@ -113,9 +113,9 @@ class RouteContainer
         $route = rtrim($route, '/') ?: $route;
 
         // voeg de route toe aan bij het request type
-        self::$routes[self::$requestType = $requestType][] = [
+        self::$routes[self::$requestMethod = $requestMethod][] = [
           'route' => $route,
-          'method' => $requestType,
+          'method' => $requestMethod,
           'name' => '',
           'urls' => [],
           'callback' => $callback,
@@ -206,19 +206,22 @@ class RouteContainer
 
     protected static function replaceDynamicRoute(string $route, array $params = [])
     {
-        if (strpos($route, '{') === false && strpos($route, '}') == false) {
+        // check if there are dynamic params in route url
+        if (!preg_match('/' . self::$routeParamPattern . '/', $route)) {
             return $route;
         }
-
+        // check if params are empty
+        // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new \Exception("Je hebt niet alle dynamische params ingevuld", 1);
-            return $route;
+            throw new \Exception("You must pass in params based on the dynamic route!", 1);
         }
-
+        // loop trough all params and replace params
         foreach ($params as $key => $value) {
+            // replace param
             $route = str_replace("{{$key}}", $value, $route);
         }
 
+        // recursive to check if all dynamic params are passed in
         return self::replaceDynamicRoute($route, $params);
     }
 
@@ -229,7 +232,7 @@ class RouteContainer
      * @return boolean
      */
 
-    public function init(): bool
+    public function init()
     {
         // krijg current request url
         $currentURL = request()->URL();
@@ -258,6 +261,11 @@ class RouteContainer
             // call needed function
             self::handleRouteCallback($routes[$routeKey]);
 
+            // clean ouput buffer for HEAD request
+            if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
+                ob_end_clean();
+            }
+
             // stop function
             return true;
         }
@@ -277,11 +285,14 @@ class RouteContainer
             if (empty($routes[$routeKey]['urls']) || (!empty($routes[$routeKey]['urls']) && in_array($currentURL, $routes[$routeKey]['urls']))) {
                 // call needed function
                 self::handleRouteCallback($routes[$routeKey], $data);
+
                 // return to stop loop and function response
-                return true;
+                break;
             }
         }
-        // geen match
-        return false;
+        // clean ouput buffer for HEAD request
+        if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
+            ob_end_clean();
+        }
     }
 }

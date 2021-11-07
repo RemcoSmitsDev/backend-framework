@@ -221,7 +221,7 @@ class Request
             }
         }
 
-        // return method in lowercase
-        return strtolower($method);
+        // return method in strtoupper
+        return strtoupper($method);
     }
 }

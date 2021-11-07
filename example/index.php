@@ -5,28 +5,35 @@ use Framework\Http\Response;
 use Framework\App;
 
 require_once(__DIR__.'/../vendor/autoload.php');
-// require helper functions
-require_once(__DIR__.'/../src/helperFunctions.php');
 
+$app = new App();
+$app->start();
 
 $route = new Route();
 
-// $route->get('/test/{id}', function () {
-//     // echo "string";
-// })->name('test')->pattern(['id' => '[0-9]+']);
+$route->prefix('account')->group(function (Route $route) {
+    // route for accountID
+    // with route pattern
+    $route->middleware(true)->prefix('{accountID}')->group(function (Route $route) {
+        // sup group based on accountID
+        $route->get('/', function ($accountID) {
+            echo "Account: ".$accountID;
+        })->pattern(['accountID' => '[0-9]+']);
 
-$route->prefix('test')->group(function (Route $route) {
-    $route->get('{id}', function ($id) {
-        echo "string".$id;
-    })->pattern(['id' => '[0-9]+']);
+        // you can change the accountID pattern
+        $route->get('/test', function ($accountID) {
+            echo "Account: ".$accountID;
+        })->pattern(['accountID' => '[0-9]+\-[A-Za-z]+']);
+    });
 
-    $route->get('{id}/remco', function (Response $response) {
-        // echo "string".$id.'<br><br>';
-        $response->json(['test' => 'aksdfjsalkdfjlksadf']);
-
-        // echo request()->test;
+    // when pattern was not correct
+    $route->get('/{ID}', function (Response $response, $ID) {
+        // echo json response
+        $response->json(['ID' => $ID]);
     });
 });
 
+
+dd($route->getRoutes());
 
 $route->init();
