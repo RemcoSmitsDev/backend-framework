@@ -8,23 +8,23 @@ use Framework\Http\Api;
 
 class App
 {
-    public function start()
+    public static function start()
     {
         // set timezone
         date_default_timezone_set('Europe/Amsterdam');
         setlocale(LC_ALL, 'nl_NL');
 
         // check if app is in development mode
-        $this->checkAppState();
+        self::checkAppState();
 
         // get error based on config option debug mode
-        $this->catchErrors();
+        self::catchErrors();
 
         // set Security headers
-        $this->setSecurityHeaders();
+        self::setSecurityHeaders();
 
         // set session settings
-        $this->setSession();
+        self::setSession();
 
         // require helper functions
         require_once(__DIR__.'/helperFunctions.php');
@@ -36,7 +36,7 @@ class App
         }
     }
 
-    private function setSecurityHeaders(): void
+    private static function setSecurityHeaders(): void
     {
         // block all iframes
         header('X-Frame-Options:deny');
@@ -48,7 +48,7 @@ class App
         header('Strict-Transport-Security: max-age=31536000');
     }
 
-    private function setSession(): void
+    private static function setSession(): void
     {
         // voeg http only session.cookie toe als de app niet op development mode staat
         ini_set('session.cookie_httponly', !IS_DEVELOPMENT_MODE);
@@ -63,7 +63,7 @@ class App
         }
     }
 
-    private function catchErrors(): void
+    private static function catchErrors(): void
     {
         // shows errors when debug mode is on
         if (IS_DEVELOPMENT_MODE) {
@@ -81,7 +81,7 @@ class App
         }
     }
 
-    private function checkAppState(): void
+    private static function checkAppState(): void
     {
         // define localhost ips to check if is development
         $whitelistLocalIps = [
