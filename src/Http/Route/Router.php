@@ -122,12 +122,13 @@ class Router
           'patterns' => [],
           'middlewares' => [
             ...self::$middlewares,
-            ...self::$groupMiddlwares
+            // ...self::$groupMiddlwares
           ]
         ];
 
-        // reset alle middlewares
-        self::$middlewares = [];
+        // reset alle middlewares/prefix
+        self::$middlewares = self::$groupMiddlwares;
+        self::$prefix = self::$groupPrefix;
 
         return new static();
     }

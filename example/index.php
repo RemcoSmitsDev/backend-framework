@@ -14,9 +14,9 @@ $route = new Route();
 $route->prefix('account')->group(function (Route $route) {
     // route for accountID
     // with route pattern
-    $route->middleware(true)->prefix('{accountID}')->group(function (Route $route) {
+    $route->middleware([true, true == true])->prefix('{accountID}')->group(function (Route $route) {
         // sup group based on accountID
-        $route->get('/', function ($accountID) {
+        $route->middleware(false)->get('/', function ($accountID) {
             echo "Account: ".$accountID;
         })->pattern(['accountID' => '[0-9]+']);
 
@@ -32,8 +32,5 @@ $route->prefix('account')->group(function (Route $route) {
         $response->json(['ID' => $ID]);
     });
 });
-
-
-dd($route->getRoutes());
 
 $route->init();
