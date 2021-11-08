@@ -25,7 +25,7 @@ $route = new Route();
 <!-- all routes -->
 
 // init all routes and check witch route is equals to the current uri
-$route->ini();
+$route->init();
 ```
 
 #### Basic routing
