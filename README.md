@@ -10,8 +10,9 @@ composer require remcosmits/backend-framework
 
 #### Setup
 ```php
-// namespace for App class
+// namespace for App/Route class
 use Framework\App;
+use Framework\Http\Route\Route;
 
 // include autoloader(composer)
 require_once(__DIR__.'/../vendor/autoload.php');
