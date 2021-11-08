@@ -18,6 +18,14 @@ require_once(__DIR__.'/../vendor/autoload.php');
 
 // start app load all default(security) settings
 $app = App::start();
+
+// make instance of Route class
+$route = new Route();
+
+<!-- all routes -->
+
+// init all routes and check witch route is equals to the current uri
+$route->ini();
 ```
 
 #### Basic routing
