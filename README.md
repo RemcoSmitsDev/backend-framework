@@ -64,7 +64,7 @@ $route->get('/account/{accountID}', function ($accountID) {
 // dynamic route prefix
 $route->prefix('account')->group(function (Route $route) {
     // group by dynamic prefix param
-    $route->prefix('/{$accountID}')->group(function (Route $route) {
+    $route->prefix('/{accountID}')->group(function (Route $route) {
         // Route will be: /account/([0-9]+)/profile
         $route->get('/profile', function($accountID){
             echo "Account profile page {$accountID}";
