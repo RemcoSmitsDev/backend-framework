@@ -110,7 +110,7 @@ $route->middleware([true, false])->get('/profile', function () {
 // Grouped routes with prefix
 $route->prefix('account')->group(function (Route $route) {
     // when pattern was not correct
-    $route->get('/{$accountID}', function ($accountID) {
+    $route->get('/{accountID}', function ($accountID) {
         // Get accountID from URL
         echo "AccountID: {$accountID}";
     });
@@ -119,7 +119,7 @@ $route->prefix('account')->group(function (Route $route) {
 // Grouped routes with middleware check
 $route->middleware(true)->group(function (Route $route) {
     // when pattern was not correct
-    $route->get('/{$accountID}', function ($accountID) {
+    $route->get('/{accountID}', function ($accountID) {
         // Get accountID from URL
         echo "AccountID: {$accountID}";
     });
