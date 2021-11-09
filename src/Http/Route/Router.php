@@ -205,25 +205,33 @@ class Router
         return false;
     }
 
-    protected static function replaceDynamicRoute(string $route, array $params = [])
+    protected static function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = [])
     {
         // check if there are dynamic params in route url
         if (!preg_match('/' . self::$routeParamPattern . '/', $route)) {
             return $route;
         }
+
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new \Exception("You must pass in params based on the dynamic route!", 1);
-        }
-        // loop trough all params and replace params
-        foreach ($params as $key => $value) {
-            // replace param
-            $route = str_replace("{{$key}}", $value, $route);
+            throw new \Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: ".json_encode($wrongParams), 1);
         }
 
-        // recursive to check if all dynamic params are passed in
-        return self::replaceDynamicRoute($route, $params);
+        // loop trough all params and replace params
+        foreach ($params as $key => $value) {
+            // replace param and remove param from array when is found and replaced
+            $route = preg_replace_callback("/\{{$key}\}/", function ($string) use ($value, $key, &$params) {
+                // remove param from array
+                unset($params[$key]);
+                // return value
+                return $value;
+            }, $route);
+        }
+
+        // return replaced route
+        // return failedParams($params)
+        return self::replaceDynamicRoute($route, [], $params);
     }
 
 
