@@ -9,6 +9,7 @@ class Router
     protected static array $routes = [];
     protected static array $namedRoutes = [];
 
+    protected static array $matchMethods = [];
     protected static string $requestMethod = '';
     protected static string $prefix = '';
     protected static array $middlewares = [];
@@ -90,8 +91,13 @@ class Router
      * @return null|array
      */
 
-    public static function getRoutes(string $requestMethod = 'GET'): ?array
+    public static function getRoutes(string $requestMethod = '*'): ?array
     {
+        // check if all routes need get returned
+        if ($requestMethod === '*') {
+            return self::$routes;
+        }
+        // return routes based on requestMethod
         return self::$routes[strtoupper($requestMethod)] ?? null;
     }
 
@@ -107,6 +113,9 @@ class Router
     {
         // replace alle dubbele slashes
         $route = preg_replace("/\/+/", "/", '/'.self::$prefix.'/'.$route);
+
+        // reset matchMethods(for match method)
+        self::$matchMethods = [];
 
         // kijk of er nog wat overblijf als je laatste slash verwijder
         // anders is '/' -> ''

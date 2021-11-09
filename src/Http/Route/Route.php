@@ -85,12 +85,16 @@ class Route extends Router implements RoutesInterface
 
     public static function match(string $requestMethods, string $route, \Closure $callback): self
     {
+        // make requestMethods uppercase
+        $requestMethods = strtoupper($requestMethods);
+
         // loop trough all request methods
         foreach (explode('|', $requestMethods) as $requestMethod) {
             // add route
-            self::addRoute(strtoupper($requestMethod), $route, $callback);
+            self::addRoute($requestMethod, $route, $callback);
         }
-
+        // set matchMethods to add name to all the routes
+        self::$matchMethods = explode('|', $requestMethods);
         // return new self
         return new self();
     }
@@ -216,6 +220,21 @@ class Route extends Router implements RoutesInterface
         if (!self::$routes) {
             throw new \Exception('There are no routes to apply the name to!', 1);
         }
+        // check if there are matchMethods(when you used match method)
+        if (!empty(self::$matchMethods)) {
+            // loop trough all routes
+            foreach (self::$matchMethods as $matchMethod) {
+                // get last route key that is inserted
+                $routeKey = array_key_last(self::$routes[$matchMethod] ?? '');
+                // voeg naam toe aan route
+                self::$routes[$matchMethod][$routeKey]['name'] = $routeName;
+                // voeg toe aan namedRoutes
+                self::$namedRoutes[$routeName] = self::$routes[$matchMethod][$routeKey];
+            }
+            // return new self
+            return new self();
+        }
+
         // get last route key that is inserted
         $routeKey = array_key_last(self::$routes[self::$requestMethod]);
         // voeg naam toe aan route
@@ -261,10 +280,10 @@ class Route extends Router implements RoutesInterface
      * @return boolean|string
      */
 
-    public static function getRouteByName(string $routeName, array $params = [])
+    public static function getRouteByName(string $routeName, array $params = [], string $requestMethod = 'GET')
     {
         // krijg alle routes
-        $routes = self::getRoutes('GET');
+        $routes = self::getRoutes(strtoupper($requestMethod));
 
         // maak een column van alle namen
         $routerNames = array_column($routes, 'name');
