@@ -47,6 +47,15 @@ $route->update();
 $route->delete();
 ```
 
+#### Multi request method routing
+You can give these routes an name but you can't give them separate names.
+```php
+// route using multi request types
+$route->match('GET|POST','/user/{userID}', function ($userID) {
+    echo "GET/POST user";
+});
+```
+
 #### Dynamic routing
 ```php
 // route using dynamic routing(params)
