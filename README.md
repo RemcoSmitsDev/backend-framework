@@ -52,7 +52,7 @@ You can give these routes an name but you can't give them separate names.
 ```php
 // route using multi request types
 $route->match('GET|POST','/user/{userID}', function ($userID) {
-    echo "GET/POST user";
+    echo "user information";
 });
 ```
 
@@ -74,13 +74,13 @@ $route->get('/account/{accountID}', function ($accountID) {
 $route->prefix('account')->group(function (Route $route) {
     // group by dynamic prefix param
     $route->prefix('/{accountID}')->group(function (Route $route) {
-        // Route will be: /account/([0-9]+)/profile
+        // Route will be: /account/{accountID}/profile
         $route->get('/profile', function($accountID){
             echo "Account profile page {$accountID}";
         })->pattern(['accountID' => '[0-9]+']);
 
         // you can set an other pattern for `{accountID}`
-        // route will be: /account/([0-9]+\-[a-z]+)/profile
+        // route will be: /account/{accountID}/profile
         $route->get('/profile', function($accountID){
             echo "Account profile page {$accountID}";
         })->pattern(['accountID' => '[0-9]+\-[a-z]+']);
@@ -98,6 +98,29 @@ $route->prefix('account')->group(function (Route $route) {
 // Route will end up like: /account/profile
 $route->prefix('account')->get('/profile', function () {
     echo "Account profile page";
+});
+
+// Grouped routes with prefix
+$route->prefix('account')->group(function (Route $route) {
+    // when pattern was not correct
+    // Route will end up like: /account/{accountID}
+    $route->get('/{accountID}', function ($accountID) {
+        // Get accountID from URL
+        echo "AccountID: {$accountID}";
+    });
+});
+
+// Grouped routes with dynamic prefix
+$route->prefix('account')->group(function (Route $route) {
+    // dynamic route prefix
+    $route->prefix('{accountID}')->group(function(Route $route){
+        // Route will end up like: /account/{accountID}/profile
+        $route->get('/profile', function ($accountID) {
+            // Get accountID from URL
+            echo "AccountID: {$accountID}";
+        })->pattern(['accountID' => '[0-9]+']);
+        // you can change the dynamic route prefix pattern after all (get, post, put, update, delete, match) methods
+    });
 });
 ```
 
@@ -119,6 +142,7 @@ $route->middleware([true, false])->get('/profile', function () {
 // Grouped routes with prefix
 $route->prefix('account')->group(function (Route $route) {
     // when pattern was not correct
+    // Route will end up like: /account/{accountID}
     $route->get('/{accountID}', function ($accountID) {
         // Get accountID from URL
         echo "AccountID: {$accountID}";
@@ -128,6 +152,7 @@ $route->prefix('account')->group(function (Route $route) {
 // Grouped routes with middleware check
 $route->middleware(true)->group(function (Route $route) {
     // when pattern was not correct
+    // Route will end up like: /account/{accountID}
     $route->get('/{accountID}', function ($accountID) {
         // Get accountID from URL
         echo "AccountID: {$accountID}";
