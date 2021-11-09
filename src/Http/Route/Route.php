@@ -11,7 +11,7 @@ class Route extends Router implements RoutesInterface
      * GET Route
      * @static
      * @param string $route
-     * @param \Closure $callback
+     * @param \Closure|array $callback
      * @return self
      */
 
@@ -24,11 +24,11 @@ class Route extends Router implements RoutesInterface
      * POST Route
      * @static
      * @param string $route
-     * @param \Closure $callback
+     * @param \Closure|array $callback
      * @return self
      */
 
-    public static function post(string $route, \Closure $callback): self
+    public static function post(string $route, \Closure|array $callback): self
     {
         return self::addRoute('POST', $route, $callback);
     }
@@ -38,11 +38,11 @@ class Route extends Router implements RoutesInterface
      * PUT Route
      * @static
      * @param string $route
-     * @param \Closure $callback
+     * @param \Closure|array $callback
      * @return self
      */
 
-    public static function put(string $route, \Closure $callback): self
+    public static function put(string $route, \Closure|array $callback): self
     {
         return self::addRoute('PUT', $route, $callback);
     }
@@ -51,11 +51,11 @@ class Route extends Router implements RoutesInterface
      * UPDATE Route
      * @static
      * @param string $route
-     * @param \Closure $callback
+     * @param \Closure|array $callback
      * @return self
      */
 
-    public static function update(string $route, \Closure $callback): self
+    public static function update(string $route, \Closure|array $callback): self
     {
         return self::addRoute('PATCH', $route, $callback);
     }
@@ -64,11 +64,11 @@ class Route extends Router implements RoutesInterface
      * DELETE Route
      * @static
      * @param string $route
-     * @param \Closure $callback
+     * @param \Closure|array $callback
      * @return self
      */
 
-    public static function delete(string $route, \Closure $callback): self
+    public static function delete(string $route, \Closure|array $callback): self
     {
         return self::addRoute('DELETE', $route, $callback);
     }
@@ -79,11 +79,11 @@ class Route extends Router implements RoutesInterface
      * @static
      * @param string $requestMethods  '|' separator
      * @param string $route
-     * @param \Closure $callback
+     * @param \Closure|array $callback
      * @return self
      */
 
-    public static function match(string $requestMethods, string $route, \Closure $callback): self
+    public static function match(string $requestMethods, string $route, \Closure|array $callback): self
     {
         // make requestMethods uppercase
         $requestMethods = strtoupper($requestMethods);
