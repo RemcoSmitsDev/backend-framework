@@ -74,6 +74,28 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
+     * match Route
+     * match more request methods for one route
+     * @static
+     * @param string $requestMethods  '|' separator
+     * @param string $route
+     * @param \Closure $callback
+     * @return self
+     */
+
+    public static function match(string $requestMethods, string $route, \Closure $callback): self
+    {
+        // loop trough all request methods
+        foreach (explode('|', $requestMethods) as $requestMethod) {
+            // add route
+            self::addRoute(strtoupper($requestMethod), $route, $callback);
+        }
+
+        // return new self
+        return new self();
+    }
+
+    /**
      * Middleware function
      * @static
      * @param bool|string|array $validateRules
