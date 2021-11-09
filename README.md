@@ -18,7 +18,7 @@ use Framework\Http\Route\Route;
 require_once(__DIR__.'/../vendor/autoload.php');
 
 // start app load all default(security) settings
-$app = App::start();
+App::start();
 
 // make instance of Route class
 $route = new Route();
