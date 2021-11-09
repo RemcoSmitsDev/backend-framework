@@ -2,6 +2,7 @@
 
 use Framework\Content\Content;
 use Framework\Http\Request;
+use Framework\Http\Route\Route;
 use Framework\Http\Response;
 use Framework\Content\Seo;
 
@@ -75,4 +76,10 @@ function content(): Content
 {
     global $content;
     return ($content instanceof Content) ? $content : new Content();
+}
+
+function route(): Route
+{
+    global $route;
+    return ($route instanceof Route) ? $route : new Route();
 }
