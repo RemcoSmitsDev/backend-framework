@@ -50,6 +50,8 @@ class Database extends QueryBuilder
     protected string $orderBy = '';
     protected string $groupBy = '';
 
+    private int|string $insertID;
+
     // dump query
     private string $SQLQuery;
     private array $skipToDump = ['host','user','pass','DBName','PDO','stmt','fetchTypes','skipToDump','dump'];
@@ -249,8 +251,17 @@ class Database extends QueryBuilder
     private function execute(): self
     {
         $this->stmt->execute();
+        // set insert id when queryType == INSERT
+        if ($this->queryType === 'INSERT') {
+            $this->insertID = $this->PDO->lastInsertId();
+        }
         $this->close();
         return $this;
+    }
+
+    public function insertID(): int|null
+    {
+        return $this->insertID;
     }
 
     public function count()
