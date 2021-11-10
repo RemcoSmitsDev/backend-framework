@@ -83,3 +83,9 @@ function route(): Route
     global $route;
     return ($route instanceof Route) ? $route : new Route();
 }
+
+function DB(): Database
+{
+    global $DB;
+    return ($DB instanceof Database) ? $DB : new Database();
+}
