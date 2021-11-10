@@ -31,7 +31,7 @@ class Api
         }
 
         // kijkt of de url begint met ../api/
-        if (!str_starts_with(request()->URL(), API_PREFIX)) {
+        if (!str_starts_with(request()->URL(), '/api/')) {
             return false;
         }
 
