@@ -153,6 +153,16 @@ class Database extends QueryBuilder
         return $this;
     }
 
+    public function truncate()
+    {
+        // check if table name exists
+        if (empty($this->tableName)) {
+            throw new \Exception("You must enter an table name to truncate the data!", 1);
+        }
+
+        $this->query("TRUNCATE TABLE {$this->tableName}")->execute()->clearPreviousData()->close();
+    }
+
     public function update(array $updateData = [])
     {
         $this->queryType = 'UPDATE';
@@ -369,6 +379,57 @@ class Database extends QueryBuilder
                 $this->bind(':'.$key, $value);
             }
         }
+        return $this;
+    }
+
+    public function rawSubSelect(string $subSelectQuery): self
+    {
+        // add sub select to select query
+        if ($this->select == '*') {
+            $this->select = "{$this->tableName}.*, ({$query})";
+        } elseif (empty($this->select)) {
+            $this->select = "({$query})";
+        } else {
+            $this->select .= ", ({$query})";
+        }
+
+        return $this;
+    }
+
+    public function subSelect(\Closure $callback): self
+    {
+        // make new self instance
+        $queryObject = new self();
+
+        // call callback
+        $callback($queryObject);
+
+        // make query
+        $query = $this->toSql($queryObject);
+
+        // default select as
+        $selectAS = "as {$queryObject->tableName}";
+
+        // merge where data
+        $this->whereData = array_merge($this->whereData, $queryObject->whereData);
+
+        // check if `... as ...` exists in select query
+        if (preg_match('/.+?\s+(as\s+[A-Za-z-0-9\_\- ]+)/i', $queryObject->select, $match)) {
+            // set select as from table select
+            $selectAS = $match[1] ?? $selectAS;
+            // replace/remove select as from sub select query
+            $query = preg_replace("/\s*{$selectAS}/", '', $query);
+        }
+
+        // add sub select to select query
+        if ($this->select == '*') {
+            $this->select = "{$this->tableName}.*, ({$query}) {$selectAS}";
+        } elseif (empty($this->select)) {
+            $this->select = "({$query}) {$selectAS}";
+        } else {
+            $this->select .= ", ({$query}) {$selectAS}";
+        }
+
         return $this;
     }
 
