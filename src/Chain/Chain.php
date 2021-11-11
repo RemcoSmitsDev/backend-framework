@@ -4,23 +4,33 @@ namespace Framework\Chain;
 
 class Chain
 {
-    private static $returnValue;
-    private static $callback;
+    private $returnValue;
+    private $callback;
 
     public function __construct($returnValue, $callback)
     {
-        self::$returnValue = $returnValue;
-        self::$callback = $callback;
+        $this->returnValue = $returnValue;
+        $this->callback = $callback;
     }
 
-    public static function chain()
+    public function chain()
     {
-        return self::$returnValue;
+        return $this->returnValue;
     }
 
     public function __destruct()
     {
+        // check if callback exists
+        if (!$this->callback) {
+            return false;
+        }
+        // set callback to var
+        $callback = $this->callback;
+
+        // set callback to null
+        $this->callback = null;
+
         // call callback
-        (self::$callback)();
+        ($callback)();
     }
 }

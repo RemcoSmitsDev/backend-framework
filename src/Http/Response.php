@@ -7,19 +7,19 @@ use Framework\Chain\Chain;
 
 class Response implements ResponseInterface
 {
-    private static string $responseData = '';
-    private static int|string $responseCode = 200;
-    private static bool $isJson = false;
+    private string $responseData = '';
+    private int|string $responseCode = 200;
+    private bool $isJson = false;
 
-    private static string|int $exitStatus = 0;
-    private static bool $exit = false;
+    private string|int $exitStatus = 0;
+    private bool $exit = false;
 
-    private static Chain $chain;
+    private Chain $chain;
 
     public function __construct()
     {
-        self::$chain = new Chain($this, function () {
-            self::handleResponse();
+        $this->chain = new Chain($this, function () {
+            $this->handleResponse();
         });
     }
 
@@ -30,14 +30,14 @@ class Response implements ResponseInterface
     * @return $this   checks if this function is the last in the chain
     **/
 
-    public static function json(array|object|string $responseData): self
+    public function json(array|object|string $responseData): self
     {
         // set response data
-        self::$responseData = is_string($responseData) ? $responseData : json_encode($responseData);
+        $this->responseData = is_string($responseData) ? $responseData : json_encode($responseData);
         // update is json
-        self::$isJson = true;
+        $this->isJson = true;
         // handle if is last method in the chain
-        return self::$chain->chain();
+        return $this->chain->chain();
     }
 
     /**
@@ -47,14 +47,14 @@ class Response implements ResponseInterface
     * @return $this   checks if this function is the last in the chain
     **/
 
-    public static function text(string $responseData): self
+    public function text(string $responseData): self
     {
         // set response data
-        self::$responseData = $responseData;
+        $this->responseData = $responseData;
         // update is json
-        self::$isJson = false;
+        $this->isJson = false;
         // handle if is last method in the chain
-        return self::$chain->chain();
+        return $this->chain->chain();
     }
 
     /**
@@ -64,12 +64,12 @@ class Response implements ResponseInterface
     * @return $this   checks if this function is the last in the chain
     **/
 
-    public static function code(int $responseCode = 200): self
+    public function code(int $responseCode = 200): self
     {
         // set response code
-        self::$responseCode = $responseCode;
+        $this->responseCode = $responseCode;
         // handle if is last method in the chain
-        return self::$chain->chain();
+        return $this->chain->chain();
     }
 
     /**
@@ -79,7 +79,7 @@ class Response implements ResponseInterface
     * @return $this   checks if this function is the last in the chain
     **/
 
-    public static function headers(array $headers): self
+    public function headers(array $headers): self
     {
         // loop trough all headers
         foreach ($headers as $key => $value) {
@@ -90,7 +90,7 @@ class Response implements ResponseInterface
             header("{$key}:{$value}");
         }
         // handle if is last method in the chain
-        return self::$chain->chain();
+        return $this->chain->chain();
     }
 
     /**
@@ -100,29 +100,29 @@ class Response implements ResponseInterface
     * @return $this   checks if this function is the last in the chain
     **/
 
-    public static function exit(string|int $status = 0)
+    public function exit(string|int $status = 0)
     {
         // set exit to true with status value
-        self::$exit = true;
-        self::$exitStatus = $status;
+        $this->exit = true;
+        $this->exitStatus = $status;
 
         // handle if is last method in the chain
-        return self::$chain->chain();
+        return $this->chain->chain();
     }
 
     /**
     * function handleResponse
     * handles response to client on last function in the chain
-    * @static
+    *
     * @return void
     **/
 
-    public static function handleResponse()
+    public function handleResponse()
     {
         // set response code
-        http_response_code(self::$responseCode);
+        http_response_code($this->responseCode);
         // check if is json
-        if (self::$isJson) {
+        if ($this->isJson) {
             // set content header
             header('Content-Type: application/json; charset=UTF-8');
         } else {
@@ -130,11 +130,11 @@ class Response implements ResponseInterface
             header('Content-Type: text/html; charset=UTF-8');
         }
         // echo responseData
-        echo self::$responseData;
+        echo $this->responseData;
 
         // check if exit function need to be set
-        if (self::$exit) {
-            exit(self::$exitStatus);
+        if ($this->exit) {
+            exit($this->exitStatus);
         }
     }
 }
