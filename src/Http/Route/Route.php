@@ -9,306 +9,243 @@ class Route extends Router implements RoutesInterface
 {
     /**
      * GET Route
-     * @static
-     * @param string $route
-     * @param \Closure|array $callback
+     * @param string $uri
+     * @param \Closure|array $action
      * @return self
      */
 
-    public static function get(string $route, \Closure|array $callback): self
+    public function get(string $uri, \Closure|array $action): self
     {
-        return self::addRoute('GET', $route, $callback);
+        return $this->match('GET|HEAD', $uri, $action);
     }
 
     /**
      * POST Route
-     * @static
-     * @param string $route
-     * @param \Closure|array $callback
+     * @param string $uri
+     * @param \Closure|array $action
      * @return self
      */
 
-    public static function post(string $route, \Closure|array $callback): self
+    public function post(string $uri, \Closure|array $action): self
     {
-        return self::addRoute('POST', $route, $callback);
+        return $this->match('POST', $uri, $action);
     }
 
 
     /**
      * PUT Route
-     * @static
-     * @param string $route
-     * @param \Closure|array $callback
+     * @param string $uri
+     * @param \Closure|array $action
      * @return self
      */
 
-    public static function put(string $route, \Closure|array $callback): self
+    public function put(string $uri, \Closure|array $action): self
     {
-        return self::addRoute('PUT', $route, $callback);
+        return $this->match('PUT', $uri, $action);
     }
 
     /**
      * UPDATE Route
-     * @static
-     * @param string $route
-     * @param \Closure|array $callback
+     * @param string $uri
+     * @param \Closure|array $action
      * @return self
      */
 
-    public static function update(string $route, \Closure|array $callback): self
+    public function update(string $uri, \Closure|array $action): self
     {
-        return self::addRoute('PATCH', $route, $callback);
+        return $this->match('PATCH', $uri, $action);
     }
 
     /**
      * DELETE Route
-     * @static
-     * @param string $route
-     * @param \Closure|array $callback
+     * @param string $uri
+     * @param \Closure|array $action
      * @return self
      */
 
-    public static function delete(string $route, \Closure|array $callback): self
+    public function delete(string $uri, \Closure|array $action): self
     {
-        return self::addRoute('DELETE', $route, $callback);
+        return $this->match('DELETE', $uri, $action);
     }
 
     /**
      * match Route
      * match more request methods for one route
-     * @static
-     * @param string $requestMethods  '|' separator
-     * @param string $route
-     * @param \Closure|array $callback
+     * @param string $methods  '|' separator
+     * @param string $uri
+     * @param \Closure|array $action
      * @return self
      */
 
-    public static function match(string $requestMethods, string $route, \Closure|array $callback): self
+    public function match(string $methods, string $uri, \Closure|array $action): self
     {
-        // make requestMethods uppercase
-        $requestMethods = strtoupper($requestMethods);
+        // add route
+        self::addRoute(explode('|', strtoupper($methods)), $uri, $action);
 
-        // loop trough all request methods
-        foreach (explode('|', $requestMethods) as $requestMethod) {
-            // add route
-            self::addRoute($requestMethod, $route, $callback);
-        }
-        // set matchMethods to add name to all the routes
-        self::$matchMethods = explode('|', $requestMethods);
-        // return new self
-        return new self();
+        // return self
+        return $this;
     }
 
     /**
      * Middleware function
-     * @static
      * @param bool|string|array $validateRules
      * @return self
      */
 
-    public static function middleware(bool|string|array $validateRules): self
+    public function middleware(bool|string|array $validateRules): self
     {
         // update route middlewares
-        self::$middlewares = array_unique([...self::$middlewares,...(array)$validateRules]);
-        // return new self
-        return new self();
+        $this->middlewares = array_unique([...$this->middlewares,...(array)$validateRules]);
+
+        // return self
+        return $this;
     }
 
     /**
      * Prefix function
      * set group prefix
-     * @static
      * @param string $prefix
      * @return self
      */
 
-    public static function prefix(string $prefix): self
+    public function prefix(string $prefix): self
     {
         if (empty($prefix)) {
             throw new \Exception('You must enter a prefix for a route/group of routes!', 1);
         }
-        self::$prefix = str_replace('//', '/', '/'.self::$groupPrefix.'/'.trim($prefix, '/'));
-        return new self();
+
+        // add prefix to prefixs array
+        $this->prefixs[] = trim($prefix, '/');
+
+        // make prefix
+        $this->prefix = str_replace('//', '/', '/'.$this->groupPrefix.'/'.trim($prefix, '/'));
+
+        return $this;
     }
 
     /**
      * Group function
      * Group routes with prefix or middlewares
-     * @param \Closure $callback
+     * @param \Closure $action
      * @return void
      */
 
-    public function group(\Closure $callback)
+    public function group(\Closure $action)
     {
         // keep track of first prefix/middlwares of main group
-        $prefix = self::$groupPrefix;
-        $middlewares = self::$groupMiddlwares;
+        $prefix = $this->groupPrefix;
+        $middlewares = $this->groupMiddlwares;
 
         // set prefix to group prefix
-        self::$groupPrefix = self::$prefix;
+        $this->groupPrefix = $this->prefix;
 
         // merge middlwares met group middlewares
-        self::$groupMiddlwares = [...self::$middlewares,...self::$groupMiddlwares];
+        $this->groupMiddlwares = [...$this->middlewares,...$this->groupMiddlwares];
 
-        if (empty(self::$groupMiddlwares) && empty(self::$groupPrefix)) {
+        // check of er wel group middlware / prefix is
+        if (empty($this->groupMiddlwares) && empty($this->groupPrefix)) {
             throw new \Exception("Je moet een middleware of route prefix gebruiken om de group functie te kunnen gebruiken", 1);
         }
 
-        // make new instance of Route class
-        $routeGroup = clone new self();
-        $routeGroup::$groupPrefix = self::$groupPrefix;
-        $routeGroup::$groupMiddlwares = self::$groupMiddlwares;
-
         // call callback function
         // and clone current class to $groupedRoutes
-        call_user_func($callback, $routeGroup);
+        call_user_func($action, $routeGroup = clone $this);
 
         // merge nieuwe routes met huidige routes
-        self::$routes = array_merge($routeGroup::$routes, self::$routes);
+        $this->routes = $routeGroup->routes;
 
         // reset waardes voor andere routes
-        self::$groupMiddlwares = [];
-        self::$groupPrefix = '';
+        $this->groupMiddlwares = [];
 
         // set prefix to first prefix from main group
-        self::$groupPrefix = $prefix;
-        self::$prefix = $prefix;
+        $this->groupPrefix = $prefix;
+        $this->prefix = $prefix;
+
         // set middlewares to first middlewares from main group
-        self::$middlewares = $middlewares;
+        $this->middlewares = $middlewares;
     }
 
     /**
      * pattern function
      * Give a route a name
-     * @static
      * @param string $routeName
      * @return self
      */
 
-    public static function pattern(array $pattern): self
+    public function pattern(array $pattern): self
     {
         // check if pattern is empty
         if (empty($pattern)) {
             throw new \Exception('You must enter an pattern!', 1);
         }
         // check if there exist routes
-        if (!self::$routes) {
+        if (!$this->routes) {
             throw new \Exception('There are no routes to apply the name to!', 1);
         }
-        // get last route key that is inserted
-        $routeKey = array_key_last(self::$routes[self::$requestMethod]);
+
         // voeg naam toe aan route
-        self::$routes[self::$requestMethod][$routeKey]['patterns'] = $pattern;
+        $this->routes[array_key_last($this->routes)]['patterns'] = $pattern;
         // return self
-        return new self();
+        return $this;
     }
 
     /**
      * pattern function
      * Give a route an name to access based on on the given name
-     * @static
      * @param string $pattern
      * @return self
      */
 
-    public static function name(string $routeName): self
+    public function name(string $routeName): self
     {
         // check if routena is empty
         if (empty($routeName)) {
             throw new \Exception('You must enter an routeName!', 1);
         }
         // check if there exist routes
-        if (!self::$routes) {
+        if (is_null($this->routes)) {
             throw new \Exception('There are no routes to apply the name to!', 1);
-        }
-        // check if there are matchMethods(when you used match method)
-        if (!empty(self::$matchMethods)) {
-            // loop trough all routes
-            foreach (self::$matchMethods as $matchMethod) {
-                // get last route key that is inserted
-                $routeKey = array_key_last(self::$routes[$matchMethod] ?? '');
-                // voeg naam toe aan route
-                self::$routes[$matchMethod][$routeKey]['name'] = $routeName;
-                // voeg toe aan namedRoutes
-                self::$namedRoutes[$routeName] = self::$routes[$matchMethod][$routeKey];
-            }
-            // return new self
-            return new self();
         }
 
         // get last route key that is inserted
-        $routeKey = array_key_last(self::$routes[self::$requestMethod]);
+        $routeKey = array_key_last($this->routes);
         // voeg naam toe aan route
-        self::$routes[self::$requestMethod][$routeKey]['name'] = $routeName;
+        $this->routes[$routeKey]['name'] = $routeName;
         // voeg toe aan namedRoutes
-        self::$namedRoutes[$routeName] = self::$routes[self::$requestMethod][$routeKey];
+        $this->namedRoutes[$routeName] = $this->routes;
         // return self
-        return new self();
+        return $this;
     }
-
-    /**
-     * Urls function
-     * give a dynamic route specific urls that are only valid urls for that route
-     * @static
-     * @param array $validURLs
-     * @return self
-     */
-
-    public static function urls(array $validURLs): self
-    {
-        // check if urls is empty
-        if (empty($validURLs)) {
-            throw new \Exception('You must enter a array of valid urls!', 1);
-        }
-        // check if there exist routes
-        if (!self::$routes) {
-            throw new \Exception('There are no routes to apply the name to!', 1);
-        }
-        // get all routes by requestMethod
-        $routes = self::getRoutes(self::$requestMethod);
-        // put urls to last route
-        $routes[array_key_last($routes)]['urls'] = $validURLs;
-        // return self
-        return new self();
-    }
-
 
     /**
      * getRouteByName function
      * get a routeURL by given name
-     * @static
      * @param string $routeName
      * @return boolean|string
      */
 
-    public static function getRouteByName(string $routeName, array $params = [], string $requestMethod = 'GET')
+    public function getRouteByName(string $routeName, array $params = []): string
     {
         // krijg alle routes
-        $routes = self::getRoutes(strtoupper($requestMethod));
+        $route = array_filter($this->routes, function ($route) use ($routeName) {
+            return $route['name'] === $routeName;
+        });
 
-        // maak een column van alle namen
-        $routerNames = array_column($routes, 'name');
-
-        // als er geen naam is gevonden dan wordt er een lege url terug gestuurd
-        if (!in_array($routeName, $routerNames)) {
-            return false;
-        }
-
-        // get route by index
-        $route = $routes[array_search($routeName, $routerNames)];
-
-        // return route with replaced dynamic params
-        return self::replaceDynamicRoute($route['route'], $params);
+        // return route uri
+        return !isset(array_values($route)[0]) ? '' : $this->replaceDynamicRoute(
+            array_values($route)[0]['uri'],
+            $params
+        );
     }
 
     /**
      * getCurrentRoute function
      * get current route
-     * @return Object
+     * @return array
      */
 
-    public static function getCurrentRoute(): Object
+    public function getCurrentRoute(): array
     {
-        return (object)(self::$currentRoute ?: ['name' => '','route' => '', 'method' => '', 'urls' => [],'middlewares' => '','patterns' => []]);
+        return $this->currentRoute ?: ['name' => '','route' => '', 'method' => '', 'urls' => [],'middlewares' => '','patterns' => []];
     }
 }

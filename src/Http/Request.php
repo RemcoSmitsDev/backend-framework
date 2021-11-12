@@ -73,36 +73,6 @@ class Request
         return true;
     }
 
-    public static function applyForwardHeaders(): array
-    {
-        // maak headers klaar
-        // default: leeg
-        $headers = [
-          'Forwarded' => '',
-          'X-Forwarded-Fo' => ''
-        ];
-
-        $userIP = auth()->getUserIP();
-
-        // kijk of forward header bestaat voeg dan user ip toe
-        // anders maak header aan
-        if (isset(getallheaders()['Forwarded'])) {
-            $headers['Forwarded'] = 'Forwarded: ' . getallheaders()['Forwarded'] . ', for="' . $userIP . '"';
-        } else {
-            $headers['Forwarded'] = 'Forwarded: for="' . $userIP . '"';
-        }
-
-        // kijk of the X-Forwarded-Fo header bestaat
-        if (isset(getallheaders()['X-Forwarded-Fo'])) {
-            $headers['X-Forwarded-Fo'] = 'X-Forwarded-Fo: ' . getallheaders()['X-Forwarded-Fo'] . ', ' . $userIP;
-        } else {
-            $headers['X-Forwarded-Fo'] = 'X-Forwarded-Fo: ' . $userIP;
-        }
-
-        return $headers;
-    }
-
-
     public static function match(string $requestURL): bool
     {
         // verwijder laatste slash van url als hij dan leeg is maak er dan alleen een slash van
@@ -160,16 +130,16 @@ class Request
         return (object)['data' => self::$response,'info' => (object)self::$curlInfo];
     }
 
-    public function URL(): string
+    public function uri(): string
     {
         // krijg de huidige url zonden get waardes
-        return clearInjections(rtrim(explode('?', self::fullURL(), 2)[0], '/') ?: '/');
+        return rtrim(explode('?', self::url(), 2)[0], '/') ?: '/';
     }
 
-    public function fullURL(): string
+    public function url(): string
     {
         // krijg de huidige url zonden get waardes
-        return clearInjections(rtrim($_SERVER['REQUEST_URI'], '/') ?: '/');
+        return rtrim($_SERVER['REQUEST_URI'], '/') ?: '/';
     }
 
     public function headers()

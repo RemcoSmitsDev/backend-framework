@@ -16,7 +16,20 @@ $route = new Route();
 $route->prefix('account')->group(function (Route $route) {
     // route for accountID
     // with route pattern
-    $route->middleware([true, true == true])->prefix('{accountID}')->group(function (Route $route) {
+    $route->middleware(true)->prefix('{accountID}')->group(function (Route $route) {
+        // sup group based on accountID
+        $route->middleware(true)->get('/', function ($accountID) {
+            echo "AccountID: ".$accountID;
+        })->pattern(['accountID' => '[0-9]+']);
+
+        // you can change the accountID pattern
+        $route->get('/test1', function ($accountID) {
+            echo "Account: ".$accountID;
+        })->name('test')->pattern(['accountID' => '[0-9]+\-[A-Za-z]+']);
+    });
+
+    // when pattern was not correct
+    $route->prefix('{accountID}/test2')->group(function (Route $route) {
         // sup group based on accountID
         $route->get('/', function ($accountID) {
             echo "AccountID: ".$accountID;
@@ -27,13 +40,12 @@ $route->prefix('account')->group(function (Route $route) {
             echo "Account: ".$accountID;
         })->pattern(['accountID' => '[0-9]+\-[A-Za-z]+']);
     });
-
-    // when pattern was not correct
-    $route->get('/{ID}', function (Response $response, $ID) {
-        // echo json response
-        $response->json(['ID' => $ID]);
-    });
 });
+
+// $route->match('POST|GET', '/test/{abb}', function ($abb) {
+//     echo "test route{$abb}";
+// });
+
 
 // init all routes(check route against current url by request method)
 $route->init();
