@@ -171,6 +171,7 @@ class Route extends Router implements RoutesInterface
         self::$groupPrefix = '';
 
         // set prefix to first prefix from main group
+        self::$groupPrefix = $prefix;
         self::$prefix = $prefix;
         // set middlewares to first middlewares from main group
         self::$middlewares = $middlewares;
