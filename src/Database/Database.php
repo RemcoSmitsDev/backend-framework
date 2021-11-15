@@ -523,7 +523,7 @@ class Database extends QueryBuilder
 
     public function whereRaw(string $whereClause)
     {
-        $this->wheres[] = clearInjections($whereClause);
+        $this->wheres[] = $whereClause;
         return $this;
     }
 
