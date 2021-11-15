@@ -550,6 +550,12 @@ class Database extends QueryBuilder
               break;
           }
         }
+            
+        // fix bug when string is empty
+        if ($value === '') {
+            $type = \PDO::PARAM_STR;
+        }
+        
         $this->stmt->bindValue($param, $value, $type);
         return $this;
     }
