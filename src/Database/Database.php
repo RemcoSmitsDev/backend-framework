@@ -268,7 +268,7 @@ class Database extends QueryBuilder
         return $this;
     }
 
-    private function execute(): self
+    public function execute(): self
     {
         $this->stmt->execute();
         // set insert id when queryType == INSERT
