@@ -28,6 +28,7 @@ class Database extends QueryBuilder
         'arg' => \PDO::FETCH_OBJ
       ],
     ];
+    private $tempFetchType = null;
 
     // json(all,single) function
     protected bool $json = false;
