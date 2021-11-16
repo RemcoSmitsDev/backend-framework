@@ -74,11 +74,11 @@ class Database extends QueryBuilder
 
         $PDOSettings = "mysql:host={$this->host};dbname={$this->DBName};port=8889";
 
-        $options = array(
+        $options = [
           \PDO::ATTR_PERSISTENT => true,
           \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
           \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"
-        );
+        ];
 
         try {
             $this->PDO = new \PDO($PDOSettings, $this->user, $this->pass, $options);

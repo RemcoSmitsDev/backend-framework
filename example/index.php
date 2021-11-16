@@ -4,6 +4,8 @@ use Framework\Http\Route\Route;
 use Framework\Http\Response;
 use Framework\App;
 
+use Framework\Database\DatabaseV2;
+
 require_once(__DIR__.'/../vendor/autoload.php');
 
 // start app load all default(security) settings
@@ -11,6 +13,37 @@ $app = App::start();
 
 // make instance of route class
 $route = new Route();
+
+$DB = new DatabaseV2();
+
+
+// $result = $DB->table('el_users')->select(['first_name', 'id' => function ($query) {
+//     $query->table('el_role', 'count(id)')->where('users_id', 1);
+// }])->where(function ($query) {
+//     $query->where('id', 1)->orWhere('id', 8);
+// })->all();
+
+// $result = $DB->table('el_users')->select(['role' => function ($query) {
+//     $query->table('el_role', 'count(id)')->where('el_users.id', 1);
+// }])->all(['not found']);
+
+$result = $DB->table('el_users')->whereIn('id', [1,2,3])->all(['not found']);
+
+// $result = $DB->table('el_users', ['*'])->whereIn('id', [1,2,3])->all(['asd']);
+
+
+dd($result);
+
+
+
+
+
+
+
+
+
+
+exit();
 
 // routing example
 $route->prefix('account')->group(function (Route $route) {
