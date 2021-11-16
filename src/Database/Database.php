@@ -206,6 +206,8 @@ class Database extends QueryBuilder
 
         $this->autoBind($this->whereData);
 
+        $tempFetchType = $this->tempFetchType;
+
         if ($this->count() === 0) {
             $this->clearPreviousData();
             return $defaultReturn;
@@ -215,11 +217,12 @@ class Database extends QueryBuilder
 
         if ($this->json) {
             $this->clearPreviousData();
-            return json_encode($this->stmt->$type($this->fetchTypes[$this->tempFetchType ?? $fetchType]['arg']), JSON_INVALID_UTF8_IGNORE);
+            return json_encode($this->stmt->$type($tempFetchType ?: $this->fetchTypes[$fetchType]['arg']), JSON_INVALID_UTF8_IGNORE);
         }
 
         $this->clearPreviousData();
-        return $this->stmt->$type($this->fetchTypes[$this->tempFetchType ?? $fetchType]['arg']);
+
+        return $this->stmt->$type($tempFetchType ?: $this->fetchTypes[$fetchType]['arg']);
     }
 
     private function close(): self
