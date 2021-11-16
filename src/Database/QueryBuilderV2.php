@@ -33,7 +33,7 @@ trait QueryBuilderV2
         $isMultidymential = count($insertData) != count($insertData, COUNT_RECURSIVE);
 
         // keep track of data
-        $data = [];
+        $bindData = [];
 
         // check if insertData is multidymential
         if ($isMultidymential) {
@@ -43,7 +43,7 @@ trait QueryBuilderV2
             // merge datainto one layer
             foreach ($insertData as $value) {
                 // merge data into one layer
-                $data = array_merge($data, array_values($value));
+                $bindData = array_merge($bindData, array_values($value));
 
                 // make for count(value) an ?
                 $val = rtrim(str_repeat('?,', count($value)), ',');
@@ -56,29 +56,20 @@ trait QueryBuilderV2
         } else {
             // get value placeholders
             $valuePlaceholders = rtrim(str_repeat('?,', count($insertData)), ',');
+            // update data variable
+            $bindData = $insertData;
         }
 
         // make string of column names
         $columns = implode('`,`', array_keys($isMultidymential ? $insertData[0] : $insertData));
-
-        // get whereclause and bindata
-        [$whereClause, $bindData] = $this->formatWhere($this->bindings['where']);
-
-        // merge with order
-        $data = array_merge($data, $bindData);
-
-        // make whereClause correct when whereclause is not empty
-        if (!empty($whereClause)) {
-            $whereClause = " WHERE {$whereClause} ";
-        }
 
         // trim ( AND ) from begin and end for when there are to much wrapping
         $valuePlaceholders = trim($valuePlaceholders, '()');
 
         // return insert query
         return [
-            "INSERT INTO `{$query->bindings['from']}` (`{$columns}`) VALUES ({$valuePlaceholders}){$whereClause}",
-            $data
+            "INSERT INTO `{$query->bindings['from']}` (`{$columns}`) VALUES ({$valuePlaceholders})",
+            $bindData
         ];
     }
 
