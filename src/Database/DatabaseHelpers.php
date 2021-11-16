@@ -86,7 +86,7 @@ trait DatabaseHelpers
             return $query->selectToSql($query);
         } elseif (is_string($query)) {
             // return query string with empty bindings
-            return [$query,[]];
+            return [$query, []];
         } else {
             throw new \Exception("The sub query must be an instanceof DatabaseV2 or an string", 1);
         }
@@ -103,12 +103,12 @@ trait DatabaseHelpers
         // merge bindData
         $this->bindings['bindData'] = array_merge($this->bindings['bindData'], $bindData);
 
-        // check if bindData is empty
-        if (!empty($this->bindings['bindData'])) {
-            // bind value for prepared statements
-            $statement->execute($this->bindings['bindData']);
-        } else {
-            $statement->execute();
+        // catch an error
+        try {
+            // bind value for prepared statements if there are bind values
+            $statement->execute($this->bindings['bindData'] ?: null);
+        } catch (\Throwable $th) {
+            $this->errorWhileExecuting = true;
         }
 
         // close connection
@@ -116,5 +116,28 @@ trait DatabaseHelpers
 
         // return statement to fetch
         return $statement;
+    }
+
+    /**
+     * function handleInsertExecution
+     * @param string $query
+     * @param array $insertData
+     * @return int|bool
+     */
+
+    public function handleInsertExecution(string $query, array $insertData): int|bool
+    {
+        // prepare database query
+        $statement = $this->connection->prepare($query);
+
+        // catch when goes wrong
+        try {
+            // try to execute insert query
+            $statement->execute(array_values($insertData));
+            // return insert id
+            return $this->connection->lastInsertId();
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 }

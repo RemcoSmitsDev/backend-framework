@@ -13,7 +13,7 @@ trait QueryBuilderV2
         $from = $query->bindings['from'];
 
         // format where statement
-        [$where,$bindData] = $this->formatWhere($query->bindings['where']);
+        [$where, $bindData] = $this->formatWhere($query->bindings['where']);
 
         // when where statement is not empty and `WHERE` is not in string
         if (!empty($where)) {
@@ -22,8 +22,63 @@ trait QueryBuilderV2
 
         // return select query
         return [
-          "SELECT {$select} FROM `{$from}`{$where}",
-          $bindData
+            "SELECT {$select} FROM `{$from}`{$where}",
+            $bindData
+        ];
+    }
+
+    public function insertToSql(DatabaseV2 $query, array $insertData): array
+    {
+        // check if array is multidymensinal
+        $isMultidymential = count($insertData) != count($insertData, COUNT_RECURSIVE);
+
+        // keep track of data
+        $data = [];
+
+        // check if insertData is multidymential
+        if ($isMultidymential) {
+            // keep track of value placeholders
+            $valuePlaceholders = '';
+
+            // merge datainto one layer
+            foreach ($insertData as $value) {
+                // merge data into one layer
+                $data = array_merge($data, array_values($value));
+
+                // make for count(value) an ?
+                $val = rtrim(str_repeat('?,', count($value)), ',');
+                // make value placeholder
+                $valuePlaceholders .= "({$val}),";
+            }
+
+            // trim last comma in string
+            $valuePlaceholders = rtrim($valuePlaceholders, ',');
+        } else {
+            // get value placeholders
+            $valuePlaceholders = rtrim(str_repeat('?,', count($insertData)), ',');
+        }
+
+        // make string of column names
+        $columns = implode('`,`', array_keys($isMultidymential ? $insertData[0] : $insertData));
+
+        // get whereclause and bindata
+        [$whereClause, $bindData] = $this->formatWhere($this->bindings['where']);
+
+        // merge with order
+        $data = array_merge($data, $bindData);
+
+        // make whereClause correct when whereclause is not empty
+        if (!empty($whereClause)) {
+            $whereClause = " WHERE {$whereClause} ";
+        }
+
+        // trim ( AND ) from begin and end for when there are to much wrapping
+        $valuePlaceholders = trim($valuePlaceholders, '()');
+
+        // return insert query
+        return [
+            "INSERT INTO `{$query->bindings['from']}` (`{$columns}`) VALUES ({$valuePlaceholders}){$whereClause}",
+            $data
         ];
     }
 
@@ -67,9 +122,9 @@ trait QueryBuilderV2
 
             // check if whereClause is empty
             if (empty($whereClause)) {
-                $whereClause = ' ' . $value['column'].' ' . $value['operator'] . ' ' . $placeholder;
+                $whereClause = ' ' . $value['column'] . ' ' . $value['operator'] . ' ' . $placeholder;
             } else {
-                $whereClause .=  ' ' . strtoupper($value['boolean']) . ' ' . $value['column'].' ' . $value['operator'] . ' ' . $placeholder;
+                $whereClause .=  ' ' . strtoupper($value['boolean']) . ' ' . $value['column'] . ' ' . $value['operator'] . ' ' . $placeholder;
             }
 
             // check if type is raw
@@ -81,8 +136,8 @@ trait QueryBuilderV2
 
         // return where clause
         return [
-          $whereClause,
-          $bindData
+            $whereClause,
+            $bindData
         ];
     }
 }

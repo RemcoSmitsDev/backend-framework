@@ -15,20 +15,22 @@ class DatabaseV2
     // fetch mode
     protected $fetchMode = \PDO::FETCH_OBJ;
 
+    // bindings for making database query
     protected array $bindings = [
         'select' => [],
         'from' => '',
         'join' => [],
         'where' => [],
         'bindData' => [],
+        'limit' => '',
         'groupBy' => [],
-        // 'having' => [],
-        'order' => [],
-        // 'union' => [],
-        // 'unionOrder' => [],
+        'orderBy' => [],
     ];
 
-    public function __construct(Connection|\PDO $connection = null)
+    // keep track if there went something wrong
+    protected bool $errorWhileExecuting = false;
+
+    public function __construct(Connection | \PDO $connection = null)
     {
         // make connection to database
         $this->connection = $connection ?: new Connection();
@@ -39,7 +41,6 @@ class DatabaseV2
         }
     }
 
-
     /**
      * select table with option for select columns
      * @param string       $tableName
@@ -47,7 +48,7 @@ class DatabaseV2
      * @return self
      */
 
-    public function table(string $tableName, string|array $select = '*'): self
+    public function table(string $tableName, string | array $select = '*'): self
     {
         // add tablename
         $this->bindings['from'] = $tableName;
@@ -65,7 +66,7 @@ class DatabaseV2
      * @return self
      */
 
-    public function select(string|array $select = ['*']): self
+    public function select(string | array $select = ['*']): self
     {
         // make select
         $columns = is_array($select) ? $select : (array) $select;
@@ -101,10 +102,16 @@ class DatabaseV2
         return $this;
     }
 
-    public function subSelect(string|\Closure $query, $as)
+    /**
+     * functin subSelect
+     * @param string|\Closure $query
+     * @param string          $as
+     */
+
+    public function subSelect(string | \Closure $query, string $as): void
     {
         // get bindings from query
-        [$query,$bindings] = $this->createSubSelect($query, $as);
+        [$query, $bindings] = $this->createSubSelect($query, $as);
 
         // update bindData
         $this->bindings['bindData'] = array_merge($this->bindings['bindData'], $bindings);
@@ -113,12 +120,19 @@ class DatabaseV2
         $this->bindings['select'][] = "({$query}) as {$as}";
     }
 
-
     //
     // WHERE functions
     //
 
-    public function where($column, $operator = null, $value = null, $boolean = 'AND'): self
+    /**
+     * function where
+     * @param $column
+     * @param array|string $operator
+     * @param $value
+     * @param string $boolean
+     */
+
+    public function where($column, array | string $operator = null, $value = null, string $boolean = 'AND'): self
     {
         // check is instanceof \Closure
         if ($column instanceof \Closure && is_null($value)) {
@@ -141,7 +155,7 @@ class DatabaseV2
         // loop trough all columns
         foreach ($columns as $key => $column) {
             // get value by column
-            $_value = $values[$key] ?? null;
+            $value = $values[$key] ?? null;
             // check if operator is an array
             if (is_array($operator)) {
                 $_operator = $operator[$key] ?? '=';
@@ -149,15 +163,15 @@ class DatabaseV2
 
             // force to be real int
             if (is_int($value)) {
-                $value = (int)$value;
+                $value = (int) $value;
             }
 
             // add to where statement
             $this->bindings['where'][] = [
-              'column' => $column,
-              'operator' => $_operator ?? $operator,
-              'value' => $value,
-              'boolean' => $boolean
+                'column' => $column,
+                'operator' => $_operator ?? $operator,
+                'value' => $value,
+                'boolean' => $boolean,
             ];
         }
 
@@ -165,26 +179,44 @@ class DatabaseV2
         return $this;
     }
 
+    /**
+     * function orWhere
+     * @param $column   Column names from tables
+     * @param $operator
+     * @param $value
+     */
+
     public function orWhere($column, $operator = null, $value = null)
     {
+        // return self and make where statement with OR
         return $this->where($column, $operator, $value, 'OR');
     }
 
-    public function whereIn(string|\Closure $column, array $values, string $boolean = 'AND'): self
+    /**
+     * function whereIn
+     * @param string|\Closure $column
+     * @param array $values
+     * @param string $boolean
+     * @return self
+     */
+
+    public function whereIn(string | \Closure $column, array $values, string $boolean = 'AND'): self
     {
+        // check if $column is instance of closure that means that whereIn will be an subWhere
+        // the where statement will have ( ) wrapped around it
         if ($column instanceof \Closure) {
             // call closure
             $column($query = new static($this->connection));
             // get bindings from query
-            [$query,$bindings] = $this->createSubSelect($query);
+            [$query, $bindings] = $this->createSubSelect($query);
 
             // add to where statement
             $this->bindings['where'][] = [
-              'type' => 'raw',
-              'column' => 'id',
-              'operator' => 'IN',
-              'value' => '('.$query.')',
-              'boolean' => $boolean
+                'type' => 'raw',
+                'column' => 'id',
+                'operator' => 'IN',
+                'value' => '(' . $query . ')',
+                'boolean' => $boolean,
             ];
 
             // return self
@@ -193,11 +225,11 @@ class DatabaseV2
 
         // add to where statement
         $this->bindings['where'][] = [
-          'type' => 'raw',
-          'column' => $column,
-          'operator' => 'IN',
-          'value' => '(?)',
-          'boolean' => $boolean
+            'type' => 'raw',
+            'column' => $column,
+            'operator' => 'IN',
+            'value' => '(?)',
+            'boolean' => $boolean,
         ];
         // merge bindData
         $this->bindings['bindData'][] = implode(',', $values);
@@ -209,21 +241,68 @@ class DatabaseV2
     // Fetch methods
     //
 
-    public function all($fallbackReturnType = false)
+    /**
+     * function all
+     * @param mixed $fallbackReturnType
+     * @param int $fetchMode
+     */
+
+    public function all($fallbackReturnType = false, int $fetchMode = null)
     {
         // return all results
-        return $this->handleFetchQuery()->fetchAll($this->fetchMode) ?: $fallbackReturnType;
+        $returnValue = $this->handleFetchQuery()->fetchAll($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
+
+        // return fallback return value
+        return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
     }
 
-    public function one($fallbackReturnType = false)
+    /**
+     * function one
+     * @param mixed $fallbackReturnType
+     * @param int $fetchMode
+     */
+
+    public function one($fallbackReturnType = false, int $fetchMode = null)
     {
-        // return all results
-        return $this->handleFetchQuery()->fetch($this->fetchMode) ?: $fallbackReturnType;
+        // return one result
+        $returnValue = $this->handleFetchQuery()->fetch($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
+
+        // return fallback return value
+        return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
     }
 
-    public function get($fallbackReturnType = false)
+    /**
+     * function column
+     * @param mixed $fallbackReturnType
+     * @param int $fetchMode
+     */
+
+    public function column($fallbackReturnType = false, int $fetchMode = null)
     {
-        // return all results
-        return $this->one($fallbackReturnType);
+        // get return value
+        $returnValue = $this->handleFetchQuery()->fetchColumn($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
+
+        // return fallback return value
+        return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
+    }
+
+    //
+    // action methods
+    //
+
+    /**
+     * function insert
+     * @param array $insert
+     */
+
+    public function insert(array $insertData)
+    {
+        // check if there exists an table
+        if (empty($this->bindings['from'])) {
+            return false;
+        }
+
+        // return insert id(s)
+        return $this->handleInsertExecution(...$this->insertToSql($this, $insertData));
     }
 }
