@@ -125,10 +125,20 @@ class Database extends QueryBuilder
         return $this->handleReturnData($defaultReturn, 'column');
     }
 
-    public function insert(array $insertData)
+    public function insert(array $insertData = [])
     {
         $this->queryType = 'INSERT';
         $this->data = $insertData;
+        
+        if ($this->isRaw) {
+            $this->autoBind($this->whereData)
+          ->autoBind($insertData)
+          ->execute()
+          ->clearPreviousData()
+          ->close();
+
+            return $this;
+        }
 
         $this->query($this->toSql($this))
                ->autoBind($this->whereData)
