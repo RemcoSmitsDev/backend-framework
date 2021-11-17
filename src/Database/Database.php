@@ -24,7 +24,7 @@ class Database extends QueryBuilder
         'arg' => \PDO::FETCH_OBJ
       ],
       'column' => [
-        'name' => 'fetch',
+        'name' => 'fetchColumn',
         'arg' => \PDO::FETCH_OBJ
       ],
     ];
