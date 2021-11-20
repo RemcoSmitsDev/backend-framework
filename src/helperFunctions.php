@@ -48,17 +48,13 @@ function clearInjections(string|array $value): string|array
     return htmlspecialchars(trim($value), ENT_QUOTES, 'utf-8');
 }
 
-function dd($value): void
+function dd(...$values): void
 {
     echo "<pre>";
-    print_r($value);
+    foreach ($values as $value) {
+        print_r($value);
+    }
     echo "</pre>";
-}
-
-function seo(): Seo
-{
-    global $seo;
-    return ($seo instanceof Seo) ? $seo : new Seo();
 }
 
 function request(): Request
