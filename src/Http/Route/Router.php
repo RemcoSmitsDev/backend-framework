@@ -11,7 +11,6 @@ class Router
     protected array $namedRoutes = [];
 
     protected string $prefix = '';
-    protected array $prefixs = [];
     protected array $middlewares = [];
 
     protected string $group = '';
@@ -51,7 +50,7 @@ class Router
         // when array [Test::class,'index']
         if (is_array($action)) {
             // check if information is correct
-            if (!isset($action[0],$action[1]) || !is_string($action[0]) || !is_string($action[1])) {
+            if (!isset($action[0], $action[1]) || !is_string($action[0]) || !is_string($action[1])) {
                 throw new \Exception("Your array must have as first item an class and as seconde item function name", 1);
             }
             // is no class was found throw error
@@ -112,7 +111,7 @@ class Router
     protected function addRoute(array $methods, string $uri, \Closure|array $action): self
     {
         // replace alle dubbele slashes
-        $uri = preg_replace("/\/+/", "/", '/'.$this->prefix.'/'.$uri);
+        $uri = preg_replace("/\/+/", "/", '/' . $this->prefix . '/' . $uri);
 
         // kijk of er nog wat overblijf als je laatste slash verwijder
         // anders is '/' -> ''
@@ -120,16 +119,15 @@ class Router
 
         // voeg de route toe aan bij het request type
         $this->routes[] = [
-          'uri' => $uri,
-          'isDynamic' => preg_match('/' . $this->routeParamPattern . '/', $uri),
-          'methods' => $methods,
-          'prefixs' => $this->prefixs,
-          'name' => '',
-          'action' => $action,
-          'patterns' => [],
-          'middlewares' => [
-            ...$this->middlewares,
-          ]
+            'uri' => $uri,
+            'isDynamic' => preg_match('/' . $this->routeParamPattern . '/', $uri),
+            'methods' => $methods,
+            'name' => '',
+            'action' => $action,
+            'patterns' => [],
+            'middlewares' => [
+                ...$this->middlewares,
+            ]
         ];
 
         // reset alle middlewares/prefix
@@ -159,7 +157,7 @@ class Router
         }
 
         // make regex string and replace other patterns
-        return "/^" . preg_replace('/'.$this->routeParamPattern.'/', "([^\/]*+)", str_replace('/', '\/', $uri)) . "(?!.)/";
+        return "/^" . preg_replace('/' . $this->routeParamPattern . '/', "([^\/]*+)", str_replace('/', '\/', $uri)) . "(?!.)/";
     }
 
     /**
@@ -191,7 +189,7 @@ class Router
         // loop trough all url parts
         foreach ($explodeRouteURL as $key => $part) {
             // check if dynamic parameter was found
-            if (preg_match('/'.$this->routeParamPattern.'/', $part)) {
+            if (preg_match('/' . $this->routeParamPattern . '/', $part)) {
                 // add data to globals
                 $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
             }
@@ -210,7 +208,7 @@ class Router
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new \Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: ".json_encode($wrongParams), 1);
+            throw new \Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams), 1);
         }
 
         // loop trough all params and replace params

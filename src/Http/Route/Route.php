@@ -95,7 +95,7 @@ class Route extends Router implements RoutesInterface
     public function middleware(bool|string|array $validateRules): self
     {
         // update route middlewares
-        $this->middlewares = array_unique([...$this->middlewares,...(array)$validateRules]);
+        $this->middlewares = array_unique([...$this->middlewares, ...(array)$validateRules]);
 
         // return self
         return $this;
@@ -110,15 +110,13 @@ class Route extends Router implements RoutesInterface
 
     public function prefix(string $prefix): self
     {
+        // check if prefix is empty
         if (empty($prefix)) {
             throw new \Exception('You must enter a prefix for a route/group of routes!', 1);
         }
 
-        // add prefix to prefixs array
-        $this->prefixs[] = trim($prefix, '/');
-
         // make prefix
-        $this->prefix = str_replace('//', '/', '/'.$this->groupPrefix.'/'.trim($prefix, '/'));
+        $this->prefix = str_replace('//', '/', '/' . $this->groupPrefix . '/' . trim($prefix, '/'));
 
         return $this;
     }
@@ -140,7 +138,7 @@ class Route extends Router implements RoutesInterface
         $this->groupPrefix = $this->prefix;
 
         // merge middlwares met group middlewares
-        $this->groupMiddlwares = [...$this->middlewares,...$this->groupMiddlwares];
+        $this->groupMiddlwares = [...$this->middlewares, ...$this->groupMiddlwares];
 
         // check of er wel group middlware / prefix is
         if (empty($this->groupMiddlwares) && empty($this->groupPrefix)) {
@@ -246,6 +244,6 @@ class Route extends Router implements RoutesInterface
 
     public function getCurrentRoute(): array
     {
-        return $this->currentRoute ?: ['name' => '','route' => '', 'method' => '', 'urls' => [],'middlewares' => '','patterns' => []];
+        return $this->currentRoute ?: ['name' => '', 'route' => '', 'method' => '', 'urls' => [], 'middlewares' => '', 'patterns' => []];
     }
 }
