@@ -4,6 +4,8 @@ namespace Framework\Database;
 
 class QueryBuilder
 {
+    use DatabaseHelpers;
+
     /**
      * function selectToSql
      * @param Database $query
@@ -152,7 +154,6 @@ class QueryBuilder
 
         // format order by
         $orderBy = !empty($query->orders) ? ' ORDER BY ' . $this->formatOrderBy($query->orders) : '';
-
 
         // return query and bindData
         return "{$joins}{$whereClause}{$groupBy}{$orderBy}{$limit}";
