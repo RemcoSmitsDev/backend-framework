@@ -6,12 +6,12 @@ use PDOException;
 
 class Connection
 {
-    protected \PDO $connection;
+    /**
+     * keeps track of connection
+     * @var \PDO
+     */
 
-    private string $username;
-    private string $password;
-    private string $hostname;
-    private string $databaseName;
+    protected \PDO $connection;
 
     /**
      * function __construct
@@ -21,12 +21,14 @@ class Connection
      * @param string $hostname
      */
 
-    public function __construct(string $username = 'root', string $password = 'root', string $databaseName = '', string $hostname = 'localhost')
-    {
-        $this->username = $username;
-        $this->password = $password;
-        $this->databaseName = $databaseName;
-        $this->hostname = $hostname;
+    public function __construct(
+        private string $username = 'root',
+        private string $password = 'root',
+        private string $databaseName = '',
+        private string $hostname = 'localhost',
+        private string $chartset = 'utf8',
+        private int $port = 3306,
+    ) {
     }
 
     /**
@@ -42,13 +44,13 @@ class Connection
         }
 
         // connection settings
-        $connectionSettings = "mysql:host={$this->hostname};dbname={$this->databaseName};port=8889";
+        $connectionSettings = "mysql:host={$this->hostname};dbname={$this->databaseName};port={$this->port};charset={$this->chartset}";
 
         // define options
         $options = [
             \PDO::ATTR_PERSISTENT => true,
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"
+            \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->chartset}"
         ];
 
         // try making connection to database
