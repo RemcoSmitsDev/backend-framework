@@ -2,8 +2,6 @@
 
 namespace Framework\Database\Connection;
 
-use PDOException;
-
 class Connection
 {
     /**
