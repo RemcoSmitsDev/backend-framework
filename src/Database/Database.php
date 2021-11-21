@@ -55,7 +55,6 @@ class Database extends QueryBuilder
         'from' => [],
         'join' => [],
         'where' => [],
-        'limit' => [],
         'groupBy' => [],
         'orderBy' => [],
     ];
@@ -94,6 +93,13 @@ class Database extends QueryBuilder
      */
 
     protected int $limit;
+
+    /**
+     * keeps track of offset
+     * @var int
+     */
+
+    protected int $offset;
 
     /**
      * keeps track of all group statements
@@ -630,6 +636,32 @@ class Database extends QueryBuilder
     }
 
     /**
+     * function offset
+     * @param int $offset
+     * @return self
+     */
+
+    public function offset(int $offset): self
+    {
+        // add offset to builderparts(min value of 0)
+        $this->offset = max(0, (int) $offset);
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * function paginate
+     * @param int $page
+     * @param int $perPage
+     */
+
+    public function paginate(int $page, int $perPage = 15)
+    {
+        return $this->offset(($page - 1) * $perPage)->limit($perPage);
+    }
+
+    /**
      * function orderBy
      * @param string $column
      * @param string $direction
@@ -657,16 +689,10 @@ class Database extends QueryBuilder
      * @return self
      */
 
-    public function groupBy(...$groups): self
+    public function groupBy(string ...$groups): self
     {
         // loop trough all groups
-        foreach ($groups as $group) {
-            // add group
-            $this->groups = array_merge(
-                (array) $this->groups,
-                (array) $group
-            );
-        }
+        $this->groups = array_merge($this->groups, $this->flattenArray($groups));
 
         // return self
         return $this;

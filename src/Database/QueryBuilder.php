@@ -146,17 +146,37 @@ class QueryBuilder
         // add WHERE to statement if not empty
         $whereClause = !empty($whereClause) ? " WHERE {$whereClause}" : '';
 
-        // format limit
-        $limit = !empty($query->limit) ? " LIMIT {$query->limit}" : '';
-
         // format group by
-        $groupBy = !empty($query->groups) ? " GROUP BY {$query->groups}" : '';
+        $groupBy = !empty($query->groups) ? ' GROUP BY ' . $this->formatGroupBy($query->groups) : '';
 
         // format order by
         $orderBy = !empty($query->orders) ? ' ORDER BY ' . $this->formatOrderBy($query->orders) : '';
 
+        // format limit
+        $limit = isset($query->limit) ? " LIMIT {$query->limit}" : '';
+
+        // format offset
+        $offset = isset($query->offset) ? " OFFSET {$query->offset}" : '';
+
         // return query and bindData
-        return "{$joins}{$whereClause}{$groupBy}{$orderBy}{$limit}";
+        return $joins . $whereClause . $groupBy . $orderBy . $limit . $offset;
+    }
+
+    /**
+     * function formatGroupBy
+     * @param array $groups
+     * @return string
+     */
+
+    private function formatGroupBy(array $groups): string
+    {
+        // loop trough all groups
+        $groups = array_map(function ($group) {
+            return preg_replace('/([A-z0-9_\-]+)/', '`$1`', $group);
+        }, $groups);
+
+        // return groupBy string
+        return implode(', ', $groups);
     }
 
     /**
