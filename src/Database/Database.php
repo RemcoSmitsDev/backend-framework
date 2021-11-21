@@ -134,18 +134,13 @@ class Database extends QueryBuilder
 
     /**
      * function __construct
-     * @param Connection|\PDO $connection
+     * @param Connection $connection
      */
 
-    public function __construct(Connection | \PDO $connection = null)
+    public function __construct(Connection $connection)
     {
         // make connection to database
-        $this->connection = $connection ?: new Connection();
-
-        // try to start connection
-        if ($this->connection instanceof Connection) {
-            $this->connection = $this->connection->start();
-        }
+        $this->connection = $connection;
     }
 
     /**

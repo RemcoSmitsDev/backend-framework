@@ -2,6 +2,8 @@
 
 namespace Framework\Database;
 
+use Framework\Database\Connection\Connection;
+
 trait DatabaseHelpers
 {
     /**
@@ -180,7 +182,13 @@ trait DatabaseHelpers
 
         // check if there was an type found
         if (empty($match) || !in_array(strtolower($match[0]), $this->validTypes)) {
-            throw new \Exception("You have passed an non valid database query", 1);
+            throw new \Exception('You have passed an non valid database query. Valid types: (' . implode(', ', $this->validTypes) . ')', 1);
+        }
+
+        // check if connection not already was started
+        if ($this->connection instanceof Connection) {
+            // try to start connection
+            $this->connection = $this->connection->start();
         }
 
         // get type from match
