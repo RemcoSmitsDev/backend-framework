@@ -247,7 +247,7 @@ class Router
 
         // clean ouput buffer for HEAD request
         if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
-            ob_end_clean();
+            ob_start();
         }
 
         // loop trough all routes
@@ -271,7 +271,7 @@ class Router
                 }
 
                 // call needed function
-                self::handleRouteAction($route);
+                $this->handleRouteAction($route);
 
                 // set currentRoute
                 $this->currentRoute = $route;
@@ -285,12 +285,12 @@ class Router
                 }
 
                 // check if a dynamic route match the current url
-                if (($data = self::validateDynamicUri($route)) === false) {
+                if (($data = $this->validateDynamicUri($route)) === false) {
                     continue;
                 }
 
                 // call needed function
-                self::handleRouteAction($route, $data);
+                $this->handleRouteAction($route, $data);
 
                 // set currentRoute
                 $this->currentRoute = $route;
