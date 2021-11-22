@@ -2,575 +2,742 @@
 
 namespace Framework\Database;
 
+use Framework\Database\Connection\Connection;
+use Framework\Database\DatabaseHelpers;
+use Framework\Database\JoinClause;
+
 class Database extends QueryBuilder
 {
-    // connection settings
-    private string $host;
-    private string $user;
-    private string $pass;
-    private string $DBName;
+    use DatabaseHelpers;
 
-    // pdo vars
-    private ?object $PDO = null;
-    private object $stmt;
+    /**
+     * keeps track of show query's
+     * @var bool
+     */
 
-    private array $fetchTypes = [
-      'all' => [
-        'name' => 'fetchAll',
-        'arg' => \PDO::FETCH_OBJ
-      ],
-      'one' => [
-        'name' => 'fetch',
-        'arg' => \PDO::FETCH_OBJ
-      ],
-      'column' => [
-        'name' => 'fetch',
-        'arg' => \PDO::FETCH_OBJ
-      ],
+    private bool $logSql = false;
+
+    /**
+     * keep track of connection
+     * @var Connection|\PDO|null
+     */
+
+    private Connection | \PDO | null $connection;
+
+    /**
+     * fetch mode
+     * @var int
+     */
+
+    protected int $fetchMode = \PDO::FETCH_OBJ;
+
+    /**
+     * valid query types
+     * @var array
+     */
+
+    private array $validTypes = [
+        'insert',
+        'update',
+        'select',
+        'delete',
+        'truncate',
+        'drop',
     ];
     private $tempFetchType = null;
 
-    // json(all,single) function
-    protected bool $json = false;
+    /**
+     * builder parts for making database query
+     * @var array
+     */
 
-    protected array $whereData = [];
+    protected array $bindings = [
+        'select' => [],
+        'from' => [],
+        'join' => [],
+        'where' => [],
+        'groupBy' => [],
+        'orderBy' => [],
+    ];
+
+    /**
+     * keeps track of select columns
+     * @var array
+     */
+
+    protected array $columns = [];
+
+    /**
+     * keep track of main table name
+     * @var string
+     */
+
+    protected string $from = '';
+
+    /**
+     * keeps track of joins
+     * @var array
+     */
+
+    protected array $joins = [];
+
+    /**
+     * keeps track of where statements
+     * @var array
+     */
+
     protected array $wheres = [];
-    protected array $seperators = [];
-    protected array $data = [];
 
-    protected string $tableName;
-    protected string $select = '*';
+    /**
+     * keeps track of limit amount
+     * @var int
+     */
 
-    protected string $queryType = 'SELECT';
-    protected bool $isRaw = false;
+    protected int $limit;
 
+    /**
+     * keeps track of offset
+     * @var int
+     */
 
-    protected string $joinQuerys = '';
+    protected int $offset;
 
-    protected $limit = '';
-    protected string $orderBy = '';
-    protected string $groupBy = '';
+    /**
+     * keeps track of all group statements
+     * @var array
+     */
 
-    private int|string $insertID;
+    protected array $groups = [];
 
-    // dump query
-    private string $SQLQuery;
-    private array $skipToDump = ['host','user','pass','DBName','PDO','stmt','fetchTypes','skipToDump','dump'];
-    private object $dump;
+    /**
+     * keeps track of all order statements
+     * @var array
+     */
 
-    public function __construct()
+    protected array $orders = [];
+
+    /**
+     * keep track if there went something wrong
+     * @var bool
+     */
+    protected bool $errorWhileExecuting = false;
+
+    /**
+     * keep track of already executed query
+     * @var bool
+     */
+    private bool $hasBeenExecuted = false;
+
+    /**
+     * keep track of statement
+     */
+    private $statement;
+
+    /**
+     * function __construct
+     * @param Connection $connection
+     */
+
+    public function __construct(Connection $connection)
     {
-        // define database dev/live config
-        $this->host = constant(config()::class.'::'.config()::DB_CONNECTION_PREFIX.'HOST');
-        $this->user = constant(config()::class.'::'.config()::DB_CONNECTION_PREFIX.'USER');
-        $this->pass = constant(config()::class.'::'.config()::DB_CONNECTION_PREFIX.'PASS');
-        $this->DBName = constant(config()::class.'::'.config()::DB_CONNECTION_PREFIX.'NAME');
+        // make connection to database
+        $this->connection = $connection;
     }
 
-    private function connect(): self
+    /**
+     * function logSql
+     */
+
+    public function logSql(): self
     {
-        if (!is_null($this->PDO)) {
+        // set logSql to true
+        $this->logSql = true;
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * select table with option for select columns
+     * @param string       $tableName
+     * @param string|array $select
+     * @return self
+     */
+
+    public function table(string $tableName, string | array $select = '*'): self
+    {
+        // add tablename
+        $this->from = $tableName;
+
+        // make select statement 
+        // and return self
+        return $this->select($select);
+    }
+
+    /**
+     * Select columns from table
+     * @param string|array $select
+     * @return self
+     */
+
+    public function select(string | array $select = ['*']): self
+    {
+        // make select
+        $columns = (array) $select;
+
+        // loop trough all columns
+        foreach ($columns as $as => $column) {
+            // check if is subSelect with as name
+            if (is_string($as) && $column instanceof \Closure) {
+                // make subSelect
+                $this->subSelect($column, $as);
+            }
+            // when column is an array
+            elseif (is_array($column)) {
+                $this->columns = array_merge($this->columns, $this->selectFormat($column));
+            }
+            // else is string
+            else {
+                // trim spaces
+                $column = trim($column);
+
+                // check if * is in column string
+                if (preg_match('/\*|count\(.+?\)|DISTINCT/i', $column)) {
+                    $this->columns[] = "$column";
+                } else {
+                    $this->columns[] = "`$column`";
+                }
+            }
+        }
+
+        // make select columns unique
+        $this->columns = array_unique($this->columns);
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * function subSelect
+     * @param string|\Closure $query
+     * @param string          $as
+     * @return void
+     */
+
+    public function subSelect(string | \Closure $query, string $as): void
+    {
+        // get bindings from query
+        [$query, $bindData] = $this->createSubSelect($query, $as);
+
+        // add binddata
+        // $this->bindings['select'] = array_merge($this->bindings['select'], $bindData);
+
+        // format subSelect
+        $this->columns[] = "({$query}) as {$as}";
+    }
+
+    //
+    // WHERE functions
+    //
+
+    /**
+     * function where
+     * @param $column
+     * @param array|string $operator
+     * @param $value
+     * @param string $boolean
+     * @return self
+     */
+
+    public function where($column, array | string $operator = null, $value = null, string $boolean = 'AND'): self
+    {
+        // check is instanceof \Closure
+        if ($column instanceof \Closure && is_null($value)) {
+            // return self and handle whereClosure
+            return $this->whereClosure($column, $boolean);
+        }
+
+        // when value is null
+        if (is_null($value) && !is_null($operator)) {
+            // make operator the value
+            $value = $operator;
+            // reset operator to '='
+            $operator = '=';
+        }
+
+        // make array of columns/values
+        $columns = (array) $column;
+        $values = (array) $value;
+
+        // loop trough all columns
+        foreach ($columns as $key => $column) {
+            // get value by column
+            $value = $values[$key] ?? null;
+            // check if operator is an array
+            if (is_array($operator)) {
+                $_operator = $operator[$key] ?? '=';
+            }
+
+            // force to be real int
+            if (is_int($value)) {
+                $value = (int) $value;
+            }
+
+            // add to where statement
+            $this->wheres[] = [
+                'type' => 'normal',
+                'column' => $column,
+                'operator' => $_operator ?? $operator,
+                'value' => $value,
+                'boolean' => $boolean,
+            ];
+
+            // add value binding
+            $this->bindings['where'][] = $value;
+        }
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * function whereRaw
+     * @param string|\Closure $query
+     * @param mixed $bindData
+     * @param string $boolean
+     * @param self
+     */
+
+    public function whereRaw(string|\Closure $query, $bindData = [], string $boolean = 'AND')
+    {
+        // keep track of query type
+        $type = 'raw';
+
+        // check if query is string
+        if (is_string($query)) {
+            // add to where statement
+            $this->wheres[] = compact(
+                'type',
+                'query',
+                'boolean'
+            );
+
+            // add binddata to builder parts
+            $this->bindings['where'] = array_merge($this->bindings['where'], $this->flattenArray((array) $bindData));
+
+            // return self
             return $this;
         }
 
-        $PDOSettings = "mysql:host={$this->host};dbname={$this->DBName};port=8889";
+        // update query type to 
+        $type = 'nested';
 
-        $options = array(
-          \PDO::ATTR_PERSISTENT => true,
-          \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-          \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"
+        // get query
+        $query($query = new static($this->connection));
+
+        // add binddata to builder parts
+        $this->mergeBindings($this, $query);
+
+        // get formatted where statement with bindData
+        $query = $query->formatWhere($query->wheres);
+
+        // add to where statement
+        $this->wheres[] = compact(
+            'type',
+            'query',
+            'boolean'
         );
 
-        try {
-            $this->PDO = new \PDO($PDOSettings, $this->user, $this->pass, $options);
-        } catch (\PDOExeption $e) {
-            echo $e->getMessage();
-        }
-
+        // return self
         return $this;
     }
 
-    private function query(string $query): self
+    /**
+     * function orWhere
+     * @param mixed $column   Column names from tables
+     * @param string $operator
+     * @param mixed $value
+     * @return self
+     */
+
+    public function orWhere($column, string $operator = null, $value = null)
     {
-        $this->stmt = $this->connect()->PDO->prepare($this->SQLQuery = $query);
-        return $this;
+        // return self and make where statement with OR
+        return $this->where($column, $operator, $value, 'OR');
     }
 
-    public function raw(string $rawQuery)
-    {
-        $this->isRaw = true;
-        return $this->connect()->query($rawQuery);
-    }
+    /**
+     * function whereIn
+     * @param string|\Closure $column
+     * @param array $values
+     * @param string $boolean
+     * @return self
+     */
 
-    public function all($defaultReturn = false, int $fetchType = null)
+    public function whereIn(string | \Closure $column, array $values = null, string $boolean = 'AND'): self
     {
-        if (!is_null($fetchType)) {
-            $this->tempFetchType = $fetchType;
-        }
-        return $this->handleReturnData($defaultReturn, 'all');
-    }
+        // check if $column is instance of closure that means that whereIn will be an subWhere
+        // the where statement will have ( ) wrapped around it
+        if ($column instanceof \Closure) {
+            // call closure
+            $column($query = new static($this->connection));
+            // get bindings from query
+            [$query,] = $this->createSubSelect($query);
 
-    public function one($defaultReturn = false, int $fetchType = null)
-    {
-        if (!is_null($fetchType)) {
-            $this->tempFetchType = $fetchType;
-        }
-        return $this->handleReturnData($defaultReturn, 'one');
-    }
+            // add to where statement
+            $this->wheres[] = [
+                'type' => 'raw',
+                'column' => 'id',
+                'operator' => 'IN',
+                'value' => '(' . $query . ')',
+                'boolean' => $boolean,
+            ];
 
-    public function column($defaultReturn = false, int $fetchType = null)
-    {
-        if (!is_null($fetchType)) {
-            $this->tempFetchType = $fetchType;
-        }
-        return $this->handleReturnData($defaultReturn, 'column');
-    }
-
-    public function insert(array $insertData = [])
-    {
-        $this->queryType = 'INSERT';
-        $this->data = $insertData;
-        
-        if ($this->isRaw) {
-            $this->autoBind($this->whereData)
-          ->autoBind($insertData)
-          ->execute()
-          ->clearPreviousData()
-          ->close();
-
+            // return self
             return $this;
         }
 
-        $this->query($this->toSql($this))
-               ->autoBind($this->whereData)
-               ->autoBind($insertData)
-               ->execute()
-               ->clearPreviousData()
-               ->close();
+        // add to where statement
+        $this->wheres[] = [
+            'type' => 'raw',
+            'column' => $column,
+            'operator' => 'IN',
+            'value' => '(?)',
+            'boolean' => $boolean,
+        ];
 
+        // add values to where bindings
+        $this->bindings['where'][] = implode(',', $values);
+
+        // return self
         return $this;
     }
 
-    public function delete()
+    /**
+     * function whereExists
+     * @param \Closure $callback
+     * @param string $boolean
+     * @param bool $not
+     * @return self
+     */
+
+    public function whereExists(\Closure $callback, string $boolean = 'AND', bool $not = false): self
     {
-        $this->queryType = 'DELETE';
+        // call closure
+        $callback($query = new static($this->connection));
 
-        $this->query($this->toSql($this))
-                 ->autoBind($this->whereData)
-                 ->execute()
-                 ->clearPreviousData()
-                 ->close();
+        // merge bindings
+        $this->mergeBindings($this, $query);
 
+        // get bindings from query
+        [$query, $bindings] = $this->createSubSelect($query);
+
+        // get type based on not value
+        $type = $not ? 'notExists' : 'exists';
+
+        // add to where statement
+        $this->wheres[] = compact(
+            'type',
+            'query',
+            'boolean'
+        );
+
+        // return self
         return $this;
     }
 
-    public function truncate()
+    /**
+     * function whereNotExists
+     * @param \Closure $callback
+     * @param string $boolean
+     * @return self
+     */
+
+    public function whereNotExists(\Closure $callback, string $boolean = 'AND'): self
     {
-        // check if table name exists
-        if (empty($this->tableName)) {
-            throw new \Exception("You must enter an table name to truncate the data!", 1);
+        return $this->whereExists($callback, $boolean, true);
+    }
+
+
+    /**
+     * function whereColumn
+     * @param string $column
+     * @param string|null $operator
+     * @param string|null $value
+     * @param string $boolean
+     */
+
+    public function whereColumn(string $column, string $operator = null, string $value, string $boolean = 'AND')
+    {
+        // add to where statement
+        $this->wheres[] = [
+            'type' => 'column',
+            'column' => $column,
+            'operator' => $operator,
+            'value' => $value,
+            'boolean' => $boolean,
+        ];
+
+        // return self
+        return $this;
+    }
+
+    // 
+    // Join methods
+    // 
+
+    public function join(string $table, string|\Closure $first, string $operator = null, string $value = null, string $type = 'INNER'): self
+    {
+        // make instance of 
+        $join = new JoinClause($this, $table, $type);
+
+        // check if first is instance of closure
+        if ($first instanceof \Closure) {
+            // make closure and make instance of JoinClause
+            $first($join);
+            // add join query
+            $this->joins[] = $join;
+        } else {
+            $this->joins[] = $join->on($first, $operator, $value);
         }
 
-        $this->query("TRUNCATE TABLE {$this->tableName}")->execute()->clearPreviousData()->close();
-    }
+        // merge bindings
+        $this->mergeBindings($this, $join);
 
-    public function update(array $updateData = [])
-    {
-        $this->queryType = 'UPDATE';
-        $this->data = $updateData;
-
-        if ($this->isRaw) {
-            $this->autoBind($this->whereData)
-          ->autoBind($updateData)
-          ->execute()
-          ->clearPreviousData()
-          ->close();
-
-            return $this;
-        }
-
-        $this->query($this->toSql($this))
-                 ->autoBind($this->whereData)
-                 ->autoBind($updateData)
-                 ->execute()
-                 ->clearPreviousData()
-                 ->close();
-
+        // return self
         return $this;
     }
 
-    private function handleReturnData($defaultReturn, $fetchType)
+    /**
+     * function leftJoin
+     * @param string $table
+     * @param string|\Closure $first
+     * @param string|null $operator
+     * @param string|null $value
+     */
+
+    public function leftJoin(string $table, string|\Closure $first, string $operator = null, string $value = null): self
     {
-        if (!$this->isRaw) {
-            $this->query($this->toSql($this));
-        }
-
-        $this->autoBind($this->whereData);
-
-        $tempFetchType = $this->tempFetchType;
-
-        if ($this->count() === 0) {
-            $this->clearPreviousData();
-            return $defaultReturn;
-        }
-
-        $type = $this->fetchTypes[$fetchType]['name'];
-
-        if ($this->json) {
-            $this->clearPreviousData();
-            return json_encode($this->stmt->$type($tempFetchType ?: $this->fetchTypes[$fetchType]['arg']), JSON_INVALID_UTF8_IGNORE);
-        }
-
-        $this->clearPreviousData();
-
-        return $this->stmt->$type($tempFetchType ?: $this->fetchTypes[$fetchType]['arg']);
+        return $this->join($table, $first, $operator, $value, 'left');
     }
 
-    private function close(): self
+    /**
+     * function rightJoin
+     * @param string $table
+     * @param string|\Closure $first
+     * @param string|null $operator
+     * @param string|null $value
+     */
+
+    public function rightJoin(string $table, string|\Closure $first, string $operator = null, string $value = null): self
     {
-        $this->PDO = null;
-        return $this;
+        return $this->join($table, $first, $operator, $value, 'right');
     }
 
-    private function replaceBindData(string &$SQLQuery, array $bindData): void
+    //
+    // Fetch methods
+    //
+
+    /**
+     * function all
+     * @param mixed $fallbackReturnType
+     * @param int $fetchMode
+     */
+
+    public function all($fallbackReturnType = false, int $fetchMode = null)
     {
-        foreach ($bindData as $key => $value) {
-            if (is_array($value)) {
-                foreach ($value as $key => $val) {
-                    $val = preg_quote(clearInjections($val));
+        // return all results
+        $returnValue = $this->handleExecution(...$this->selectToSql($this))->fetchAll($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
 
-                    if (!is_numeric($val) && !is_null($val) && !is_bool($val)) {
-                        $val = "'{$val}'";
-                    }
-
-                    $SQLQuery = preg_replace('/\:'.$key.'/', $val, $SQLQuery, 1);
-                }
-            } else {
-                $value = addslashes(clearInjections($value));
-
-                if (!is_numeric($value) && !is_null($value) && !is_bool($value)) {
-                    $value = "'{$value}'";
-                }
-
-                $SQLQuery = preg_replace('/\:'.$key.'/', $value, $SQLQuery, 1);
-            }
-        }
+        // return fallback return value
+        return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
     }
 
-    public function dump(bool $showDump = true): ?object
+    /**
+     * function one
+     * @param mixed $fallbackReturnType
+     * @param int $fetchMode
+     */
+
+    public function one($fallbackReturnType = false, int $fetchMode = null)
     {
-        $this->dump->SQLQueryWithValues = $this->dump->SQLQuery;
+        // make sure that limit is 1
+        $this->limit(1);
 
-        $this->replaceBindData($this->dump->SQLQueryWithValues, $this->dump->whereData);
-        $this->replaceBindData($this->dump->SQLQueryWithValues, $this->dump->data);
+        // return one result
+        $returnValue = $this->handleExecution(...$this->selectToSql($this))->fetch($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
 
-        if ($showDump) {
-            echo '<pre>';
-            var_dump($this->dump);
-            echo '</pre>';
-        }
-        return $this;
+        // return fallback return value
+        return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
     }
 
-    public function execute(): self
+    /**
+     * function column
+     * @param mixed $fallbackReturnType
+     * @param int $fetchMode
+     */
+
+    public function column($fallbackReturnType = false, int $fetchMode = null)
     {
-        $this->stmt->execute();
-        // set insert id when queryType == INSERT
-        if ($this->queryType === 'INSERT') {
-            $this->insertID = $this->PDO->lastInsertId();
-        }
-        $this->close();
-        return $this;
+        // get return value
+        $returnValue = $this->handleExecution(...$this->selectToSql($this))->fetchColumn($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
+
+        // return fallback return value
+        return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
     }
 
-    public function insertID(): int|null
+    //
+    // action methods
+    //
+
+    /**
+     * function insert
+     * @param array $insert
+     * @return bool|int
+     */
+
+    public function insert(array $insertData): bool|int
     {
-        return $this->insertID;
-    }
-
-    public function count()
-    {
-        $this->execute();
-        return $this->stmt->rowCount();
-    }
-
-    public function json()
-    {
-        $this->json = true;
-        return $this;
-    }
-
-    private function clearPreviousData()
-    {
-        $this->dump = new \stdClass();
-
-        foreach (get_object_vars($this) as $key => $value) {
-            if (in_array($key, $this->skipToDump)) {
-                continue;
-            }
-            $this->dump->$key = $value;
-        }
-
-        $this->json = false;
-
-        $this->whereData = [];
-        $this->wheres = [];
-        $this->seperators = [];
-        $this->data = [];
-
-        $this->tableName = '';
-        $this->select = '*';
-
-        $this->queryType = 'SELECT';
-        $this->orderBy = '';
-        $this->groupBy = '';
-        $this->limit = '';
-        $this->isRaw = false;
-
-        $this->SQLQuery = '';
-        $this->joinQuerys = '';
-
-        if (isset($this->tempFetchType)) {
-            $this->tempFetchType = false;
-        }
-
-        return $this;
-    }
-
-    public function table(string $tableName, string $select = '*')
-    {
-        $this->tableName = clearInjections($tableName);
-        $this->select = clearInjections($select);
-        return $this;
-    }
-
-    public function limit($limit)
-    {
-        $this->limit = " LIMIT {$limit} ";
-        return $this;
-    }
-
-    public function orderBy(string $orderBy)
-    {
-        $this->orderBy = ' ORDER BY '.clearInjections($orderBy);
-        return $this;
-    }
-
-    public function groupBy(string $groupBy)
-    {
-        $this->groupBy = ' GROUP BY '.clearInjections($groupBy);
-        return $this;
-    }
-
-    protected function findOrFailCheck($columnNames, $operators, $findValues)
-    {
-        if (empty($columnNames)) {
+        // check if there exists an table
+        if (empty($this->from)) {
             return false;
         }
 
-
-        foreach ($columnNames as $key => $columnName) {
-            $operator = $operators[$key] ?? '=';
-
-            $columnNames[$key] = str_replace('.', '_', $columnName);
-
-            $this->wheres[] = "{$columnName} {$operator} :{$columnNames[$key]}";
-        }
-
-        $this->whereData[] = array_combine($columnNames, $findValues);
-
-        return true;
+        // return insert id(s) or false when execution was failed
+        return $this->handleExecution(...$this->insertToSql($this, $insertData));
     }
 
-    protected function autoBind(array $bindData)
+    /** 
+     * function update
+     * @param array $updateData
+     * @return bool
+     */
+    public function update(array $updateData): bool
     {
-        foreach ($bindData as $key => $value) {
-            if (is_array($value)) {
-                foreach ($value as $key => $val) {
-                    $this->bind(':'.$key, $val);
-                }
-            } else {
-                $this->bind(':'.$key, $value);
-            }
+        // check if update data is empty
+        if (empty($updateData && $this->from)) {
+            return false;
         }
+
+        // return true or false (based on status of execution)
+        return $this->handleExecution(...$this->updateToSql($this, $updateData));
+    }
+
+    /** 
+     * function update
+     * @return bool
+     */
+    public function delete(): bool
+    {
+        // check if update data is empty
+        if (empty($this->from)) {
+            return false;
+        }
+
+        // return true or false (based on status of execution)
+        return $this->handleExecution(...$this->deleteToSql($this));
+    }
+
+
+    /**
+     * function raw
+     * @param string $query
+     * @param array $bindData
+     * @return mixed
+     */
+
+    public function raw(string $query, $bindData = []): mixed
+    {
+        // handle execution of query
+        $response = $this->handleExecution(
+            $query,
+            $this->flattenArray((array) $bindData),
+            $type
+        );
+
+        // return value based on query type
+        return $type === 'select' ? $this : $response;
+    }
+
+    //
+    // helpers
+    //  
+
+    /**
+     * function limit
+     * @param int $limit
+     * @return self
+     */
+
+    public function limit(int $limit): self
+    {
+        // add limit to builderparts
+        $this->limit = $limit;
+
+        // return self
         return $this;
     }
 
-    public function rawSubSelect(string $subSelectQuery): self
-    {
-        // add sub select to select query
-        if ($this->select == '*') {
-            $this->select = "{$this->tableName}.*, ({$query})";
-        } elseif (empty($this->select)) {
-            $this->select = "({$query})";
-        } else {
-            $this->select .= ", ({$query})";
-        }
+    /**
+     * function offset
+     * @param int $offset
+     * @return self
+     */
 
+    public function offset(int $offset): self
+    {
+        // add offset to builderparts(min value of 0)
+        $this->offset = max(0, (int) $offset);
+
+        // return self
         return $this;
     }
 
-    public function subSelect(\Closure $callback): self
+    /**
+     * function paginate
+     * @param int $page
+     * @param int $perPage
+     */
+
+    public function paginate(int $page, int $perPage = 15)
     {
-        // make new self instance
-        $queryObject = new self();
+        return $this->offset(($page - 1) * $perPage)->limit($perPage);
+    }
 
-        // call callback
-        $callback($queryObject);
+    /**
+     * function orderBy
+     * @param string $column
+     * @param string $direction
+     * @return self
+     */
 
-        // make query
-        $query = $this->toSql($queryObject);
+    public function orderBy(string $column, string $direction = 'ASC'): self
+    {
+        // make direction to uppercase
+        $direction = strtoupper($direction);
 
-        // default select as
-        $selectAS = "as {$queryObject->tableName}";
+        // add orderBy to builderparts
+        $this->orders[] = compact(
+            'column',
+            'direction'
+        );
 
-        // merge where data
-        $this->whereData = array_merge($this->whereData, $queryObject->whereData);
-
-        // check if `... as ...` exists in select query
-        if (preg_match('/.+?\s+(as\s+[A-Za-z-0-9\_\- ]+)/i', $queryObject->select, $match)) {
-            // set select as from table select
-            $selectAS = $match[1] ?? $selectAS;
-            // replace/remove select as from sub select query
-            $query = preg_replace("/\s*{$selectAS}/", '', $query);
-        }
-
-        // add sub select to select query
-        if ($this->select == '*') {
-            $this->select = "{$this->tableName}.*, ({$query}) {$selectAS}";
-        } elseif (empty($this->select)) {
-            $this->select = "({$query}) {$selectAS}";
-        } else {
-            $this->select .= ", ({$query}) {$selectAS}";
-        }
-
+        // return self
         return $this;
     }
 
-    public function or(): self
+    /**
+     * function groupBy
+     * @param string|array $groups
+     * @return self
+     */
+
+    public function groupBy(string ...$groups): self
     {
-        if (!empty($this->wheres)) {
-            $this->seperators[] = 'OR';
-        }
-        return $this;
-    }
+        // loop trough all groups
+        $this->groups = array_merge($this->groups, $this->flattenArray($groups));
 
-    public function and(): self
-    {
-        if (!empty($this->wheres)) {
-            $this->seperators[] = 'AND';
-        }
-        return $this;
-    }
-
-    public function join(string $tableName, \Closure $callback)
-    {
-        $on = $callback($this);
-
-        $this->joinQuerys .= ' INNER JOIN ' . $tableName . $on;
-
-        return $this;
-    }
-
-    public function leftJoin(string $tableName, \Closure $callback)
-    {
-        $on = $callback($this);
-
-        $this->joinQuerys .= ' LEFT JOIN ' . $tableName . $on;
-
-        return $this;
-    }
-
-    public function rightJoin(string $tableName, \Closure $callback)
-    {
-        $on = $callback($this);
-
-        $this->joinQuerys .= ' RIGHT JOIN ' . $tableName . $on;
-
-        return $this;
-    }
-
-    public function on(string $on1, string $on2): string
-    {
-        return ' ON ' . $on1 . ' = ' . $on2;
-    }
-
-    public function rawBindData(array $bindData)
-    {
-        $this->whereData = [(array)$bindData];
-        return $this;
-    }
-
-    public function where(): self
-    {
-        $args = func_get_args();
-
-        $columnNames = [];
-        $operators = ['='];
-        $findValues = [];
-
-        if (count($args) == 2) {
-            $columnNames = (array)$args[0];
-            $findValues = (array)$args[1];
-        } elseif (count($args) == 3) {
-            $columnNames = (array)$args[0];
-            $operators = (array)$args[1];
-            $findValues = (array)$args[2];
-        } else {
-            throw new \Exception('Je moet 2 of 3 velden invullen', 1);
-            return $this;
-        }
-
-        foreach ($args as $key => $value) {
-            if (next($args) && count(is_array($args[$key+1]) ? $args[$key+1] : [$args[$key+1]]) != count(is_array($value) ? $value : [$value])) {
-                throw new \Exception('Alle velden moeten evenlang zijn', 1);
-                return $this;
-            }
-        }
-
-        if (!$this->findOrFailCheck($columnNames, $operators, $findValues)) {
-            return $this;
-        }
-
-        return $this;
-    }
-
-    public function whereRaw(string $whereClause)
-    {
-        $this->wheres[] = $whereClause;
-        return $this;
-    }
-
-    protected function bind($param, $value, $type = null)
-    {
-        $value = clearInjections($value);
-        $param = clearInjections($param);
-
-        $param = str_replace('.', '_', $param);
-
-        if (is_null($type)) {
-            switch ($value) {
-            case is_int($value):
-              $type = \PDO::PARAM_INT;
-              break;
-            case is_bool($value):
-              $type = \PDO::PARAM_BOOL;
-              break;
-            case is_null($value):
-              $type = \PDO::PARAM_NULL;
-              break;
-            default:
-              $type = \PDO::PARAM_STR;
-              break;
-          }
-        }
-            
-        // fix bug when string is empty
-        if ($value === '') {
-            $type = \PDO::PARAM_STR;
-        }
-        
-        $this->stmt->bindValue($param, $value, $type);
+        // return self
         return $this;
     }
 }
