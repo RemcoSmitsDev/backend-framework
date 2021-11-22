@@ -290,12 +290,6 @@ class Router
                 if (($data = self::validateDynamicUri($route)) === false) {
                     continue;
                 }
-                
-                // check if is not from api request
-                if (Api::fromOwnServer() && !Api::fromAjax()) {
-                    // TODO: remove this to more better way of getting data into javascript by uri
-                    echo "<script>window.history.replaceState(" . json_encode($data) . ", 'NULL', '{$this->request->uri()}'); document.querySelector('script').remove();</script>";
-                }
 
                 // call needed function
                 self::handleRouteAction($route, $data);
