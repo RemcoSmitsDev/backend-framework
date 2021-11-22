@@ -44,6 +44,7 @@ class Database extends QueryBuilder
         'truncate',
         'drop',
     ];
+    private $tempFetchType = null;
 
     /**
      * builder parts for making database query

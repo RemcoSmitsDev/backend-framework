@@ -32,7 +32,7 @@ function randomString(int $length = 15): string
     return $randomString;
 }
 
-function clearInjections(string|array $value): string|array
+function clearInjections(string|array|null $value): string|array|null
 {
     // kijk of input value een array is
     if (is_array($value)) {

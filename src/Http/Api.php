@@ -31,7 +31,7 @@ class Api
         }
 
         // kijkt of de url begint met ../api/
-        if (!str_starts_with(request()->URL(), '/api/')) {
+        if (!str_starts_with(request()->uri(), '/api/')) {
             return false;
         }
 
@@ -42,7 +42,7 @@ class Api
         }
 
         // verwijder get waardes uit url van ajax request
-        $URL = request()->URL();
+        $URL = request()->uri();
 
         // verwijder `.php` van de string als die er is
         // verwijder ../ | .. om er voor te zorgen dat het niet mogelijk is om de Directory te veranderen
