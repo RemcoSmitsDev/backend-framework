@@ -146,6 +146,7 @@ class Database extends QueryBuilder
     /**
      * function logSql
      */
+
     public function logSql(): self
     {
         // set logSql to true
@@ -283,6 +284,7 @@ class Database extends QueryBuilder
 
             // add to where statement
             $this->wheres[] = [
+                'type' => 'normal',
                 'column' => $column,
                 'operator' => $_operator ?? $operator,
                 'value' => $value,
@@ -307,16 +309,17 @@ class Database extends QueryBuilder
 
     public function whereRaw(string|\Closure $query, $bindData = [], string $boolean = 'AND')
     {
+        // keep track of query type
+        $type = 'raw';
+
         // check if query is string
         if (is_string($query)) {
             // add to where statement
-            $this->wheres[] = [
-                'type' => 'raw',
-                'column' => '',
-                'operator' => '',
-                'value' => $query,
-                'boolean' => $boolean,
-            ];
+            $this->wheres[] = compact(
+                'type',
+                'query',
+                'boolean'
+            );
 
             // add binddata to builder parts
             $this->bindings['where'] = array_merge($this->bindings['where'], $this->flattenArray((array) $bindData));
@@ -325,23 +328,24 @@ class Database extends QueryBuilder
             return $this;
         }
 
+        // update query type to 
+        $type = 'nested';
+
         // get query
         $query($query = new static($this->connection));
 
+        // add binddata to builder parts
+        $this->mergeBindings($this, $query);
+
         // get formatted where statement with bindData
-        [$whereClause, $bindData] = $query->formatWhere($query->wheres);
+        $query = $query->formatWhere($query->wheres);
 
         // add to where statement
-        $this->wheres[] = [
-            'type' => 'raw',
-            'column' => '',
-            'operator' => '',
-            'value' => '(' . trim($whereClause) . ')',
-            'boolean' => $boolean,
-        ];
-
-        // add binddata to builder parts
-        $this->bindings['where'] = array_merge($this->bindings['where'], $this->flattenArray($query->bindings['where']));
+        $this->wheres[] = compact(
+            'type',
+            'query',
+            'boolean'
+        );
 
         // return self
         return $this;
@@ -409,6 +413,52 @@ class Database extends QueryBuilder
     }
 
     /**
+     * function whereExists
+     * @param \Closure $callback
+     * @param string $boolean
+     * @param bool $not
+     * @return self
+     */
+
+    public function whereExists(\Closure $callback, string $boolean = 'AND', bool $not = false): self
+    {
+        // call closure
+        $callback($query = new static($this->connection));
+
+        // merge bindings
+        $this->mergeBindings($this, $query);
+
+        // get bindings from query
+        [$query, $bindings] = $this->createSubSelect($query);
+
+        // get type based on not value
+        $type = $not ? 'notExists' : 'exists';
+
+        // add to where statement
+        $this->wheres[] = compact(
+            'type',
+            'query',
+            'boolean'
+        );
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * function whereNotExists
+     * @param \Closure $callback
+     * @param string $boolean
+     * @return self
+     */
+
+    public function whereNotExists(\Closure $callback, string $boolean = 'AND'): self
+    {
+        return $this->whereExists($callback, $boolean, true);
+    }
+
+
+    /**
      * function whereColumn
      * @param string $column
      * @param string|null $operator
@@ -450,11 +500,8 @@ class Database extends QueryBuilder
             $this->joins[] = $join->on($first, $operator, $value);
         }
 
-        // loop trough all bindings
-        foreach ($join->bindings as $key => $binding) {
-            // merge binding
-            $this->bindings[$key] = array_merge($this->bindings[$key], $binding);
-        }
+        // merge bindings
+        $this->mergeBindings($this, $join);
 
         // return self
         return $this;

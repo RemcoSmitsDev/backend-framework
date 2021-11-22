@@ -28,7 +28,7 @@ trait DatabaseHelpers
 
     public function formatColumnNames(string $columnName): string
     {
-        return preg_replace('/([A-z0-9_\-]+)\.([A-z0-9_\-]+)/', '`$1`.`$2`', $columnName);
+        return preg_replace('/([A-z0-9_\-]+)\.([A-z0-9_\-]+)/', ' `$1`.`$2`', $columnName);
     }
 
     /**
@@ -113,9 +113,8 @@ trait DatabaseHelpers
             (array) $query->wheres
         );
 
-        foreach ($query->bindings as $key => $binding) {
-            $this->bindings[$key] = array_merge($this->bindings[$key], $query->bindings[$key]);
-        }
+        // merge bindings
+        $this->mergeBindings($this, $query);
 
         // return self
         return $this;
@@ -299,5 +298,14 @@ trait DatabaseHelpers
 
         // echo query
         echo $query . ' --- bindings: (' . implode(',', $formattedBindData) . ')<br>';
+    }
+
+    public function mergeBindings(Database $mainQuery, Database $mergeQuery)
+    {
+        // loop trough all bindings
+        foreach ($mergeQuery->bindings as $key => $binding) {
+            // merge binding
+            $mainQuery->bindings[$key] = array_merge($mainQuery->bindings[$key], $binding);
+        }
     }
 }

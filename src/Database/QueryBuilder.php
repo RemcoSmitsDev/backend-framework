@@ -221,6 +221,28 @@ class QueryBuilder
         return $joinStatement;
     }
 
+    /**
+     * function formatSubSelect
+     * @param array $where
+     * @return array
+     */
+
+    public function formatSubSelect(array $whereClause, array $where): array
+    {
+        // get where clause
+        $_whereClause = $this->formatWhere($where);
+
+        // format where clause
+        if (!empty($whereClause)) {
+            $whereClause[] = " {$where[0]['boolean']} ({$_whereClause}) ";
+        } else {
+            $whereClause[] = " ({$_whereClause}) ";
+        }
+
+        // return where statements
+        return $whereClause;
+    }
+
     /** 
      * function formatWhere
      * @param array $where
@@ -231,21 +253,20 @@ class QueryBuilder
     {
         // keep track of where clause
         $whereClause = [];
-        $bindData = [];
+
+        // types that have an valid column value
+        $typesWithColumnValue = [
+            'column',
+            'normal'
+        ];
 
         // koop trough all where statements
         foreach ($where as $value) {
             // check if key is string (column name)
             if (isset($value[0])) {
-                // get where clause
-                $_whereClause = $this->formatWhere($value);
+                // merge sub select with whereclause
+                $whereClause = array_merge($whereClause, $this->formatSubSelect($whereClause, $value));
 
-                // format where clause
-                if (!empty($whereClause)) {
-                    $whereClause[] = " {$value[0]['boolean']} ({$_whereClause}) ";
-                } else {
-                    $whereClause[] = " ({$_whereClause}) ";
-                }
                 // go to the next on in the array
                 continue;
             }
@@ -256,36 +277,38 @@ class QueryBuilder
             // default placeholder
             $placeholder = '?';
 
+            // keep track of column name
+            $column = $value['column'] ?? '';
+
             // check if type is raw
             if ($type === 'raw') {
-                // make placeholder the raw query
-                $placeholder = $value['value'];
+                $whereClause[] = ($value['boolean'] ?? '') . ' ' . $value['query'];
+            } elseif ($type === 'exists' || $type === 'notExists') {
+                $whereClause[] = ($type === 'exists' ? 'exists' : 'not exists') . " ({$value['query']})";
+            } elseif ($type === 'nested') {
+                $whereClause[] = '(' . trim($value['query']) . ')';
             } elseif ($type === 'column') {
                 $placeholder = $this->formatColumnNames($value['value']);
             }
 
+            // check if can continue
+            if (!in_array($type, $typesWithColumnValue)) {
+                continue;
+            }
+
             // make column format
-            if ($type === 'raw' && empty($value['column'] && $value['operator'])) {
-                $column = '';
-            } else {
-                $column = !strpos($value['column'], '.') ? ' `' . $this->from . '`.`' . $value['column'] . '` ' : ' ' . $this->formatColumnNames($value['column']) . ' ';
+            if (!empty($column) && !strpos($column, '.')) {
+                $column = '  ' . $this->from . '.' . $column;
             }
 
-            // check if whereClause is empty
-            if (empty($whereClause)) {
-                $whereClause[] = $column . $value['operator'] . ' ' . $placeholder;
-            } else {
-                $whereClause[] =  strtoupper($value['boolean']) . $column . $value['operator'] . ' ' . $placeholder;
-            }
+            // format columns
+            $column = $this->formatColumnNames($column);
 
-            // check if type is raw
-            if ($type !== 'raw' && $type !== 'column') {
-                // add data to bindData
-                $bindData[] = $value['value'];
-            }
+            // add to where clause
+            $whereClause[] = strtoupper($value['boolean'] ?? '') . $column . ' ' . ($value['operator'] ?? '') . ' ' . $placeholder;
         }
 
         // return where clause
-        return implode(' ', $whereClause);
+        return trim(implode(' ', $whereClause), ' AND OR');
     }
 }
