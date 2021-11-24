@@ -26,12 +26,15 @@ class App
         // set session settings
         self::setSession();
 
+        // set global app for app helper function
+        $app = new self;
+
         // require helper functions
-        require_once(__DIR__.'/helperFunctions.php');
+        require_once(__DIR__ . '/helperFunctions.php');
 
         // kijk of een van de tokens niet bestaat generate dan een token
         // om later ajax request te kunnen valideren
-        if (!isset($_COOKIE['requestToken'],$_SESSION['requestToken'])) {
+        if (!isset($_COOKIE['requestToken'], $_SESSION['requestToken'])) {
             Api::generateRequestToken();
         }
     }
@@ -85,8 +88,8 @@ class App
     {
         // define localhost ips to check if is development
         $whitelistLocalIps = [
-          '127.0.0.1',
-          '::1'
+            '127.0.0.1',
+            '::1'
         ];
 
         // kijk of de server local is zet dan development aan
@@ -97,5 +100,16 @@ class App
 
         // server root for constant vars
         define('SERVER_ROOT', $_SERVER['DOCUMENT_ROOT']);
+    }
+
+    public function instance(Object ...$classes)
+    {
+        // loop trough all classes
+        foreach ($classes as $class) {
+            // make reflection of class
+            $reflect = new \ReflectionClass($class);
+            // set class
+            $this->{lcfirst($reflect->getShortName())} = $class;
+        }
     }
 }

@@ -7,12 +7,12 @@ use Framework\Interfaces\DependencyInjectionContainerInterface;
 class DependencyInjectionContainer implements DependencyInjectionContainerInterface
 {
     /**
-    * handleClosure function
-    * get alle parameters from class method reflection
-    * @param |Closure $callback
-    * @param array $arguments = []
-    * @return array parameters
-    */
+     * handleClosure function
+     * get alle parameters from class method reflection
+     * @param |Closure $callback
+     * @param array $arguments = []
+     * @return array parameters
+     */
 
     public static function handleClosure(\Closure $callback, array $parameters = []): array
     {
@@ -21,13 +21,13 @@ class DependencyInjectionContainer implements DependencyInjectionContainerInterf
     }
 
     /**
-    * handleClassMethod function
-    * get alle parameters from class method reflection
-    * @param string $className
-    * @param string $method
-    * @param array $arguments = []
-    * @return array parameters
-    */
+     * handleClassMethod function
+     * get alle parameters from class method reflection
+     * @param string $className
+     * @param string $method
+     * @param array $arguments = []
+     * @return array parameters
+     */
 
     public static function handleClassMethod(string $className, string $method, array $parameters = [])
     {
@@ -41,22 +41,23 @@ class DependencyInjectionContainer implements DependencyInjectionContainerInterf
     }
 
     /**
-    * getParameters function
-    * get alle parameters from function/method reflection
-    * @param \ReflectionMethod|\ReflectionFunction $reflection
-    * @return array $dependencies
-    */
+     * getParameters function
+     * get alle parameters from function/method reflection
+     * @param \ReflectionMethod|\ReflectionFunction $reflection
+     * @return array $dependencies
+     */
 
     private static function getParameters(\ReflectionMethod|\ReflectionFunction $reflection, array $parameters = [])
     {
         // types to skip
-        $skipTypes = ['string','array','object','stdclass'];
+        $skipTypes = ['string', 'array', 'object', 'stdclass'];
 
         // dependencies
         $dependencies = [];
 
         // loop trough parameters
         foreach ($reflection->getParameters() as $parameter) {
+
             // check if type exists
             if (!($type = $parameter->getType())) {
                 // check if parameter already exists
@@ -66,16 +67,29 @@ class DependencyInjectionContainer implements DependencyInjectionContainerInterf
                 // go to the next in the array
                 continue;
             }
+
             // define type of variabel to string
             $type = (string)$type;
 
             // check if type is in skip array
             if (in_array(strtolower($type), $skipTypes)) {
+                // add type as depency
+                $dependencies[] = $type;
+                // go to the next in the function
                 continue;
             }
 
-            // make instance of class
-            $dependencies[] = new $type();
+            // make reflection of class
+            $reflect = new \ReflectionClass($type);
+
+            // check if there already exists an instance of the class in the app class
+            if (isset(app()->{$objectName = lcfirst($reflect->getShortName())})) {
+                // set class
+                $dependencies[] = app()->{$objectName};
+            } else {
+                // make instance of class
+                $dependencies[] = new $type();
+            }
         }
 
         return $dependencies;

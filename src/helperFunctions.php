@@ -1,11 +1,11 @@
 <?php
 
+use Framework\Cache\Cache;
 use Framework\Database\Database;
 use Framework\Http\Route\Route;
 use Framework\Content\Content;
 use Framework\Http\Response;
 use Framework\Http\Request;
-use Framework\Content\Seo;
 
 function stripAccents(string $input): string
 {
@@ -85,4 +85,16 @@ function DB(): Database
 {
     global $DB;
     return ($DB instanceof Database) ? $DB : new Database();
+}
+
+function cache(): Cache
+{
+    global $cache;
+    return ($cache instanceof Cache) ? $cache : new Cache();
+}
+
+function app(?Object $newInstance = null)
+{
+    global $app;
+    return $app;
 }

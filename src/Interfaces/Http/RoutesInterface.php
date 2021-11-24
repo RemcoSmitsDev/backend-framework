@@ -13,11 +13,11 @@ interface RoutesInterface
 
     public function put(string $route, \Closure|array $action): self;
 
-    public function update(string $route, \Closure|array $action): self;
+    public function patch(string $route, \Closure|array $action): self;
 
     public function delete(string $route, \Closure|array $action): self;
 
-    public function middleware(bool|string|array $validateRules): self;
+    public function middleware(bool|array $validateRules): self;
 
     public function prefix(string $prefix): self;
 

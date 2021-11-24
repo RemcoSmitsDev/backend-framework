@@ -5,30 +5,30 @@ namespace Framework\Cache;
 class Cache
 {
     /**
-    * $cacheConfigFilePath
-    **/
+     * $cacheConfigFilePath
+     **/
 
     private $cacheFolderPath = '';
     private $cacheConfigFilePath = '';
 
     /**
-    * @param int $remeberTime = 86400
-    **/
+     * @param int $remeberTime = 86400
+     **/
 
     private int $rememberTime = 86400;
 
 
     public function __construct()
     {
-        $this->cacheFolderPath = SERVER_ROOT.'/../cache/';
-        $this->cacheConfigFilePath = $this->cacheFolderPath.'__cacheConfig.json';
+        $this->cacheFolderPath = SERVER_ROOT . '/../cache/';
+        $this->cacheConfigFilePath = $this->cacheFolderPath . '__cacheConfig.json';
     }
 
     /**
-    * function remember
-    * @param int $remeberTime = 86400
-    * @return self
-    **/
+     * function remember
+     * @param int $remeberTime = 86400
+     * @return self
+     **/
 
     public function remember(int $rememberTime = 86400)
     {
@@ -37,36 +37,32 @@ class Cache
     }
 
     /**
-    * function file
-    * @param string $file(__FILE__)
-    * @param string $extraInformationToEtagName = ''
-    * @return void
-    **/
+     * function file
+     * @param string $file(__FILE__)
+     * @param string $extraInformationToEtagName = ''
+     * @return void
+     **/
 
     public function file(string $file, string $extraInformationToEtagName = '')
     {
-        // check if cache can be on
-        if (!config()::ALLOW_HTTP_CACHE) {
-            return false;
-        }
         // Get last modification time of the current PHP file
         $fileLastModifiedTime = filemtime($file);
 
         // Combine both to generate a unique ETag for a unique content
         // Specification says ETag should be specified within double quotes
-        $etag = '"' . md5(clearInjections($file.$fileLastModifiedTime.$extraInformationToEtagName)) . '"';
+        $etag = '"' . md5(clearInjections($file . $fileLastModifiedTime . $extraInformationToEtagName)) . '"';
 
         // Set Cache-Control header
         header('Cache-Control: public, max-age=' . $this->rememberTime . ', must-revalidate');
 
         // format lastModified
-        $lastModified = gmdate('D, d M Y H:i:s', $fileLastModifiedTime).' GMT';
+        $lastModified = gmdate('D, d M Y H:i:s', $fileLastModifiedTime) . ' GMT';
 
         // set last Modified
         header("Last-Modified: {$lastModified}");
 
         // format expires
-        $expires = gmdate('D, d M Y H:i:s', time() + $this->rememberTime).' GMT';
+        $expires = gmdate('D, d M Y H:i:s', time() + $this->rememberTime) . ' GMT';
         // set expire date
         header("Expires: {$expires}");
 
@@ -83,19 +79,15 @@ class Cache
     }
 
     /**
-    * function data
-    * cache/get cached data
-    * @param string $identifier(unique identifier)
-    * @param \Closure $closure
-    * @param int $lifeTime = 3600
-    **/
+     * function data
+     * cache/get cached data
+     * @param string $identifier(unique identifier)
+     * @param \Closure $closure
+     * @param int $lifeTime = 3600
+     **/
 
     public function data(string $identifier, \Closure $closure, int $lifeTime = 3600)
     {
-        // kijken of cache gebruikt mag worden
-        if (!config()::ALLOW_FILE_CACHE) {
-            return $closure();
-        }
         // krijg informatie terug van cache
         $cacheInfo = $this->getCacheItemInfo($identifier);
 
@@ -109,21 +101,21 @@ class Cache
         $data = $closure();
 
         // voeg json data toe
-        file_put_contents($this->cacheFolderPath.$cacheInfo->fileName, json_encode($data));
+        file_put_contents($this->cacheFolderPath . $cacheInfo->fileName, json_encode(serialize($data)));
 
         // put inside config
-        $this->putInsideConfig(['identifier' => $cacheInfo->identifier,'fileName' => $cacheInfo->fileName, 'lastModified' => time(), 'lifeTime' => $lifeTime]);
+        $this->putInsideConfig(['identifier' => $cacheInfo->identifier, 'fileName' => $cacheInfo->fileName, 'lastModified' => time(), 'lifeTime' => $lifeTime]);
 
         // return data
         return $data;
     }
 
     /**
-    * function get
-    * get single cache file if exists
-    * @param string $identifier(unique identifier)
-    * @return boolean|object
-    **/
+     * function get
+     * get single cache file if exists
+     * @param string $identifier(unique identifier)
+     * @return boolean|object
+     **/
 
     public function get(string $identifier)
     {
@@ -135,11 +127,11 @@ class Cache
     }
 
     /**
-    * function remove
-    * removes cache file
-    * @param string $identifier(unique identifier)
-    * @return void
-    **/
+     * function remove
+     * removes cache file
+     * @param string $identifier(unique identifier)
+     * @return void
+     **/
 
     public function remove(string $identifier, bool $isFlushed = false)
     {
@@ -149,7 +141,7 @@ class Cache
         // kijk of er een cache bestand is gevonden
         if ($cacheInfo->fileFound) {
             // verwijder cache file van cache
-            unlink($this->cacheFolderPath.$cacheInfo->fileName);
+            unlink($this->cacheFolderPath . $cacheInfo->fileName);
         }
 
         // update cacheConfig and removed wrong cache files
@@ -159,11 +151,11 @@ class Cache
     }
 
     /**
-    * function getCacheItemInfo
-    * gets inforamtion cache information by identifier
-    * @param string $identifier(unique identifier)
-    * @return object
-    **/
+     * function getCacheItemInfo
+     * gets inforamtion cache information by identifier
+     * @param string $identifier(unique identifier)
+     * @return object
+     **/
 
     private function getCacheItemInfo(string $identifier)
     {
@@ -172,11 +164,11 @@ class Cache
 
         // default returndata template
         $returnData = (object)[
-          'data' => null,
-          'lastModified' => null,
-          'fileName' => $identifier.'.json',
-          'identifier' => $identifier,
-          'fileFound' => null
+            'data' => null,
+            'lastModified' => null,
+            'fileName' => $identifier . '.json',
+            'identifier' => $identifier,
+            'fileFound' => null
         ];
 
         // check if file exists
@@ -188,7 +180,7 @@ class Cache
         }
 
         // krijg cache config data
-        $cacheConfigData = json_decode(file_get_contents($this->cacheConfigFilePath));
+        $cacheConfigData = json_decode(unserialize(file_get_contents($this->cacheConfigFilePath)));
 
         // kijk of er cache data bestaat
         if (empty($cacheConfigData) || !is_array($cacheConfigData)) {
@@ -217,7 +209,7 @@ class Cache
         //  kijk of lifetime is verlopen
         if ($cacheItem->lastModified + $cacheItem->lifeTime <= time()) {
             // verwijder cache file
-            unlink($this->cacheFolderPath.$cacheItem->fileName);
+            unlink($this->cacheFolderPath . $cacheItem->fileName);
             // update return data
             $returnData->fileFound = false;
             // krijg return data van closure
@@ -226,18 +218,18 @@ class Cache
 
         // kijk of bestand gevonden konden worden
         // update return data
-        $returnData->fileFound = file_exists($this->cacheFolderPath.$cacheItem->fileName);
-        $returnData->data = $returnData->fileFound ? json_decode(file_get_contents($this->cacheFolderPath.$cacheItem->fileName)) : null;
+        $returnData->fileFound = file_exists($this->cacheFolderPath . $cacheItem->fileName);
+        $returnData->data = $returnData->fileFound ? json_decode(file_get_contents($this->cacheFolderPath . $cacheItem->fileName)) : null;
 
         // return data
         return $returnData;
     }
 
     /**
-    * function flushEndOfLiveTimeCacheItems
-    * checkes if cacheFiles are still valid and cacheConfig is up to date
-    * @return boolean|\DateTime
-    **/
+     * function flushEndOfLiveTimeCacheItems
+     * checkes if cacheFiles are still valid and cacheConfig is up to date
+     * @return boolean|\DateTime
+     **/
 
     public function flushEndOfLiveTimeCacheItems()
     {
@@ -252,7 +244,7 @@ class Cache
         // loop through alle cache items and check if the lifetime didn't passed
         foreach ($cacheItems as $key => $cacheItem) {
             // check if lifeTime is passed
-            if (!isset($cacheItem->lastModified, $cacheItem->lifeTime, $cacheItem->identifier) || !file_exists($this->cacheFolderPath.$cacheItem->fileName) || $cacheItem->lastModified + $cacheItem->lifeTime <= time()) {
+            if (!isset($cacheItem->lastModified, $cacheItem->lifeTime, $cacheItem->identifier) || !file_exists($this->cacheFolderPath . $cacheItem->fileName) || $cacheItem->lastModified + $cacheItem->lifeTime <= time()) {
                 // verwijder cache item van array
                 unset($cacheItems[$key]);
                 // check if file exists then remove cache file
@@ -261,10 +253,10 @@ class Cache
         }
 
         // wrong files to filter out
-        $wrongFiles = ['..','.','.DS_Store','__cacheConfig.json'];
+        $wrongFiles = ['..', '.', '.DS_Store', '__cacheConfig.json'];
 
         // get all files accept '..' and '.'
-        $files = array_filter(scandir(SERVER_ROOT.'/../cache'), fn ($file) => !in_array($file, $wrongFiles));
+        $files = array_filter(scandir(SERVER_ROOT . '/../cache'), fn ($file) => !in_array($file, $wrongFiles));
 
         // get all identifiers from cacheConfig items
         $identifiers = array_column($cacheItems, 'identifier');
@@ -274,7 +266,7 @@ class Cache
             // kijk of file niet in cache config identifiers array staat
             if (!in_array(str_replace('.json', '', $file), $identifiers)) {
                 // verwijder bestand
-                unlink($this->cacheFolderPath.$file);
+                unlink($this->cacheFolderPath . $file);
             }
         }
 
@@ -286,12 +278,12 @@ class Cache
     }
 
     /**
-    * function putInsideConfig
-    * updates cache config based on cache data files
-    * @return void
-    **/
+     * function putInsideConfig
+     * updates cache config based on cache data files
+     * @return void
+     **/
 
-    private function putInsideConfig($data, bool $mergeOldData = true)
+    private function putInsideConfig($data, bool $mergeOldData = true): void
     {
         // behoud oude email
         $oldData = [];
@@ -302,17 +294,17 @@ class Cache
         }
 
         // insert new data
-        file_put_contents($this->cacheConfigFilePath, json_encode($mergeOldData ? [$data,...$oldData] : $data));
+        file_put_contents($this->cacheConfigFilePath, json_encode($mergeOldData ? [$data, ...$oldData] : $data));
     }
 
     /**
-    * function generateFileName
-    * makes hashed string to make filenames more random/secure
-    * @param string $identifier
-    * @return string
-    **/
+     * function generateFileName
+     * makes hashed string to make filenames more random/secure
+     * @param string $identifier
+     * @return string
+     **/
 
-    private function generateFileName(string $identifier)
+    private function generateFileName(string $identifier): string
     {
         return md5($identifier);
     }

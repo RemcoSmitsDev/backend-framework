@@ -3,7 +3,6 @@
 namespace Framework\Http\Route;
 
 use Framework\Interfaces\Http\RoutesInterface;
-use Framework\Http\Route\Middleware;
 
 class Route extends Router implements RoutesInterface
 {
@@ -45,13 +44,13 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * UPDATE Route
+     * patch Route
      * @param string $uri
      * @param \Closure|array $action
      * @return self
      */
 
-    public function update(string $uri, \Closure|array $action): self
+    public function patch(string $uri, \Closure|array $action): self
     {
         return $this->match('PATCH', $uri, $action);
     }
@@ -80,22 +79,22 @@ class Route extends Router implements RoutesInterface
     public function match(string $methods, string $uri, \Closure|array $action): self
     {
         // add route
-        self::addRoute(explode('|', strtoupper($methods)), $uri, $action);
-
-        // return self
-        return $this;
+        return $this->addRoute(explode('|', strtoupper($methods)), $uri, $action);
     }
 
     /**
      * Middleware function
-     * @param bool|string|array $validateRules
+     * @param bool|array $validateRules
      * @return self
      */
 
-    public function middleware(bool|string|array $validateRules): self
+    public function middleware(bool|array $validateRules): self
     {
         // update route middlewares
-        $this->middlewares = array_unique([...$this->middlewares, ...(array)$validateRules]);
+        $this->middlewares = array_unique([
+            ...$this->middlewares,
+            ...(array)$validateRules
+        ]);
 
         // return self
         return $this;
@@ -128,7 +127,7 @@ class Route extends Router implements RoutesInterface
      * @return void
      */
 
-    public function group(\Closure $action)
+    public function group(\Closure $action): void
     {
         // keep track of first prefix/middlwares of main group
         $prefix = $this->groupPrefix;
@@ -138,7 +137,10 @@ class Route extends Router implements RoutesInterface
         $this->groupPrefix = $this->prefix;
 
         // merge middlwares met group middlewares
-        $this->groupMiddlwares = [...$this->middlewares, ...$this->groupMiddlwares];
+        $this->groupMiddlwares = [
+            ...$this->middlewares,
+            ...$this->groupMiddlwares
+        ];
 
         // check of er wel group middlware / prefix is
         if (empty($this->groupMiddlwares) && empty($this->groupPrefix)) {
@@ -244,6 +246,6 @@ class Route extends Router implements RoutesInterface
 
     public function getCurrentRoute(): array
     {
-        return $this->currentRoute ?: ['name' => '', 'route' => '', 'method' => '', 'urls' => [], 'middlewares' => '', 'patterns' => []];
+        return $this->currentRoute ?: ['name' => '', 'route' => '', 'method' => '', 'middlewares' => '', 'patterns' => []];
     }
 }

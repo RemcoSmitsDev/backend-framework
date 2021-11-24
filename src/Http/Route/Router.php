@@ -27,7 +27,7 @@ class Router
 
     public function __construct()
     {
-        $this->request = new Request();
+        $this->request = app()->request ?? new Request();
     }
 
     /**
@@ -36,11 +36,8 @@ class Router
      * @param $action
      */
 
-    protected function handleRouteAction(array $route, array $data = [])
+    protected function handleRouteAction(array $route, array $data = []): void
     {
-        // default value
-        $dependencies = [];
-
         // set action function
         $action = $route['action'];
 
@@ -65,14 +62,8 @@ class Router
                 throw new \Exception("Method couldn't be found", 1);
             }
 
-            // get method from action array
-            $method = $action[1];
-
-            // call function
-            $dependencies = DependencyInjectionContainer::handleClassMethod($action[0], $action[1], $data);
-
             // call method with dependencies
-            $class->$method(...$dependencies);
+            $class->{$action[1]}(...DependencyInjectionContainer::handleClassMethod($action[0], $action[1], $data));
             // stop function
             return;
         }
@@ -82,11 +73,8 @@ class Router
             throw new \Exception("Action must be an instanceof and \Closure or and [Test::class,'index']", 1);
         }
 
-        // krijg alle dependencies van de closure function
-        $dependencies = DependencyInjectionContainer::handleClosure($action, $data);
-
         // call function
-        call_user_func($action, ...$dependencies);
+        call_user_func($action, ...DependencyInjectionContainer::handleClosure($action, $data));
     }
 
     /**
@@ -291,9 +279,6 @@ class Router
 
                 // call needed function
                 $this->handleRouteAction($route, $data);
-
-                // set currentRoute
-                $this->currentRoute = $route;
 
                 // break foreach
                 break;
