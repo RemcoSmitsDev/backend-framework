@@ -1,11 +1,10 @@
 <?php
 
-use Framework\Cache\Cache;
-use Framework\Database\Database;
 use Framework\Http\Route\Route;
 use Framework\Content\Content;
 use Framework\Http\Response;
 use Framework\Http\Request;
+use Framework\Cache\Cache;
 
 function stripAccents(string $input): string
 {
@@ -48,53 +47,85 @@ function clearInjections(string|array|null $value): string|array|null
     return htmlspecialchars(trim($value), ENT_QUOTES, 'utf-8');
 }
 
-function dd(...$values): void
+function dd(...$values)
 {
-    echo "<pre>";
+    // check if is not development
+    if (!IS_DEVELOPMENT_MODE) {
+        return false;
+    }
+
+    echo "<pre style='width:auto;overflow:auto;'>";
     foreach ($values as $value) {
         print_r($value);
     }
     echo "</pre>";
 }
 
-function request(): Request
+function getClassName($class): string
+{
+    $class = new \ReflectionClass($class);
+
+    return $class->getShortName();
+}
+
+function request(string|int $find = null)
 {
     global $request;
-    return ($request instanceof Request) ? $request : new Request();
+
+    $request = app()->request ?? app(
+        $request instanceof Request ? $request : new Request()
+    );
+
+    return !is_null($find) ?
+        (property_exists($request, $find) ? $request->{$find} : null) :
+        $request;
 }
 
 function response(): Response
 {
     global $response;
-    return ($response instanceof Response) ? $response : new Response();
+
+    return app()->response ?? app(
+        $response instanceof Response ? $response : new Response()
+    );
 }
 
 function content(): Content
 {
     global $content;
-    return ($content instanceof Content) ? $content : new Content();
+
+    return app()->content ?? app(
+        $content instanceof Content ? $content : new Content()
+    );
 }
 
 function route(): Route
 {
     global $route;
-    return ($route instanceof Route) ? $route : new Route();
-}
 
-function DB(): Database
-{
-    global $DB;
-    return ($DB instanceof Database) ? $DB : new Database();
+    return app()->route ?? app(
+        $route instanceof Route ? $route : new Route()
+    );
 }
 
 function cache(): Cache
 {
     global $cache;
-    return ($cache instanceof Cache) ? $cache : new Cache();
+
+    return app()->cache ?? app(
+        $cache instanceof Cache ? $cache : new Cache()
+    );
 }
 
-function app(?Object $newInstance = null)
+function app(Object|string $class = null)
 {
     global $app;
+
+    if (is_object($class)) {
+        return $app->instance($class)->{lcfirst(getClassName($class))};
+    } elseif (is_string($class)) {
+        return $app->{$class} ?? $app;
+    }
+
     return $app;
 }

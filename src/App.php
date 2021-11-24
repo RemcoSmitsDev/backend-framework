@@ -2,8 +2,6 @@
 
 namespace Framework;
 
-use Framework\Content\Content;
-use Framework\Http\Route\Route;
 use Framework\Http\Api;
 
 class App
@@ -102,14 +100,15 @@ class App
         define('SERVER_ROOT', $_SERVER['DOCUMENT_ROOT']);
     }
 
-    public function instance(Object ...$classes)
+    public function instance(Object ...$classes): self
     {
         // loop trough all classes
         foreach ($classes as $class) {
-            // make reflection of class
-            $reflect = new \ReflectionClass($class);
             // set class
-            $this->{lcfirst($reflect->getShortName())} = $class;
+            $this->{lcfirst(getClassName($class))} = $class;
         }
+
+        // return self
+        return $this;
     }
 }

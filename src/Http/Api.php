@@ -25,7 +25,7 @@ class Api
         }
 
         // als de server geen request mag krijgen dat stop die gelijk
-        if (!config()::API_ALLOW_REQUESTS) {
+        if (function_exists('config') && !config()::API_ALLOW_REQUESTS) {
             response()->code(403);
             return false;
         }
@@ -46,13 +46,13 @@ class Api
 
         // verwijder `.php` van de string als die er is
         // verwijder ../ | .. om er voor te zorgen dat het niet mogelijk is om de Directory te veranderen
-        $URL = str_replace(['../','..','.php'], '', $URL);
+        $URL = str_replace(['../', '..', '.php'], '', $URL);
 
         // voeg `.php` toe aan het einde van de url
         $URL .= '.php';
 
         // file path to api
-        $path = realpath($_SERVER['DOCUMENT_ROOT']."/../{$URL}");
+        $path = realpath($_SERVER['DOCUMENT_ROOT'] . "/../{$URL}");
 
         // kijkt of de url van ajax request bestaat in de api folder
         if (!file_exists($path)) {
@@ -71,7 +71,7 @@ class Api
             return false;
         }
 
-        if (!str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", "", $_SERVER['HTTP_REFERER']), explode("/", $_SERVER["HTTP_HOST"].$_SERVER["REQUEST_URI"])[0])) {
+        if (!str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", "", $_SERVER['HTTP_REFERER']), explode("/", $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"])[0])) {
             return false;
         }
 
@@ -120,7 +120,7 @@ class Api
         // kijk of er al headers zijn verzonden
         if (!headers_sent()) {
             // voeg token toe aan session om later tegebruiken in js om vervolgens het request te valideren
-            setcookie('requestToken', $newToken, time()+3600, '/');
+            setcookie('requestToken', $newToken, time() + 3600, '/');
         }
 
         // return self

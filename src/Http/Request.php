@@ -26,22 +26,27 @@ class Request
         }
     }
 
-    public function get()
+    public function get(string|int $find = null)
     {
-        return $this->getData ?? $this->getData = (object)clearInjections($_GET);
+        $getData = $this->getData ?? $this->getData = (object)clearInjections($_GET);
+
+        return !is_null($find) ?
+            (property_exists($getData, $find) ? $getData->{$find} : null) :
+            $getData;
     }
 
-    public function post()
+    public function post(string|int $find = null)
     {
-        if (isset($this->postData)) {
-            return $this->postData;
+        if (!isset($this->postData)) {
+            // get data from other request types
+            $dataArray = json_decode(file_get_contents('php://input'), true) ?? [];
+            // if postData is not define/null
+            $this->postData = (object)clearInjections(((array)$dataArray) + $_POST);
         }
-        // get data from other request types
-        $dataArray = json_decode(file_get_contents('php://input')) ?? [];
-        // if postData is not define/null
-        $this->postData = (object)clearInjections(((array)$dataArray) + $_POST);
 
-        return $this->postData;
+        return !is_null($find) ?
+            (property_exists($this->postData, $find) ? $this->postData->{$find} : null) :
+            $this->postData;
     }
 
     public function exists()
@@ -73,45 +78,22 @@ class Request
         return true;
     }
 
-    public static function match(string $requestURL): bool
-    {
-        // verwijder laatste slash van url als hij dan leeg is maak er dan alleen een slash van
-        $requestURL = rtrim($requestURL, '/') ?: '/';
-
-        // kijk of de url gelijk is aan een ingestelde route
-        // als er regex in de url zit dan wordt er gekeken of hiermee een match is
-        if (self::URL() === $requestURL || preg_match('/^'.str_replace('/', '\/', $requestURL).'$/', self::URL())) {
-            return true;
-        }
-        return false;
-    }
-
     public static function send(string $requestType, string $requestURL, $requestData = null, array $headers = []): self
     {
-        $requestTypse = ['GET','POST','PUT','DELETE'];
-
-        // maak request type uppercase
-        $requestType = strtoupper($requestType);
-
-        // kijk of request type in toegestaande request type array staat.
-        if (!in_array($requestType, $requestTypse)) {
-            throw new \Exception("Geen geldig request type: {$requestType}", 1);
-        }
-
         // define curl
         $curl = curl_init();
 
         // maak request headers klaar
         curl_setopt_array($curl, [
-          CURLOPT_URL => $requestURL,
-          CURLOPT_RETURNTRANSFER => true,
-          CURLOPT_CUSTOMREQUEST => $requestType,
-          CURLOPT_POSTFIELDS => is_array($requestData) ? json_encode($requestData) : $requestData,
-          CURLOPT_HTTPHEADER => $headers
+            CURLOPT_URL => $requestURL,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => strtoupper($requestType),
+            CURLOPT_POSTFIELDS => is_array($requestData) ? json_encode($requestData) : $requestData,
+            CURLOPT_HTTPHEADER => $headers
         ]);
 
         // fix bugs ssl expired
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, !config()::DEVELOPMENT_MODE);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, !function_exists('config') || !config()::DEVELOPMENT_MODE);
 
         // krijg response van request
         $response = curl_exec($curl);
@@ -127,7 +109,7 @@ class Request
 
     public function response(): object
     {
-        return (object)['data' => self::$response,'info' => (object)self::$curlInfo];
+        return (object)['data' => self::$response, 'info' => (object)self::$curlInfo];
     }
 
     public function uri(): string

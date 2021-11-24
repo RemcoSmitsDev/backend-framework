@@ -24,11 +24,11 @@ class Response implements ResponseInterface
     }
 
     /**
-    * function json
-    * formats responseData into json based in input data
-    * @param array|string $responseData
-    * @return $this   checks if this function is the last in the chain
-    **/
+     * function json
+     * formats responseData into json based in input data
+     * @param array|string $responseData
+     * @return $this   checks if this function is the last in the chain
+     **/
 
     public function json(array|object|string $responseData): self
     {
@@ -41,11 +41,11 @@ class Response implements ResponseInterface
     }
 
     /**
-    * function text
-    * sets reponse data
-    * @param string $responseData
-    * @return $this   checks if this function is the last in the chain
-    **/
+     * function text
+     * sets reponse data
+     * @param string $responseData
+     * @return $this   checks if this function is the last in the chain
+     **/
 
     public function text(string $responseData): self
     {
@@ -58,11 +58,11 @@ class Response implements ResponseInterface
     }
 
     /**
-    * function code
-    * send http response code to the client
-    * @param int $responseCode = 200
-    * @return $this   checks if this function is the last in the chain
-    **/
+     * function code
+     * send http response code to the client
+     * @param int $responseCode = 200
+     * @return $this   checks if this function is the last in the chain
+     **/
 
     public function code(int $responseCode = 200): self
     {
@@ -73,11 +73,11 @@ class Response implements ResponseInterface
     }
 
     /**
-    * function headers
-    * formats headers and send headers to the client
-    * @param array $headers
-    * @return $this   checks if this function is the last in the chain
-    **/
+     * function headers
+     * formats headers and send headers to the client
+     * @param array $headers
+     * @return $this   checks if this function is the last in the chain
+     **/
 
     public function headers(array $headers): self
     {
@@ -94,11 +94,11 @@ class Response implements ResponseInterface
     }
 
     /**
-    * function exit
-    * stops the page for rendering other data with responseCode
-    * @param string|int $responseData
-    * @return $this   checks if this function is the last in the chain
-    **/
+     * function exit
+     * stops the page for rendering other data with responseCode
+     * @param string|int $responseData
+     * @return $this   checks if this function is the last in the chain
+     **/
 
     public function exit(string|int $status = 0)
     {
@@ -111,24 +111,28 @@ class Response implements ResponseInterface
     }
 
     /**
-    * function handleResponse
-    * handles response to client on last function in the chain
-    *
-    * @return void
-    **/
+     * function handleResponse
+     * handles response to client on last function in the chain
+     *
+     * @return void
+     **/
 
     public function handleResponse()
     {
-        // set response code
-        http_response_code($this->responseCode);
-        // check if is json
-        if ($this->isJson) {
-            // set content header
-            header('Content-Type: application/json; charset=UTF-8');
-        } else {
-            // set content headers
-            header('Content-Type: text/html; charset=UTF-8');
+        // check if the headers are already send
+        if (!headers_sent()) {
+            // set response code
+            http_response_code($this->responseCode);
+            // check if is json
+            if ($this->isJson) {
+                // set content header
+                header('Content-Type: application/json; charset=UTF-8');
+            } else {
+                // set content headers
+                header('Content-Type: text/html; charset=UTF-8');
+            }
         }
+
         // echo responseData
         echo $this->responseData;
 

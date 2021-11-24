@@ -202,7 +202,7 @@ class Database extends QueryBuilder
                 $column = trim($column);
 
                 // check if * is in column string
-                if (preg_match('/\*|count\(.+?\)|DISTINCT/i', $column)) {
+                if (preg_match('/\*|\w+\(.+?\)|DISTINCT/i', $column)) {
                     $this->columns[] = "$column";
                 } else {
                     $this->columns[] = "`$column`";
