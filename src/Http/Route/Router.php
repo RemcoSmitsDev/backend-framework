@@ -157,7 +157,7 @@ class Router
         }
 
         // make regex string and replace other patterns
-        return "/^" . preg_replace('/' . $this->routeParamPattern . '/', "([^\/]*+)", str_replace('/', '\/', $uri)) . "(?!.)/";
+        return "/^" . preg_replace('/' . $this->routeParamPattern . '/', "([^\/]+)", str_replace('/', '\/', $uri)) . "(?!.)/";
     }
 
     /**
