@@ -24,9 +24,6 @@ class App
         // set session settings
         self::setSession();
 
-        // set global app for app helper function
-        $app = new self;
-
         // require helper functions
         require_once(__DIR__ . '/helperFunctions.php');
 

@@ -5,6 +5,7 @@ use Framework\Content\Content;
 use Framework\Http\Response;
 use Framework\Http\Request;
 use Framework\Cache\Cache;
+use Framework\App;
 
 function stripAccents(string $input): string
 {
@@ -72,7 +73,7 @@ function request(string|int $find = null)
 {
     global $request;
 
-    $request = app()->request ?? app(
+    $request = app('request') ?? app(
         $request instanceof Request ? $request : new Request()
     );
 
@@ -85,7 +86,7 @@ function response(): Response
 {
     global $response;
 
-    return app()->response ?? app(
+    return app('response') ?: app(
         $response instanceof Response ? $response : new Response()
     );
 }
@@ -94,7 +95,7 @@ function content(): Content
 {
     global $content;
 
-    return app()->content ?? app(
+    return app('content') ?: app(
         $content instanceof Content ? $content : new Content()
     );
 }
@@ -103,7 +104,7 @@ function route(): Route
 {
     global $route;
 
-    return app()->route ?? app(
+    return app('route') ?: app(
         $route instanceof Route ? $route : new Route()
     );
 }
@@ -112,7 +113,7 @@ function cache(): Cache
 {
     global $cache;
 
-    return app()->cache ?? app(
+    return app('cache') ?: app(
         $cache instanceof Cache ? $cache : new Cache()
     );
 }
@@ -121,10 +122,18 @@ function app(Object|string $class = null)
 {
     global $app;
 
+    // check if app is an instance of app class
+    if (!$app instanceof App) {
+        $app = new App;
+    }
+
+    // check if is object
     if (is_object($class)) {
         return $app->instance($class)->{lcfirst(getClassName($class))};
-    } elseif (is_string($class)) {
-        return $app->{$class} ?? $app;
+    }
+    // when you want to access an stored class
+    elseif (is_string($class)) {
+        return $app->{$class} ?? null;
     }
 
     return $app;
