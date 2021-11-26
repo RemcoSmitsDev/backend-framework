@@ -97,7 +97,6 @@ class Response implements ResponseInterface
      * function exit
      * stops the page for rendering other data with responseCode
      * @param string|int $responseData
-     * @return $this   checks if this function is the last in the chain
      **/
 
     public function exit(string|int $status = 0)
@@ -105,9 +104,9 @@ class Response implements ResponseInterface
         // set exit to true with status value
         $this->exit = true;
         $this->exitStatus = $status;
-
-        // handle if is last method in the chain
-        return $this->chain->chain();
+        
+        // exit page
+        exit($this->exitStatus);
     }
 
     /**
