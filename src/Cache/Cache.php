@@ -101,7 +101,7 @@ class Cache
         $data = $closure();
 
         // voeg json data toe
-        file_put_contents($this->cacheFolderPath . $cacheInfo->fileName, json_encode(serialize($data)));
+        file_put_contents($this->cacheFolderPath . $cacheInfo->fileName, json_encode($data));
 
         // put inside config
         $this->putInsideConfig(['identifier' => $cacheInfo->identifier, 'fileName' => $cacheInfo->fileName, 'lastModified' => time(), 'lifeTime' => $lifeTime]);
@@ -180,7 +180,7 @@ class Cache
         }
 
         // krijg cache config data
-        $cacheConfigData = json_decode(unserialize(file_get_contents($this->cacheConfigFilePath)));
+        $cacheConfigData = json_decode(file_get_contents($this->cacheConfigFilePath));
 
         // kijk of er cache data bestaat
         if (empty($cacheConfigData) || !is_array($cacheConfigData)) {
