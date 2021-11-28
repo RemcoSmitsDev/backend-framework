@@ -124,7 +124,7 @@ class Request
         return rtrim($_SERVER['REQUEST_URI'], '/') ?: '/';
     }
 
-    public function headers()
+    public function headers(string $findHeader = null)
     {
         $headers = [];
 
@@ -135,7 +135,7 @@ class Request
 
             // getallheaders() can return false if something went wrong
             if ($headers !== false) {
-                return $headers;
+                return $findHeader ? $headers[$findHeader] ?? null : $headers;
             }
         }
 
@@ -146,7 +146,7 @@ class Request
             }
         }
 
-        return $headers;
+        return $findHeader ? $headers[$findHeader] ?? null : $headers;
     }
 
     public function method()

@@ -41,12 +41,9 @@ class Api
             return false;
         }
 
-        // verwijder get waardes uit url van ajax request
-        $URL = request()->uri();
-
         // verwijder `.php` van de string als die er is
         // verwijder ../ | .. om er voor te zorgen dat het niet mogelijk is om de Directory te veranderen
-        $URL = str_replace(['../', '..', '.php'], '', $URL);
+        $URL = str_replace(['../', '..', '.php'], '', request()->uri());
 
         // voeg `.php` toe aan het einde van de url
         $URL .= '.php';
