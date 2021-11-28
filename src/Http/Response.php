@@ -3,48 +3,141 @@
 namespace Framework\Http;
 
 use Framework\Interfaces\Http\ResponseInterface;
-use Framework\Chain\Chain;
 
 class Response implements ResponseInterface
 {
-    private string $responseData = '';
-    private int|string $responseCode = 200;
-    private bool $isJson = false;
-
-    private string|int $exitStatus = 0;
-    private bool $exit = false;
-
-    private Chain $chain;
-
-    public function __construct()
-    {
-        $this->chain = new Chain($this, function () {
-            $this->handleResponse();
-        });
-    }
+    /**
+     * Holds all response messages by response code
+     * @var array $statusTexts
+     */
+    public array $statusTexts = [
+        100 => 'Continue',
+        101 => 'Switching Protocols',
+        102 => 'Processing',
+        103 => 'Early Hints',
+        200 => 'OK',
+        201 => 'Created',
+        202 => 'Accepted',
+        203 => 'Non-Authoritative Information',
+        204 => 'No Content',
+        205 => 'Reset Content',
+        206 => 'Partial Content',
+        207 => 'Multi-Status',
+        208 => 'Already Reported',
+        226 => 'IM Used',
+        300 => 'Multiple Choices',
+        301 => 'Moved Permanently',
+        302 => 'Found',
+        303 => 'See Other',
+        304 => 'Not Modified',
+        305 => 'Use Proxy',
+        307 => 'Temporary Redirect',
+        308 => 'Permanent Redirect',
+        400 => 'Bad Request',
+        401 => 'Unauthorized',
+        402 => 'Payment Required',
+        403 => 'Forbidden',
+        404 => 'Not Found',
+        405 => 'Method Not Allowed',
+        406 => 'Not Acceptable',
+        407 => 'Proxy Authentication Required',
+        408 => 'Request Timeout',
+        409 => 'Conflict',
+        410 => 'Gone',
+        411 => 'Length Required',
+        412 => 'Precondition Failed',
+        413 => 'Payload Too Large',
+        414 => 'URI Too Long',
+        415 => 'Unsupported Media Type',
+        416 => 'Range Not Satisfiable',
+        417 => 'Expectation Failed',
+        418 => 'I\'m a teapot',
+        421 => 'Misdirected Request',
+        422 => 'Unprocessable Entity',
+        423 => 'Locked',
+        424 => 'Failed Dependency',
+        425 => 'Too Early',
+        426 => 'Upgrade Required',
+        428 => 'Precondition Required',
+        429 => 'Too Many Requests',
+        431 => 'Request Header Fields Too Large',
+        451 => 'Unavailable For Legal Reasons',
+        500 => 'Internal Server Error',
+        501 => 'Not Implemented',
+        502 => 'Bad Gateway',
+        503 => 'Service Unavailable',
+        504 => 'Gateway Timeout',
+        505 => 'HTTP Version Not Supported',
+        506 => 'Variant Also Negotiates',
+        507 => 'Insufficient Storage',
+        508 => 'Loop Detected',
+        510 => 'Not Extended',
+        511 => 'Network Authentication Required',
+    ];
 
     /**
-     * function json
+     * Keeps track of response data
+     * @var string $responseData
+     */
+    private string $responseData = '';
+
+    /**
+     * Keeps track of responseCode
+     * @var int|string $responseCode
+     */
+    private int|string $responseCode = 200;
+
+    /**
+     * keeps track of is json
+     * @var bool $isJson
+     */
+    private bool $isJson = false;
+
+    /**
+     * Keeps track of exit code/message
+     * @var string|int $exitMessage
+     */
+    private string|int $exitMessage = 0;
+
+    /**
+     * Keep track if need to exit out
+     * @var bool $exit
+     */
+    private bool $exit = false;
+
+    /**
+     * Keeps track of view name
+     * @var string $view
+     */
+    private ?string $view = null;
+
+    /**
+     * Keeps track of view data
+     * @var array $data
+     */
+    private array $data = [];
+
+    /**
      * formats responseData into json based in input data
-     * @param array|string $responseData
-     * @return $this   checks if this function is the last in the chain
+     * @param mixed $responseData
+     * @return self
      **/
 
-    public function json(array|object|string $responseData): self
+    public function json(mixed $responseData): self
     {
         // set response data
         $this->responseData = is_string($responseData) ? $responseData : json_encode($responseData);
         // update is json
         $this->isJson = true;
-        // handle if is last method in the chain
-        return $this->chain->chain();
+
+        // return self
+        return $this;
     }
 
     /**
-     * function text
      * sets reponse data
      * @param string $responseData
-     * @return $this   checks if this function is the last in the chain
+     * @return self
      **/
 
     public function text(string $responseData): self
@@ -53,30 +146,30 @@ class Response implements ResponseInterface
         $this->responseData = $responseData;
         // update is json
         $this->isJson = false;
-        // handle if is last method in the chain
-        return $this->chain->chain();
+
+        // return self
+        return $this;
     }
 
     /**
-     * function code
      * send http response code to the client
      * @param int $responseCode = 200
-     * @return $this   checks if this function is the last in the chain
+     * @return self
      **/
 
     public function code(int $responseCode = 200): self
     {
         // set response code
         $this->responseCode = $responseCode;
-        // handle if is last method in the chain
-        return $this->chain->chain();
+
+        // return self
+        return $this;
     }
 
     /**
-     * function headers
      * formats headers and send headers to the client
      * @param array $headers
-     * @return $this   checks if this function is the last in the chain
+     * @return self
      **/
 
     public function headers(array $headers): self
@@ -89,39 +182,66 @@ class Response implements ResponseInterface
             // set header with value
             header("{$key}:{$value}");
         }
-        // handle if is last method in the chain
-        return $this->chain->chain();
+
+        // return self
+        return $this;
     }
 
     /**
-     * function exit
      * stops the page for rendering other data with responseCode
      * @param string|int $responseData
+     * @return self
      **/
 
-    public function exit(string|int $status = 0)
+    public function exit(string|int $status = 0): self
     {
         // set exit to true with status value
         $this->exit = true;
-        $this->exitStatus = $status;
-        
-        // exit page
-        exit($this->exitStatus);
+        $this->exitMessage = $status;
+
+        // return self
+        return $this;
     }
 
     /**
-     * function handleResponse
-     * handles response to client on last function in the chain
-     *
-     * @return void
-     **/
+     * get view into response data
+     * @param string $view
+     * @param array $data
+     * @return self
+     */
 
-    public function handleResponse()
+    public function view(string $view, array $data = []): self
+    {
+        // get output buffer
+        $this->view = $view;
+        $this->data = $data;
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * This function returns response message based on responseCode
+     * @param int|null $responseCode
+     * @return string
+     */
+
+    public function getMessage(?int $responseCode = null): string
+    {
+        return $this->statusTexts[$responseCode ?: http_response_code()];
+    }
+
+    /**
+     * handles response to user when class closes
+     */
+
+    public function __destruct()
     {
         // check if the headers are already send
         if (!headers_sent()) {
             // set response code
-            http_response_code($this->responseCode);
+            header('HTTP/1.1 ' . $this->responseCode . ' ' . $this->statusTexts[$this->responseCode]);
+
             // check if is json
             if ($this->isJson) {
                 // set content header
@@ -135,9 +255,14 @@ class Response implements ResponseInterface
         // echo responseData
         echo $this->responseData;
 
+        // check if there
+        if ($this->view) {
+            content()->view($this->view, $this->data);
+        }
+
         // check if exit function need to be set
         if ($this->exit) {
-            exit($this->exitStatus);
+            exit($this->exitMessage);
         }
     }
 }
