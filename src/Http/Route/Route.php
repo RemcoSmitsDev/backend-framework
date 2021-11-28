@@ -131,19 +131,19 @@ class Route extends Router implements RoutesInterface
     {
         // keep track of first prefix/middlwares of main group
         $prefix = $this->groupPrefix;
-        $middlewares = $this->groupMiddlwares;
+        $middlewares = $this->groupMiddlewares;
 
         // set prefix to group prefix
         $this->groupPrefix = $this->prefix;
 
         // merge middlwares met group middlewares
-        $this->groupMiddlwares = [
+        $this->groupMiddlewares = [
             ...$this->middlewares,
-            ...$this->groupMiddlwares
+            ...$this->groupMiddlewares
         ];
 
         // check of er wel group middlware / prefix is
-        if (empty($this->groupMiddlwares) && empty($this->groupPrefix)) {
+        if (empty($this->groupMiddlewares) && empty($this->groupPrefix)) {
             throw new \Exception("Je moet een middleware of route prefix gebruiken om de group functie te kunnen gebruiken", 1);
         }
 
@@ -155,7 +155,7 @@ class Route extends Router implements RoutesInterface
         $this->routes = $routeGroup->routes;
 
         // reset waardes voor andere routes
-        $this->groupMiddlwares = [];
+        $this->groupMiddlewares = [];
 
         // set prefix to first prefix from main group
         $this->groupPrefix = $prefix;

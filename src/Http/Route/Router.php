@@ -7,33 +7,70 @@ use Framework\Http\Request;
 
 class Router
 {
+    /**
+     * Keeps track of all routes
+     * @var array $routes
+     */
     protected array $routes = [];
+
+    /**
+     * Keeps track of all names routes
+     * @var array $namedRoutes
+     */
     protected array $namedRoutes = [];
 
+    /**
+     * Keeps track of current prefix
+     * @var string $prefix
+     */
     protected string $prefix = '';
-    protected array $middlewares = [];
 
-    protected string $group = '';
-    protected array $groupMiddlwares = [];
+    /**
+     * Keeps track of current groupprefix
+     * @var string $groupPrefix
+     */
     protected string $groupPrefix = '';
 
+    /**
+     * Keeps track of current middlewares
+     * @var array $middlewares
+     */
+    protected array $middlewares = [];
+
+    /**
+     * Keeps track of curren group middlewares
+     * @var array $groupMiddlewares
+     */
+    protected array $groupMiddlewares = [];
+
+    /**
+     * Keeps track of current Route
+     * @var array $currentRoute
+     */
     protected array $currentRoute = [];
 
-    // helping global patterns
+    /**
+     * Default dynamic route pattern
+     * @var string $routeParamPattern
+     */
     private string $routeParamPattern = '\{[A-Za-z_]+[0-9]*\}';
 
+    /**
+     * Keeps track of request class
+     * @var Request $request
+     */
     protected Request $request;
-
 
     public function __construct()
     {
-        $this->request = app()->request ?? new Request();
+        $this->request = request();
     }
 
     /**
-     * handleRouteAction function
-     * Handles the action(function/ class function)
-     * @param $action
+     * Handles the action(function/class method)
+     * @param array $route
+     * @param array $data
+     * @return void
      */
 
     protected function handleRouteAction(array $route, array $data = []): void
@@ -78,7 +115,6 @@ class Router
     }
 
     /**
-     * getRoutes function
      * Get all routes bij a requestMethod
      * @return null|array
      */
@@ -89,7 +125,6 @@ class Router
     }
 
     /**
-     * addRoute function
      * add route to routes array based on requestMethod
      * @param array $methods
      * @param string $uri
@@ -119,14 +154,13 @@ class Router
         ];
 
         // reset alle middlewares/prefix
-        $this->middlewares = $this->groupMiddlwares;
+        $this->middlewares = $this->groupMiddlewares;
         $this->prefix = $this->groupPrefix;
 
         return $this;
     }
 
     /**
-     * replaceRouteURLPatterns function
      * replace all dynamic routing params to regex
      * @param string $uri
      * @param array $route
@@ -149,7 +183,6 @@ class Router
     }
 
     /**
-     * validateDynamicUri function
      * kijk of er de route dynamic params heeft
      * als de route dynamic routes heeft en deze matched mat de current url
      * return dan de dynamic params values met de naam als key
@@ -186,6 +219,13 @@ class Router
         return $data;
     }
 
+    /**
+     * This function replaces dynamic routes and checks if all the dynamic parts are fulfilled
+     * @param string $route
+     * @param array $params
+     * @param array $wrongParams
+     */
+
     protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = [])
     {
         // check if there are dynamic params in route url
@@ -217,21 +257,20 @@ class Router
 
 
     /**
-     * init function
      * get route by current request url
      * @return boolean
      */
 
     public function init()
     {
-        // krijg current request url
-        $uri = $this->request->uri();
-
         // check if there are no routes yet
         if (is_null($this->getRoutes())) {
             // geen routes
             return false;
         }
+
+        // krijg current request url
+        $uri = $this->request->uri();
 
         // clean ouput buffer for HEAD request
         if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
@@ -254,8 +293,8 @@ class Router
 
                 // check if middleware is valid
                 if (!Middleware::validate($route['middlewares'])) {
-                    // TODO: hier moet gehandeld worden dat je geen rechten hebt iets van een 500 page/code ofzo
-                    return false;
+                    // send forbidden response code
+                    response()->code(403)->view('responseView')->exit();
                 }
 
                 // call needed function
@@ -267,14 +306,15 @@ class Router
                 // break foreach
                 break;
             } else {
-                // check if de route has middlewares and check if there are passed
-                if (!Middleware::validate($route['middlewares'])) {
-                    continue;
-                }
-
                 // check if a dynamic route match the current url
                 if (($data = $this->validateDynamicUri($route)) === false) {
                     continue;
+                }
+
+                // check if de route has middlewares and check if there are passed
+                if (!Middleware::validate($route['middlewares'])) {
+                    // send forbidden response code
+                    response()->code(403)->view('responseView')->exit();
                 }
 
                 // call needed function
