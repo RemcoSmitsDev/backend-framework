@@ -2,21 +2,19 @@
 
 namespace Framework\Cache;
 
+use DateTime;
+
 class Cache
 {
     /**
-     * $cacheConfigFilePath
+     * @var string $cacheConfigFilePath
      **/
-
-    private $cacheFolderPath = '';
-    private $cacheConfigFilePath = '';
+    private string $cacheFolderPath = '';
 
     /**
-     * @param int $remeberTime = 86400
-     **/
-
-    private int $rememberTime = 86400;
-
+     * @var string $cacheConfigFilePath
+     */
+    private string $cacheConfigFilePath = '';
 
     public function __construct()
     {
@@ -25,57 +23,110 @@ class Cache
     }
 
     /**
-     * function remember
-     * @param int $remeberTime = 86400
+     * function file
+     * @param string $identifier
+     * @param int $lifeTime
+     * @param string $type (public | private)
      * @return self
      **/
 
-    public function remember(int $rememberTime = 86400)
+    public function http(string $identifier, int $lifeTime = 3600, string $type = 'public'): self
     {
-        $this->rememberTime = $rememberTime;
+        // get debug trace
+        $debugTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
+        // check if request method is GET
+        // check if there is an file found where the method was called from
+        if (request()->method !== 'GET' || !isset($debugTrace[0]['file'])) {
+            return $this;
+        }
+
+        // get file path 
+        $file = $debugTrace[0]['file'];
+
+        // get last modified based on if there is an active cache
+        $lastModified = request()->headers('If-Modified-Since') ? (new DateTime(request()->headers('If-Modified-Since')))->getTimestamp() : filemtime($file);
+
+        // check if file is not modified between new last modified date
+        if (filemtime($file) > $lastModified) {
+            // set last modified to file modified date
+            $lastModified = filemtime($file);
+        }
+
+        // check if there is an current http cache make sure the max-age us incrementing
+        // based on the lifetime and last modified date
+        [$newLifeTime, $lastModified] = $this->holdCurrentCache($lifeTime, $lastModified);
+
+        // make etag to match for specific content
+        $etag = '"' . md5(clearInjections($identifier . $file . $lastModified)) . '"';
+
+        // add reponse headers
+        response()->headers([
+            // Set Cache-Control header
+            'Cache-Control' => $type . ', max-age=' . max($newLifeTime, 0) . ', must-revalidate',
+            // set last Modified
+            'Last-Modified' => gmdate('D, d M Y H:i:s \G\M\T', $lastModified),
+            // set expire date
+            'Expires' => gmdate('D, d M Y H:i:s \G\M\T', $lastModified + $lifeTime),
+            // Set ETag header
+            'ETag' => $etag
+        ]);
+
+        // Check whether browser had sent a HTTP_IF_NONE_MATCH request header
+        if (request()->headers('If-None-Match') === $etag) {
+            // So send a 304 Not Modified response header and exit
+            response()->code(304)->exit();
+        }
+
+        // return self
         return $this;
     }
 
     /**
-     * function file
-     * @param string $file(__FILE__)
-     * @param string $extraInformationToEtagName = ''
-     * @return void
-     **/
+     * This function check if there is an current http-cache and decrement max-age
+     * When the max-age = 0 then the http-cache will be removed to force renew cache modified at + lifetime
+     * @param int $lifeTime
+     * @param int $lastModified
+     */
 
-    public function file(string $file, string $extraInformationToEtagName = '')
+    private function holdCurrentCache(int $lifeTime, int $lastModified): array
     {
-        // Get last modification time of the current PHP file
-        $fileLastModifiedTime = filemtime($file);
-
-        // Combine both to generate a unique ETag for a unique content
-        // Specification says ETag should be specified within double quotes
-        $etag = '"' . md5(clearInjections($file . $fileLastModifiedTime . $extraInformationToEtagName)) . '"';
-
-        // Set Cache-Control header
-        header('Cache-Control: public, max-age=' . $this->rememberTime . ', must-revalidate');
-
-        // format lastModified
-        $lastModified = gmdate('D, d M Y H:i:s', $fileLastModifiedTime) . ' GMT';
-
-        // set last Modified
-        header("Last-Modified: {$lastModified}");
-
-        // format expires
-        $expires = gmdate('D, d M Y H:i:s', time() + $this->rememberTime) . ' GMT';
-        // set expire date
-        header("Expires: {$expires}");
-
-        // Set ETag header
-        header('ETag: ' . $etag);
-
-        // Check whether browser had sent a HTTP_IF_NONE_MATCH request header
-        if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag) {
-            // If HTTP_IF_NONE_MATCH is same as the generated ETag => content is the same as browser cache
-            // So send a 304 Not Modified response header and exit
-            header('HTTP/1.1 304 Not Modified', true, 304);
-            exit();
+        // check if there exist and cache
+        if (!request()->headers('If-Modified-Since')) {
+            // return null as lifeTime
+            return [
+                $lifeTime,
+                $lastModified
+            ];
         }
+
+        // get last modified timestamp(int)
+        $lastModTimestamp = (new DateTime(request()->headers('If-Modified-Since')))->getTimestamp();
+        // get current timestamp(int)
+        $nowTimestamp = (new DateTime())->getTimestamp();
+
+        // calc rest lifetime
+        $lifeTime = $lifeTime - ($nowTimestamp - $lastModTimestamp);
+
+        // check if the lifeTime is passed
+        if ($lifeTime <= 0) {
+            // return response headers
+            response()->headers([
+                // disable cache
+                'Cache-Control' => 'no-cache, no-store, max-age=0, must-revalidate',
+                // set old expire date
+                'Expires' => 'Mon, 26 Jul 1997 05:00:00 GMT'
+            ]);
+
+            // set last modified to now
+            $lastModified = (new DateTime())->getTimestamp();
+        }
+
+        // return new information for cache
+        return [
+            $lifeTime,
+            $lastModified
+        ];
     }
 
     /**
@@ -307,5 +358,33 @@ class Cache
     private function generateFileName(string $identifier): string
     {
         return md5($identifier);
+    }
+
+    /**
+     * function flush
+     * This method will delete all cache files
+     * @return self
+     */
+
+    public function flush(): self
+    {
+        // check if cache location exists
+        if (!file_exists($this->cacheFolderPath)) {
+            return false;
+        }
+
+        // wrong files to filter out
+        $wrongFiles = ['..', '.'];
+
+        // get all files accept '..' and '.'
+        $files = array_filter(scandir(SERVER_ROOT . '/../cache'), fn ($file) => !in_array($file, $wrongFiles));
+
+        // loop trough all files and delete them
+        foreach ($files as $file) {
+            unlink($this->cacheFolderPath . $file);
+        }
+
+        // return self
+        return $this;
     }
 }
