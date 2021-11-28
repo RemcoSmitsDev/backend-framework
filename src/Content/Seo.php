@@ -4,29 +4,59 @@ namespace Framework\Content;
 
 class Seo
 {
+  /**
+   * @var string $description Keeps track of description
+   */
+  public string $description = '';
 
-  public static string $description = '';
-  public static string $imageURL = '';
+  /**
+   * @var string $imageURL Keeps track of image url
+   */
+  public string $imageURL = '';
 
-  public static function setDescription(string $description): self
+  /**
+   * Set the description for seo tags
+   * @param string $description
+   * @return self
+   */
+
+  public function description(string $description): self
   {
-    self::$description = $description;
-    return new self;
+    $this->description = $description;
+
+    return $this;
   }
 
-  public static function setImageURL(string $imageURL): self
+  /**
+   * Set image url for seo tags
+   * @param string $imageURL
+   * @return self
+   */
+
+  public function image(string $imageURL): self
   {
-    self::$imageURL = $imageURL;
-    return new self;
+    $this->imageURL = $imageURL;
+
+    return $this;
   }
 
-  public static function getDescription(): string
+  /**
+   * Returns description
+   * @return string
+   */
+
+  public function getDescription(): string
   {
-    return self::$description;
+    return $this->description;
   }
 
-  public static function getImageURL(): string
+  /**
+   * Return image url
+   * @return string
+   */
+
+  public function getImageURL(): string
   {
-    return self::$imageURL;
+    return $this->imageURL;
   }
 }

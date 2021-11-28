@@ -6,6 +6,8 @@ use Framework\Http\Response;
 use Framework\Http\Request;
 use Framework\Cache\Cache;
 use Framework\App;
+use Framework\Content\Seo;
+use Framework\Http\Redirect;
 
 function stripAccents(string $input): string
 {
@@ -86,9 +88,12 @@ function response(): Response
 {
     global $response;
 
-    return app('response') ?: app(
-        $response instanceof Response ? $response : new Response()
-    );
+    return $response instanceof Response ? $response : new Response();
+}
+
+function redirect(string $path, int $responseCode = 302, bool $secure = null): Redirect
+{
+    return new Redirect($path, $responseCode, $secure);
 }
 
 function content(): Content
@@ -97,6 +102,15 @@ function content(): Content
 
     return app('content') ?: app(
         $content instanceof Content ? $content : new Content()
+    );
+}
+
+function seo(): Seo
+{
+    global $seo;
+
+    return app('seo') ?: app(
+        $seo instanceof Seo ? $seo : new Seo()
     );
 }
 
