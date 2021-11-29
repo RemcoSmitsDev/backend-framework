@@ -47,7 +47,7 @@ class Router
      * Keeps track of current Route
      * @var array $currentRoute
      */
-    protected array $currentRoute = [];
+    protected ?array $currentRoute = null;
 
     /**
      * Default dynamic route pattern
@@ -272,11 +272,6 @@ class Router
         // krijg current request url
         $uri = $this->request->uri();
 
-        // clean ouput buffer for HEAD request
-        if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
-            ob_start();
-        }
-
         // loop trough all routes
         foreach ($this->getRoutes() as $route) {
             // check if request method is in array of methods
@@ -325,9 +320,9 @@ class Router
             }
         }
 
-        // clean ouput buffer for HEAD request
-        if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
-            ob_end_clean();
+        // where there is no route
+        if (!$this->currentRoute) {
+            response()->code(404)->view('responseView')->exit();
         }
     }
 }

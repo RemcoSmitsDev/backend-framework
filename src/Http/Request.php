@@ -4,81 +4,107 @@ namespace Framework\Http;
 
 class Request
 {
-    private static $curlInfo;
-    private static $response;
+    private $curlInfo;
+    private $response;
 
     private object $getData;
     private object $postData;
+
+    private object $requestData;
 
     public function __construct()
     {
         // set request method
         $this->method = $this->method();
 
-        // set all request data to properties
-        foreach ((array)$this->get() as $key => $value) {
-            $this->{$key} = $value;
-        }
+        // set all request(get) data
+        $this->getData = (object) clearInjections($_GET);
 
-        // set all request data to properties
-        foreach ((array)$this->post() as $key => $value) {
-            $this->{$key} = $value;
-        }
+        // set all request(post) data
+        $this->postData = (object) clearInjections(array_merge(
+            json_decode(file_get_contents('php://input'), true) ?? [],
+            $_POST
+        ));
+
+        // merge all request data
+        $this->requestData = (object) array_merge(
+            (array) $this->getData,
+            (array) $this->postData
+        );
     }
 
-    public function get(string|int $find = null)
-    {
-        $getData = $this->getData ?? $this->getData = (object)clearInjections($_GET);
+    /**
+     * This function will return value of class property is exists
+     * @return mixed
+     */
 
-        return !is_null($find) ?
-            (property_exists($getData, $find) ? $getData->{$find} : null) :
-            $getData;
+    public function __get($name): mixed
+    {
+        return property_exists($this->requestData, $name) ? $this->requestData->{$name} : null;
     }
 
-    public function post(string|int $find = null)
+    /**
+     * This function will return all get data or the value by find key
+     * @param string|int $find
+     * @return mixed
+     */
+
+    public function get(string|int $find = null): mixed
     {
-        if (!isset($this->postData)) {
-            // get data from other request types
-            $dataArray = json_decode(file_get_contents('php://input'), true) ?? [];
-            // if postData is not define/null
-            $this->postData = (object)clearInjections(((array)$dataArray) + $_POST);
+        // check if find is null
+        if (is_null($find)) {
+            return $this->getData;
         }
 
-        return !is_null($find) ?
-            (property_exists($this->postData, $find) ? $this->postData->{$find} : null) :
-            $this->postData;
+        // return get data
+        return property_exists($this->getData, $find) ? $this->getData->{$find} : null;
     }
 
-    public function exists()
-    {
-        // get all function args
-        $args = func_get_args();
-        // strtoupper
-        $requestType = strtoupper($args[0] ?? '');
-        // verwijder eerste item van de args array
-        array_shift($args);
+    /**
+     * This function will return all post data or the value by find key
+     * @param string|int $find
+     * @return mixed
+     */
 
-        // check if requestType is valid
-        if ($requestType !== 'GET' && $requestType !== 'POST') {
-            throw new \Exception("Je kan alleen een `GET` en `POST` request validaren", 1);
+    public function post(string|int $find = null): mixed
+    {
+        // check if find is null
+        if (is_null($find)) {
+            return $this->postData;
         }
 
+        // return get data based on find value
+        return property_exists($this->postData, $find) ? $this->postData->{$find} : null;
+    }
+
+    /**
+     * This function will check if all keys exists in the current request
+     * @param string[] $requestKey
+     * @return bool
+     */
+
+    public function exists(string ...$requestKey): bool
+    {
         // loop trough all func args
-        foreach ($args as $key) {
-            // check if key is an string
-            if (!is_string($key)) {
-                throw new \Exception("De key moet een string zijn", 1);
-            }
-
+        foreach ($requestKey as $key) {
             // check if key exists
-            if ($requestType == 'GET' && !array_key_exists($key, $_GET) || $requestType == 'POST' && !array_key_exists($key, $_POST)) {
+            if (!property_exists($this->requestData, $key)) {
                 return false;
             }
         }
         return true;
     }
 
-    public static function send(string $requestType, string $requestURL, $requestData = null, array $headers = []): self
+    /**
+     * This function will send an server request to an url
+     * @param string $requestType
+     * @param string $requestURL
+     * @param mixed $requestData
+     * @param array $headers
+     * @return self
+     */
+
+    public function send(string $requestType, string $requestURL, mixed $requestData = null, array $headers = []): self
     {
         // define curl
         $curl = curl_init();
@@ -93,30 +119,48 @@ class Request
         ]);
 
         // fix bugs ssl expired
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, !function_exists('config') || !config()::DEVELOPMENT_MODE);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, !IS_DEVELOPMENT_MODE);
 
         // krijg response van request
         $response = curl_exec($curl);
 
-        self::$curlInfo = curl_getinfo($curl);
-        self::$response = $response;
+        $this->curlInfo = curl_getinfo($curl);
+        $this->response = $response;
 
         // sluit connectie
         curl_close($curl);
 
-        return new self();
+        return $this;
     }
+
+    /**
+     * This function will send information about sended server request + data
+     * @return object
+     */
 
     public function response(): object
     {
-        return (object)['data' => self::$response, 'info' => (object)self::$curlInfo];
+        return (object) [
+            'data' => $this->response,
+            'info' => (object) $this->curlInfo
+        ];
     }
+
+    /**
+     * This function will return current uri like: /route/to
+     * @return string
+     */
 
     public function uri(): string
     {
         // krijg de huidige url zonden get waardes
-        return rtrim(explode('?', self::url(), 2)[0], '/') ?: '/';
+        return rtrim(explode('?', $this->url(), 2)[0], '/') ?: '/';
     }
+
+    /**
+     * This function will return current URL with params
+     * @return string
+     */
 
     public function url(): string
     {
@@ -124,8 +168,15 @@ class Request
         return rtrim($_SERVER['REQUEST_URI'], '/') ?: '/';
     }
 
-    public function headers(string $findHeader = null)
+    /**
+     * This function will return all headers of one header based on the findHeader param
+     * @param string $findHeader
+     * @return array|string|null
+     */
+
+    public function headers(string $findHeader = null): array|string|null
     {
+        // keep track of all headers
         $headers = [];
 
         // If getallheaders() is available, use that
@@ -146,17 +197,23 @@ class Request
             }
         }
 
-        return $findHeader ? $headers[$findHeader] ?? null : $headers;
+        // return header(s) based on find header key
+        return $findHeader ? (array_key_exists($findHeader, $headers) ? $headers[$findHeader] : null) : $headers;
     }
 
-    public function method()
+    /**
+     * This function will return current request type
+     * @return string
+     */
+
+    public function method(): string
     {
         // Take the method as found in $_SERVER
-        $method = $_SERVER['REQUEST_METHOD'];
+        $method = strtoupper($_SERVER['REQUEST_METHOD']);
 
         // If it's a HEAD request override it to being GET and prevent any output, as per HTTP Specification
         // @url http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.4
-        if ($_SERVER['REQUEST_METHOD'] == 'HEAD') {
+        if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
             // start output buffer
             ob_start();
             // set method to get
@@ -164,13 +221,9 @@ class Request
         }
 
         // If it's a POST request, check for a method override header
-        elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // get all headers
-            $headers = $this->headers();
+        elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(strtoupper($this->headers('X-HTTP-Method-Override')), ['PUT', 'DELETE', 'PATCH'])) {
             // check if headers exists
-            if (isset($headers['X-HTTP-Method-Override']) && in_array($headers['X-HTTP-Method-Override'], ['PUT', 'DELETE', 'PATCH'])) {
-                $method = $headers['X-HTTP-Method-Override'];
-            }
+            $method = $this->headers('X-HTTP-Method-Override');
         }
 
         // return method in strtoupper
