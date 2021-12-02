@@ -32,7 +32,7 @@ class Content
 
     public function __construct(string $viewPath = null)
     {
-        $this->viewPath = $viewPath ?: SERVER_ROOT . '/../templates/';
+        $this->viewPath = rtrim($viewPath ?: SERVER_ROOT . '/../templates/') . '/';
     }
 
     /**
