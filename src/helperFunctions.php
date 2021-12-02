@@ -1,13 +1,13 @@
 <?php
 
+use Framework\Http\Redirect\Redirect;
 use Framework\Http\Route\Route;
 use Framework\Content\Content;
 use Framework\Http\Response;
 use Framework\Http\Request;
 use Framework\Cache\Cache;
-use Framework\App;
 use Framework\Content\Seo;
-use Framework\Http\Redirect;
+use Framework\App;
 
 function stripAccents(string $input): string
 {
