@@ -243,7 +243,7 @@ class Cache
         $lastModified = filemtime($this->cacheFolderPath . $fileName);
 
         // get lifetime from cached data
-        $lifeTime = $cacheItemData[0] ?? 0;
+        $lifeTime = intval($cacheItemData[0] ?? 0);
 
         //  kijk of lifetime is verlopen
         if ($lastModified + $lifeTime <= time()) {
