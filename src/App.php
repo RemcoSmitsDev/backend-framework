@@ -6,14 +6,40 @@ use Framework\Http\Api;
 
 class App
 {
+    /**
+     * This function will start all needed functions
+     * @return void
+     */
+
     public static function start()
     {
-        // set timezone
-        date_default_timezone_set('Europe/Amsterdam');
-        setlocale(LC_ALL, 'nl_NL');
+        // start output buffer
+        ob_start();
 
         // check if app is in development mode
         self::checkAppState();
+
+        // register shutdown function
+        register_shutdown_function(function () {
+            // when HEAD request clear response
+            if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
+                ob_get_clean();
+            }
+            // check if there are internal server errors
+            if (error_get_last() && error_get_last()['type'] === E_ERROR) {
+                // check when to get buffer
+                if (!IS_DEVELOPMENT_MODE) {
+                    // get all diplayed errors from buffer
+                    ob_get_clean();
+                }
+                // return error page
+                response()->code(500)->view('responseView')->exit();
+            }
+        });
+
+        // set timezone
+        date_default_timezone_set('Europe/Amsterdam');
+        setlocale(LC_ALL, 'nl_NL');
 
         // get error based on config option debug mode
         self::catchErrors();
@@ -34,6 +60,11 @@ class App
         }
     }
 
+    /**
+     * This function will set all needed security headers
+     * @return void
+     */
+
     private static function setSecurityHeaders(): void
     {
         // block all iframes
@@ -45,6 +76,11 @@ class App
         // enable content strict Security
         header('Strict-Transport-Security: max-age=31536000');
     }
+
+    /**
+     * This function will set all secure session headers and start session
+     * @return void
+     */
 
     private static function setSession(): void
     {
@@ -60,6 +96,11 @@ class App
             session_start();
         }
     }
+
+    /**
+     * This function handles/enables error reporting
+     * @return void
+     */
 
     private static function catchErrors(): void
     {
@@ -79,6 +120,11 @@ class App
         }
     }
 
+    /**
+     * This function checks app state(local|live) based on host
+     * @return void
+     */
+
     private static function checkAppState(): void
     {
         // define localhost ips to check if is development
@@ -96,6 +142,12 @@ class App
         // server root for constant vars
         define('SERVER_ROOT', $_SERVER['DOCUMENT_ROOT']);
     }
+
+    /**
+     * This function will store an instance of all classes
+     * @param object[] $classes
+     * @return self
+     */
 
     public function instance(Object ...$classes): self
     {
