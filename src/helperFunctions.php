@@ -7,7 +7,13 @@ use Framework\Http\Response;
 use Framework\Http\Request;
 use Framework\Cache\Cache;
 use Framework\Content\Seo;
+use \Framework\Http\Http;
 use Framework\App;
+
+/**
+ * @param string $input
+ * @return string
+ */
 
 function stripAccents(string $input): string
 {
@@ -17,6 +23,11 @@ function stripAccents(string $input): string
     //Return the input
     return strtr($input, $unwantedArray);
 }
+
+/**
+ * @param int $length
+ * @return string
+ */
 
 function randomString(int $length = 15): string
 {
@@ -31,6 +42,11 @@ function randomString(int $length = 15): string
     return $randomString;
 }
 
+/**
+ * @param string|array|null $value
+ * @return string|array|null
+ */
+
 function clearInjections(string|array|null $value): string|array|null
 {
     // kijk of input value een array is
@@ -43,6 +59,11 @@ function clearInjections(string|array|null $value): string|array|null
 
     return htmlspecialchars(trim($value), ENT_QUOTES, 'utf-8');
 }
+
+/**
+ * @param ...$values
+ * @return false|void
+ */
 
 function dd(...$values)
 {
@@ -61,6 +82,7 @@ function dd(...$values)
 /**
  * @throws ReflectionException
  */
+
 function getClassName($class): string
 {
     $class = new \ReflectionClass($class);
@@ -71,6 +93,7 @@ function getClassName($class): string
 /**
  * @throws ReflectionException
  */
+
 function request(string|int $find = null): mixed
 {
     global $request;
@@ -84,6 +107,19 @@ function request(string|int $find = null): mixed
         $request;
 }
 
+/**
+ * @return Http
+ */
+
+function http(): Http
+{
+    return new Http();
+}
+
+/**
+ * @return Response
+ */
+
 function response(): Response
 {
     global $response;
@@ -91,10 +127,22 @@ function response(): Response
     return $response instanceof Response ? $response : new Response();
 }
 
+/**
+ * @param string $path
+ * @param int $responseCode
+ * @param bool|null $secure
+ * @return Redirect
+ */
+
 function redirect(string $path, int $responseCode = 302, bool $secure = null): Redirect
 {
     return new Redirect($path, $responseCode, $secure);
 }
+
+/**
+ * @return Content
+ * @throws ReflectionException
+ */
 
 function content(): Content
 {
@@ -108,6 +156,7 @@ function content(): Content
 /**
  * @throws ReflectionException
  */
+
 function seo(): Seo
 {
     global $seo;
@@ -120,6 +169,7 @@ function seo(): Seo
 /**
  * @throws ReflectionException
  */
+
 function route(): Route
 {
     global $route;
@@ -132,6 +182,7 @@ function route(): Route
 /**
  * @throws ReflectionException
  */
+
 function cache(): Cache
 {
     global $cache;
@@ -144,6 +195,7 @@ function cache(): Cache
 /**
  * @throws ReflectionException
  */
+
 function app(Object|string $class = null): mixed
 {
     global $app;
