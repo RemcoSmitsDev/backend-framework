@@ -4,13 +4,11 @@ namespace Framework\Http;
 
 class Request
 {
-    private $curlInfo;
-    private $response;
-
+    private string $method;
     private object $getData;
     private object $postData;
 
-    private object $requestData;
+    public object $requestData;
 
     public function __construct()
     {
@@ -45,7 +43,7 @@ class Request
 
     /**
      * This function will return all get data or the value by find key
-     * @param string|int $find
+     * @param string|int|null $find
      * @return mixed
      */
 
@@ -62,7 +60,7 @@ class Request
 
     /**
      * This function will return all post data or the value by find key
-     * @param string|int $find
+     * @param string|int|null $find
      * @return mixed
      */
 
@@ -96,54 +94,22 @@ class Request
     }
 
     /**
-     * This function will send an server request to an url
-     * @param string $requestType
-     * @param string $requestURL
-     * @param mixed $requestData
-     * @param array $headers
-     * @return self
+     * @return string
      */
 
-    public function send(string $requestType, string $requestURL, mixed $requestData = null, array $headers = []): self
+    public function csrf(): string
     {
-        // define curl
-        $curl = curl_init();
-
-        // maak request headers klaar
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $requestURL,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => strtoupper($requestType),
-            CURLOPT_POSTFIELDS => is_array($requestData) ? json_encode($requestData) : $requestData,
-            CURLOPT_HTTPHEADER => $headers
-        ]);
-
-        // fix bugs ssl expired
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, !IS_DEVELOPMENT_MODE);
-
-        // krijg response van request
-        $response = curl_exec($curl);
-
-        $this->curlInfo = curl_getinfo($curl);
-        $this->response = $response;
-
-        // sluit connectie
-        curl_close($curl);
-
-        return $this;
+        return $_SESSION['_csrf_token'] ?? $_SESSION['_csrf_token'] = randomString();
     }
 
     /**
-     * This function will send information about sended server request + data
-     * @return object
+     * @return bool
+     * @throws \ReflectionException
      */
 
-    public function response(): object
+    public function validateCsrf(): bool
     {
-        return (object) [
-            'data' => $this->response,
-            'info' => (object) $this->curlInfo
-        ];
+        return \request('_token') === $this->csrf();
     }
 
     /**
@@ -154,7 +120,17 @@ class Request
     public function uri(): string
     {
         // krijg de huidige url zonden get waardes
-        return rtrim(explode('?', $this->url(), 2)[0], '/') ?: '/';
+        return parse_url(rawurldecode($this->url()))['path'];
+    }
+
+    /**
+     * This function will return the query string
+     * @return string
+     */
+
+    public function query(): string
+    {
+        return parse_url(rawurldecode($this->url()))['query'] ?? '';
     }
 
     /**
@@ -192,8 +168,12 @@ class Request
 
         // Method getallheaders() not available or went wrong: manually extract 'm
         foreach ($_SERVER as $name => $value) {
-            if ((substr($name, 0, 5) == 'HTTP_') || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH')) {
-                $headers[str_replace([' ', 'Http'], ['-', 'HTTP'], ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            if ((str_starts_with($name, 'HTTP_')) || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH')) {
+                $headers[
+                    str_replace([' ', 'Http'],
+                    ['-', 'HTTP'],
+                    ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))
+                ] = $value;
             }
         }
 

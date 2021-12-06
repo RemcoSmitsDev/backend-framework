@@ -33,7 +33,7 @@ class App
                     ob_get_clean();
                 }
                 // return error page
-                response()->code(500)->view('responseView')->exit();
+//                response()->code(500)->view('responseView')->exit();
             }
         });
 
