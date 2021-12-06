@@ -56,8 +56,8 @@ class Content
 
     /**
      * This function sets the layout type, this wil make an file path like: include{type}Content.php
-     * @param string $type
-     * 
+     * @param string $layout
+     * @return Content
      */
 
     public function layout(string $layout): self

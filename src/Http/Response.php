@@ -83,9 +83,9 @@ class Response implements ResponseInterface
 
     /**
      * Keeps track of responseCode
-     * @var int|string $responseCode
+     * @var int|string|null $responseCode
      */
-    private int|string $responseCode = 200;
+    private int|string|null $responseCode = null;
 
     /**
      * keeps track of is json
@@ -238,9 +238,12 @@ class Response implements ResponseInterface
     public function __destruct()
     {
         // check if the headers are already send
-        if (!headers_sent()) {
-            // set response code
-            header('HTTP/1.1 ' . $this->responseCode . ' ' . $this->statusTexts[$this->responseCode]);
+        if (!headers_sent() ) {
+            // check if there was an response code set
+            if (isset($this->responseCode)){
+                // set response code
+                header('HTTP/1.1 ' . $this->responseCode . ' ' . ($this->statusTexts[$this->responseCode] ?? ''));
+            }
 
             // check if is json
             if ($this->isJson) {
