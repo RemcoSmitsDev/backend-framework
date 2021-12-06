@@ -2,11 +2,16 @@
 
 namespace Framework\Parallel;
 
+use function Opis\Closure\{serialize as s, unserialize as u};
+
 class SocketConnection
 {
+    private int $bufferSize = 1024;
+    private float $timeout = 0.1;
+
     public function __construct(private \Socket $socket)
     {
-        // set noblock
+        // set nonblock
         socket_set_nonblock($this->socket);
     }
 
@@ -25,40 +30,41 @@ class SocketConnection
         ];
     }
 
-    private function selectSocket(): bool
+    private function selectSocket(): false|int
     {
-        // options/settings for selecting socket
-        $read = [$this->socket];
-        $write = null;
+        $write = [$this->socket];
+        $read = null;
         $except = null;
 
-        // select socket
-        $selectResult = socket_select($read, $write, $except, 0.1);
-
-        // check if there was an socket found
-        return $selectResult === false ? false : true;
+        return socket_select($read, $write, $except, $this->timeout);
     }
 
     public function write(string $payload): self
     {
+        // set nonblock mode
+        socket_set_nonblock($this->socket);
+
         while ($payload !== '') {
-            // check if there was an socket found
-            if (!$this->selectSocket($this->socket)) {
+            // select socket
+            $selectResult = $this->selectSocket();
+
+            // check if there was something wrong when selecting the socket target
+            if ($selectResult === false) {
                 break;
             }
 
-            // get length of payload
-            $length = strlen($payload);
+            // get payload length
+            $length = mb_strlen($payload);
 
-            // write socket
+            // write socket data to child
             $amountOfBytesSent = socket_write($this->socket, $payload, $length);
 
-            // check if there was an valid response
-            if ($amountOfBytesSent === false || $amountOfBytesSent === $length) {
+            // check if all the payload data was sent
+            if ($amountOfBytesSent === $length) {
                 break;
             }
 
-            // get correct payload based on amout of strlen payload
+            // strip payload until payload is empty
             $payload = substr($payload, $amountOfBytesSent);
         }
 
@@ -68,24 +74,28 @@ class SocketConnection
 
     public function read(): \Generator
     {
+        // set nonblock mode
         socket_set_nonblock($this->socket);
 
         while (true) {
-            // check if there was an socket found
-            if (!$this->selectSocket($this->socket)) {
+            // select socket
+            $selectResult = $this->selectSocket();
+
+            // check if there was something wrong when selecting the socket target
+            if ($selectResult === false || $selectResult <= 0) {
                 break;
             }
 
-            // read socket
-            $outputFromSocket = socket_read($this->socket, 1024);
+            // read output from socket connection until all information was readed
+            $output = socket_read($this->socket, $this->bufferSize);
 
-            // check if there was and correct output
-            if ($outputFromSocket === false || $outputFromSocket === '') {
+            // check if all information was read
+            if ($output === '') {
                 break;
             }
 
-            // return without stopping executiontime
-            yield $outputFromSocket;
+            // yield output
+            yield $output;
         }
     }
 

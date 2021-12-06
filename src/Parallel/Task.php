@@ -2,67 +2,72 @@
 
 namespace Framework\Parallel;
 
+use function Opis\Closure\{serialize as s, unserialize as u};
+
 class Task
 {
     private SocketConnection $connection;
 
-    private string $token = 'serializedResponse::';
+    private string $token = '[[serialized::';
 
-    public function __construct(private int $order, private $callback)
+    protected string $output = '';
+    private \Closure $callback;
+    private int $processId;
+
+    public function __construct(callable $callback, private int $order)
     {
+        $this->callback = \Closure::fromCallable($callback);
     }
 
-    public static function new(int $order, callable $callback): self
+    private function execute(): string
     {
-        return new self($order, $callback);
-    }
+        // call tasks and get response
+        $response = ($this->callback)();
 
-    private function execute(): mixed
-    {
+        // check if response is a string
+        if (is_string($response)) {
+            return base64_encode($response);
+        }
+
         // return response
-        return ($this->callback)();
+        return base64_encode($this->token . serialize($response));
     }
 
-    public function executeChild(SocketConnection $connection)
+    public function executeChild(SocketConnection $connection): void
     {
         // call closure
         $response = $this->execute();
 
         // make valid response for sending with socket
-        $response = is_string($response) ? $response : $this->token . serialize($response);
+        $response = is_string($response) ? $response : serialize($response);
 
         // write to parent and close socket
         $connection->write($response)->close();
     }
 
-    public function finishTask(array &$runningTasks): string
+    public function output()
     {
-        // get reponse from callback
-        $response = '';
-
-        // loop trough generator and get all ouputs
+        // loop trough generator and get all outputs
         foreach ($this->getConnection()->read() as $output) {
-            $response .= $output;
+            $this->output .= $output;
         }
 
         // close connection to child
         $this->getConnection()->close();
 
+        // base64 decode output
+        $output = base64_decode($this->output);
+
         // check if response is serialized
-        if (str_starts_with($response, $this->token)) {
-            $response = unserialize(
-                substr(
-                    $response,
-                    strlen($this->token)
-                )
+        if (str_starts_with($output, $this->token)) {
+            // unserialize data from websocket data
+            $output = unserialize(
+                substr($output, strlen($this->token))
             );
         }
 
-        // remove task from tasks 
-        unset($runningTasks[$this->getOrder()]);
-
         // return response
-        return $response;
+        return $output;
     }
 
     public function runTask()
@@ -75,14 +80,8 @@ class Task
 
         // check if is in child task
         if ($processId === 0) {
-            // close child
-            $socketToChild->close();
-
-            // call closure
-            $this->executeChild($socketToParent);
-
-            // exit
-            exit;
+            // run child task
+            $this->runChildTask($socketToChild, $socketToParent);
         }
 
         // close socket connection
@@ -95,8 +94,22 @@ class Task
         return $this->setProcessId($processId);
     }
 
+    private function runChildTask(SocketConnection $socketToChild, SocketConnection $socketToParent)
+    {
+        // close child
+        $socketToChild->close();
+
+        // call closure
+        $this->executeChild($socketToParent);
+
+        // exit
+        exit;
+    }
+
     public function isFinished(): bool
     {
+        $this->output .= $this->connection->read()->current();
+
         // check if status is equals to processId
         $status = pcntl_waitpid($this->getProcessId(), $status, WNOHANG | WUNTRACED);
 
