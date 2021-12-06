@@ -57,7 +57,7 @@ function clearInjections(string|array|null $value): string|array|null
         },$value);
     }
 
-    return htmlspecialchars(trim($value), ENT_QUOTES, 'utf-8');
+    return htmlspecialchars(trim($value));
 }
 
 /**
