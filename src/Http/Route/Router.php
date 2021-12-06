@@ -2,6 +2,7 @@
 
 namespace Framework\Http\Route;
 
+use Exception;
 use Framework\DependencyInjectionContainer\DependencyInjectionContainer;
 use Framework\Http\Request;
 
@@ -61,6 +62,14 @@ class Router
      */
     protected Request $request;
 
+    /**
+     * @var callable
+     */
+    private $onMiddlewareFailCallback;
+
+    /**
+     * @throws \ReflectionException
+     */
     public function __construct()
     {
         $this->request = request();
@@ -71,6 +80,7 @@ class Router
      * @param array $route
      * @param array $data
      * @return void
+     * @throws Exception
      */
 
     protected function handleRouteAction(array $route, array $data = []): void
@@ -85,18 +95,18 @@ class Router
         if (is_array($action)) {
             // check if information is correct
             if (!isset($action[0], $action[1]) || !is_string($action[0]) || !is_string($action[1])) {
-                throw new \Exception("Your array must have as first item an class and as seconde item function name", 1);
+                throw new Exception("Your array must have as first item an class and as seconde item function name", 1);
             }
             // is no class was found throw error
             if (!class_exists($action[0])) {
-                throw new \Exception("Class couldn't be found", 1);
+                throw new Exception("Class couldn't be found", 1);
             }
             // make instance of class
             $class = new $action[0]();
 
             // check if function exists
             if (!method_exists($class, $action[1])) {
-                throw new \Exception("Method couldn't be found", 1);
+                throw new Exception("Method couldn't be found", 1);
             }
 
             // call method with dependencies
@@ -107,7 +117,7 @@ class Router
 
         // check if action is and closure
         if (!$action instanceof \Closure) {
-            throw new \Exception("Action must be an instanceof and \Closure or and [Test::class,'index']", 1);
+            throw new Exception("Action must be an instanceof and \Closure or and [Test::class,'index']", 1);
         }
 
         // call function
@@ -224,9 +234,11 @@ class Router
      * @param string $route
      * @param array $params
      * @param array $wrongParams
+     * @return string
+     * @throws Exception
      */
 
-    protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = [])
+    protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = []): string
     {
         // check if there are dynamic params in route url
         if (!preg_match('/' . $this->routeParamPattern . '/', $route)) {
@@ -236,7 +248,7 @@ class Router
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new \Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams), 1);
+            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams), 1);
         }
 
         // loop trough all params and replace params
@@ -255,11 +267,47 @@ class Router
         return $this->replaceDynamicRoute($route, [], $params);
     }
 
+    /**
+     * @param callable $callback
+     * @return Router
+     */
+    public function onMiddlewareFail(callable $callback): self
+    {
+        $this->onMiddlewareFailCallback = $callback;
+
+        return $this;
+    }
+
+    /**
+     * This method will handle when an middleware fails
+     */
+
+    private function handleOnMiddlewareFail(array $failedRoute): void
+    {
+        // check if there is a middle fallback callback
+        if(isset($this->onMiddlewareFailCallback)){
+            // return response code
+            response()->code(403);
+
+            // call on middleware fail callback
+            call_user_func($this->onMiddlewareFailCallback, ...DependencyInjectionContainer::handleClosure(
+                $this->onMiddlewareFailCallback,
+                [ 'route' => $failedRoute ]
+            ));
+
+            // stop other actions
+            response()->exit();
+        }else{
+            // send forbidden response code
+            response()->code(403)->view('responseView')->exit();
+        }
+    }
+
 
     /**
      * get route by current request url
      * @return boolean
-     * @throws \Exception
+     * @throws Exception
      */
 
     public function init()
@@ -289,15 +337,15 @@ class Router
 
                 // check if middleware is valid
                 if (!Middleware::validate($route['middlewares'])) {
-                    // send forbidden response code
-                    response()->code(403)->view('responseView')->exit();
+                    // handle response when the middleware was not success
+                    $this->handleOnMiddlewareFail($route);
                 }
-
-                // call needed function
-                $this->handleRouteAction($route);
 
                 // set currentRoute
                 $this->currentRoute = $route;
+
+                // call needed function
+                $this->handleRouteAction($route);
 
                 // break foreach
                 break;
@@ -307,11 +355,14 @@ class Router
                     continue;
                 }
 
-                // check if de route has middlewares and check if there are passed
+                // check if middleware is valid
                 if (!Middleware::validate($route['middlewares'])) {
-                    // send forbidden response code
-                    response()->code(403)->view('responseView')->exit();
+                    // handle response when the middleware was not success
+                    $this->handleOnMiddlewareFail($route);
                 }
+
+                // set currentRoute
+                $this->currentRoute = $route;
 
                 // call needed function
                 $this->handleRouteAction($route, $data);
