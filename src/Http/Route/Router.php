@@ -259,6 +259,7 @@ class Router
     /**
      * get route by current request url
      * @return boolean
+     * @throws \Exception
      */
 
     public function init()

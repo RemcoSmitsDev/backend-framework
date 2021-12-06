@@ -6,65 +6,28 @@ use Framework\Interfaces\Http\RoutesInterface;
 
 class Route extends Router implements RoutesInterface
 {
-    /**
-     * GET Route
-     * @param string $uri
-     * @param \Closure|array $action
-     * @return self
-     */
-
-    public function get(string $uri, \Closure|array $action): self
-    {
-        return $this->match('GET|HEAD', $uri, $action);
-    }
+    private array $allowedMethods = [
+        'get',
+        'post',
+        'put',
+        'patch',
+        'delete'
+    ];
 
     /**
-     * POST Route
-     * @param string $uri
-     * @param \Closure|array $action
+     * Call possible request route methods
+     * @param string $name
+     * @param array $arguments
      * @return self
+     * @throws \Exception
      */
-
-    public function post(string $uri, \Closure|array $action): self
+    public function __call(string $name, array $arguments)
     {
-        return $this->match('POST', $uri, $action);
-    }
+        if(!in_array($name,$this->allowedMethods)){
+           throw new \Exception('The method: "'.$name.'" is not an valid method!');
+        }
 
-
-    /**
-     * PUT Route
-     * @param string $uri
-     * @param \Closure|array $action
-     * @return self
-     */
-
-    public function put(string $uri, \Closure|array $action): self
-    {
-        return $this->match('PUT', $uri, $action);
-    }
-
-    /**
-     * patch Route
-     * @param string $uri
-     * @param \Closure|array $action
-     * @return self
-     */
-
-    public function patch(string $uri, \Closure|array $action): self
-    {
-        return $this->match('PATCH', $uri, $action);
-    }
-
-    /**
-     * DELETE Route
-     * @param string $uri
-     * @param \Closure|array $action
-     * @return self
-     */
-
-    public function delete(string $uri, \Closure|array $action): self
-    {
-        return $this->match('DELETE', $uri, $action);
+        return $this->match(strtoupper($name),...$arguments);
     }
 
     /**
