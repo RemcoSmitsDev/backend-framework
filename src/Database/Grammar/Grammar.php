@@ -1,18 +1,19 @@
 <?php
 
-namespace Framework\Database;
+namespace Framework\Database\Grammar;
 
-class QueryBuilder
+use Framework\Database\QueryBuilder\QueryBuilder;
+use Framework\Database\Database;
+
+class Grammar
 {
-    use DatabaseHelpers;
-
     /**
      * function selectToSql
-     * @param Database $query
+     * @param QueryBuilder $query
      * @return array
      */
 
-    protected function selectToSql(Database $query): array
+    public function selectToSql(QueryBuilder $query): array
     {
         // format select columns into string
         $select = implode(', ', $query->columns);
@@ -20,31 +21,31 @@ class QueryBuilder
         // return select query
         return [
             "SELECT {$select} FROM `{$query->from}`" . $this->format($query),
-            $query->flattenArray($this->bindings)
+            $query->flattenArray($query->bindings)
         ];
     }
 
     /**
      * function insertToSql
-     * @param Database $query
+     * @param QueryBuilder $builder
      * @param array $insertData
      * @return array
      */
 
-    protected function insertToSql(Database $query, array $insertData): array
+    protected function insertToSql(QueryBuilder $builder, array $insertData): array
     {
-        // check if array is multidymensinal
-        $isMultidymential = count($insertData) != count($insertData, COUNT_RECURSIVE);
+        // check if array is multidimensional
+        $isMultidimensional = count($insertData) != count($insertData, COUNT_RECURSIVE);
 
         // keep track of data
         $bindData = [];
 
-        // check if insertData is multidymential
-        if ($isMultidymential) {
+        // check if insertData is multidimensional
+        if ($isMultidimensional) {
             // keep track of value placeholders
             $valuePlaceholders = '';
 
-            // merge datainto one layer
+            // merge data into one layer
             foreach ($insertData as $value) {
                 // merge data into one layer
                 $bindData = array_merge($bindData, array_values($value));
@@ -65,26 +66,26 @@ class QueryBuilder
         }
 
         // make string of column names
-        $columns = implode('`,`', array_keys($isMultidymential ? $insertData[0] : $insertData));
+        $columns = implode('`,`', array_keys($isMultidimensional ? $insertData[0] : $insertData));
 
         // trim ( AND ) from begin and end for when there are to much wrapping
         $valuePlaceholders = trim($valuePlaceholders, '()');
 
         // return insert query
         return [
-            "INSERT INTO `{$query->from}` (`{$columns}`) VALUES ({$valuePlaceholders})",
-            $query->flattenArray($insertData)
+            "INSERT INTO `{$builder->from}` (`{$columns}`) VALUES ({$valuePlaceholders})",
+            $builder->flattenArray($insertData)
         ];
     }
 
     /**
      * function updateToSql
-     * @param Database $query
+     * @param QueryBuilder $builder
      * @param array $updateData
      * @return array
      */
 
-    protected function updateToSql(Database $query, array $updateData)
+    protected function updateToSql(QueryBuilder $builder, array $updateData): array
     {
         // keep track of bind data
         $bindData = array_values($updateData);
@@ -109,54 +110,54 @@ class QueryBuilder
 
         // return query and bindings
         return [
-            "UPDATE `{$query->from}` SET {$setPlaceholders}" . $this->format($query),
-            array_merge($bindData, $query->flattenArray($query->bindings))
+            "UPDATE `{$builder->from}` SET {$setPlaceholders}" . $this->format($builder),
+            array_merge($bindData, $builder->flattenArray($builder->bindings))
         ];
     }
 
     /**
      * function deleteToSql
-     * @param Database $query
+     * @param QueryBuilder $builder
      * @return array
      */
 
-    protected function deleteToSql(Database $query)
+    protected function deleteToSql(QueryBuilder $builder): array
     {
         // return query and bindings
         return [
-            "DELETE FROM `{$query->from}`" . $this->format($query),
-            $query->flattenArray($query->bindings)
+            "DELETE FROM `{$builder->from}`" . $this->format($builder),
+            $builder->flattenArray($builder->bindings)
         ];
     }
 
     /**
      * function format
-     * @param Database $query
+     * @param QueryBuilder $builder
      * @return string
      */
 
-    protected function format(Database $query): string
+    protected function format(QueryBuilder $builder): string
     {
         // get formatted joins
-        $joins = $this->formatJoins($query->joins);
+        $joins = $this->formatJoins($builder);
 
         // format where statement
-        $whereClause = $this->formatWhere($query->wheres);
+        $whereClause = $this->formatWhere($builder, $builder->wheres);
 
         // add WHERE to statement if not empty
         $whereClause = !empty($whereClause) ? " WHERE {$whereClause}" : '';
 
         // format group by
-        $groupBy = !empty($query->groups) ? ' GROUP BY ' . $this->formatGroupBy($query->groups) : '';
+        $groupBy = !empty($builder->groups) ? ' GROUP BY ' . $this->formatGroupBy($builder->groups) : '';
 
         // format order by
-        $orderBy = !empty($query->orders) ? ' ORDER BY ' . $this->formatOrderBy($query->orders) : '';
+        $orderBy = !empty($builder->orders) ? ' ORDER BY ' . $this->formatOrderBy($builder->orders) : '';
 
         // format limit
-        $limit = isset($query->limit) ? " LIMIT {$query->limit}" : '';
+        $limit = isset($builder->limit) ? " LIMIT {$builder->limit}" : '';
 
         // format offset
-        $offset = isset($query->offset) ? " OFFSET {$query->offset}" : '';
+        $offset = isset($builder->offset) ? " OFFSET {$builder->offset}" : '';
 
         // return query and bindData
         return $joins . $whereClause . $groupBy . $orderBy . $limit . $offset;
@@ -202,19 +203,19 @@ class QueryBuilder
 
     /**
      * function formatJoins
-     * @param array $joins
+     * @param QueryBuilder $builder
      * @return string
      */
 
-    public function formatJoins(array $joins): string
+    public function formatJoins(QueryBuilder $builder): string
     {
         // keep track of statement
         $joinStatement = '';
 
-        // loop trough all join classes
-        foreach ($joins as $join) {
+        // loop through all join classes
+        foreach ($builder->joins as $join) {
             // add statement to statement string
-            $joinStatement .= " {$join->type} JOIN `{$join->table}` ON " . $this->formatWhere($join->wheres);
+            $joinStatement .= " {$join->type} JOIN `{$join->table}` ON " . $this->formatWhere($builder, $join->wheres);
         }
 
         // return statement string
@@ -223,14 +224,16 @@ class QueryBuilder
 
     /**
      * function formatSubSelect
+     * @param QueryBuilder $builder
+     * @param array $whereClause
      * @param array $where
      * @return array
      */
 
-    public function formatSubSelect(array $whereClause, array $where): array
+    public function formatSubSelect(QueryBuilder $builder, array $whereClause, array $where): array
     {
         // get where clause
-        $_whereClause = $this->formatWhere($where);
+        $_whereClause = $this->formatWhere($builder, $where);
 
         // format where clause
         if (!empty($whereClause)) {
@@ -243,13 +246,14 @@ class QueryBuilder
         return $whereClause;
     }
 
-    /** 
+    /**
      * function formatWhere
+     * @param QueryBuilder $builder
      * @param array $where
      * @return string
      */
 
-    protected function formatWhere(array $where): string
+    protected function formatWhere(QueryBuilder $builder, array $where): string
     {
         // keep track of where clause
         $whereClause = [];
@@ -260,19 +264,19 @@ class QueryBuilder
             'normal'
         ];
 
-        // koop trough all where statements
+        // loop through all where statements
         foreach ($where as $value) {
             // check if key is string (column name)
             if (isset($value[0])) {
-                // merge sub select with whereclause
-                $whereClause = array_merge($whereClause, $this->formatSubSelect($whereClause, $value));
+                // merge sub select with where clause
+                $whereClause = array_merge($whereClause, $this->formatSubSelect($builder, $whereClause, $value));
 
                 // go to the next on in the array
                 continue;
             }
 
             // get type from where value
-            $type = isset($value['type']) ? $value['type'] : 'normal';
+            $type = $value['type'] ?? 'normal';
 
             // default placeholder
             $placeholder = '?';
@@ -288,7 +292,7 @@ class QueryBuilder
             } elseif ($type === 'nested') {
                 $whereClause[] = '(' . trim($value['query']) . ')';
             } elseif ($type === 'column') {
-                $placeholder = $this->formatColumnNames($value['value']);
+                $placeholder = $builder->formatColumnNames($value['value']);
             }
 
             // check if can continue
@@ -298,11 +302,11 @@ class QueryBuilder
 
             // make column format
             if (!empty($column) && !strpos($column, '.')) {
-                $column = '  ' . $this->from . '.' . $column;
+                $column = '  ' . $builder->from . '.' . $column;
             }
 
             // format columns
-            $column = $this->formatColumnNames($column);
+            $column = $builder->formatColumnNames($column);
 
             // add to where clause
             $whereClause[] = strtoupper($value['boolean'] ?? '') . $column . ' ' . ($value['operator'] ?? '') . ' ' . $placeholder;

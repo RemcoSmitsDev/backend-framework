@@ -5,8 +5,8 @@ namespace Framework\Http;
 class Request
 {
     private string $method;
-    private object $getData;
-    private object $postData;
+    private ?object $getData;
+    private ?object $postData;
 
     public object $requestData;
 
@@ -33,10 +33,11 @@ class Request
 
     /**
      * This function will return value of class property is exists
+     * @param string $name
      * @return mixed
      */
 
-    public function __get($name): mixed
+    public function __get(string $name): mixed
     {
         return property_exists($this->requestData, $name) ? $this->requestData->{$name} : null;
     }
@@ -120,7 +121,7 @@ class Request
     public function uri(): string
     {
         // krijg de huidige url zonden get waardes
-        return parse_url(rawurldecode($this->url()))['path'];
+        return parse_url(rawurldecode($this->url()),PHP_URL_PATH);
     }
 
     /**
@@ -130,7 +131,7 @@ class Request
 
     public function query(): string
     {
-        return parse_url(rawurldecode($this->url()))['query'] ?? '';
+        return parse_url(rawurldecode($this->url()),PHP_URL_QUERY) ?? '';
     }
 
     /**
@@ -146,11 +147,11 @@ class Request
 
     /**
      * This function will return all headers of one header based on the findHeader param
-     * @param string $findHeader
+     * @param string|null $findHeader
      * @return array|string|null
      */
 
-    public function headers(string $findHeader = null): array|string|null
+    public function headers(?string $findHeader = null): array|string|null
     {
         // keep track of all headers
         $headers = [];

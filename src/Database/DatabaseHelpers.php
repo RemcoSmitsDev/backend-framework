@@ -2,10 +2,26 @@
 
 namespace Framework\Database;
 
-use Framework\Database\Connection\Connection;
+use \Framework\Database\QueryBuilder\QueryBuilder;
+use Exception;
+use Closure;
 
 trait DatabaseHelpers
 {
+    /**
+     * valid query types
+     * @var array
+     */
+
+    private array $validTypes = [
+        'insert',
+        'update',
+        'select',
+        'delete',
+        'truncate',
+        'drop',
+    ];
+
     /**
      * function flattenArray
      * @param array $array
@@ -37,7 +53,7 @@ trait DatabaseHelpers
      * @return array
      */
 
-    protected function selectFormat($selectColumn): array
+    protected function selectFormat(mixed $selectColumn): array
     {
         // keep track of select columns
         $selectColumns = [];
@@ -91,15 +107,15 @@ trait DatabaseHelpers
 
     /**
      * function whereClosure
-     * @param \Closure $column
+     * @param Closure $column
      * @param string $boolean
-     * @return self
+     * @return DatabaseHelpers|QueryBuilder
      */
 
-    protected function whereClosure(\Closure $column, string $boolean): self
+    protected function whereClosure(Closure $column, string $boolean): self
     {
         // call closure with new instance of database
-        $column($query = new static($this->connection));
+        $column($query = new QueryBuilder($this->connection));
 
         // check if there is an where statement
         if (isset($query->wheres[0])) {
@@ -122,16 +138,17 @@ trait DatabaseHelpers
 
     /**
      * function createSubSelect
-     * @param string|\Closure|Database $query
+     * @param string|Closure|Database $query
      * @return array
+     * @throws Exception
      */
 
-    protected function createSubSelect(string | \Closure | Database $query): array
+    protected function createSubSelect(string | Closure | Database $query): array
     {
         // check if query is instance of \Closure
-        if ($query instanceof \Closure) {
+        if ($query instanceof Closure) {
             // make instance of DatabaseClass
-            $query($query = new static($this->connection));
+            $query($query = new QueryBuilder($this->connection));
 
             // merge bindings
             foreach ($query->bindings as $key => $binding) {
@@ -144,12 +161,13 @@ trait DatabaseHelpers
     }
 
     /**
-     * functon parseSub
+     * function parseSub
      * @param mixed $query
      * @return array
+     * @throws Exception
      */
 
-    protected function parseSub($query): array
+    protected function parseSub(mixed $query): array
     {
         if ($query instanceof Database) {
             // return formatted query string with bindings
@@ -158,66 +176,60 @@ trait DatabaseHelpers
             // return query string with empty bindings
             return [$query, []];
         } else {
-            throw new \Exception("The sub query must be an instanceof Database or an string", 1);
+            throw new Exception("The sub query must be an instanceof Database or an string", 1);
         }
     }
 
     /**
      * function handleExecution
      * @param string $query
-     * @param array $bindData
+     * @param ?array $bindData
+     * @param string|null $type
+     * @return bool
+     * @throws Exception
      */
 
-    protected function handleExecution(string $query, ?array $bindData, string &$type = null)
+    protected function handleExecution(string $query, ?array $bindData, string &$type = null): mixed
     {
         // keep track of return value
         $returnValue = null;
 
         // get type
-        preg_match('/^\s*\b\w+\b/i', $query, $match);
+        $type = $this->getQueryType($query);
 
         // check if query log was on
         $this->logSqlQuery($query, $bindData);
 
-        // check if there was an type found
-        if (empty($match) || !in_array(strtolower($match[0]), $this->validTypes)) {
-            throw new \Exception('You have passed an non valid database query. Valid types: (' . implode(', ', $this->validTypes) . ')', 1);
-        }
-
         // check if connection not already was started
-        if ($this->connection instanceof Connection) {
-            // try to start connection
-            $this->connection = $this->connection->start();
-        }
-
-        // get type from match
-        $type = strtolower($match[0]);
+        $this->connection->start();
 
         // check if has already been executed
         if ($this->hasBeenExecuted) {
             // return insert id
             if ($type === 'insert') {
                 // get insert id
-                $returnValue = $this->connection->lastInsertId();
+                $returnValue = $this->connection->insertId();
             } elseif ($type === 'select') {
                 // return statement
-                $returnValue = $this->statement;
+                $returnValue = $this->connection->statement;
             }
 
-            // close connection
-            $this->connection = null;
+            // reset settings
+            $this->reset();
 
             // execution was done(not failures)
             return is_null($returnValue) ? true : $returnValue;
         }
 
         // prepare database query
-        $this->statement = $this->connection->prepare($query);
+        $this->connection->prepare($query);
 
         // catch when goes wrong
         try {
             // try to execute insert query
-            $this->statement->execute(array_values($bindData) ?: null);
+            $this->connection->execute(
+                array_values($bindData) ?: null
+            );
 
             // update has been executed to true
             $this->hasBeenExecuted = true;
@@ -225,14 +237,14 @@ trait DatabaseHelpers
             // return insert id
             if ($type === 'insert') {
                 // get insert id
-                $returnValue = $this->connection->lastInsertId();
+                $returnValue = $this->connection->insertId();
             } elseif ($type === 'select') {
                 // return statement
-                $returnValue = $this->statement;
+                $returnValue = $this->connection->statement;
             }
 
-            // close connection
-            $this->connection = null;
+            // reset settings
+            $this->reset();
 
             // execution was done(not failures)
             return is_null($returnValue) ? true : $returnValue;
@@ -243,13 +255,16 @@ trait DatabaseHelpers
             // update has been executed to true
             $this->hasBeenExecuted = true;
 
-            // close connection
-            $this->connection = null;
+            // echo error message
+            if(!defined('IS_DEVELOPMENT_MODE') || IS_DEVELOPMENT_MODE){
+                echo $error->getMessage();
+            }
 
-            echo $error->getMessage();
+            // reset settings
+            $this->reset();
 
             // return value based on query type
-            return $type == 'select' ? $this->statement : false;
+            return $type == 'select' ? $this->connection->statement : false;
         }
     }
 
@@ -257,6 +272,7 @@ trait DatabaseHelpers
      * function getQueryType
      * @param string $query
      * @return string
+     * @throws Exception
      */
 
     protected function getQueryType(string $query): string
@@ -266,7 +282,7 @@ trait DatabaseHelpers
 
         // check if there was an type found
         if (empty($match) || !in_array(strtolower($match[0]), $this->validTypes)) {
-            throw new \Exception("You have passed an non valid database query", 1);
+            throw new Exception("You have passed an non valid database query", 1);
         }
 
         // get type from match
@@ -277,6 +293,7 @@ trait DatabaseHelpers
      * function logSqlQuery
      * @param string $query
      * @param array $bindData
+     * @return false|void
      */
 
     private function logSqlQuery(string $query, array $bindData)
@@ -300,9 +317,9 @@ trait DatabaseHelpers
         echo $query . ' --- bindings: (' . implode(',', $formattedBindData) . ')<br>';
     }
 
-    public function mergeBindings(Database $mainQuery, Database $mergeQuery)
+    public function mergeBindings(QueryBuilder $mainQuery, QueryBuilder $mergeQuery)
     {
-        // loop trough all bindings
+        // loop through all bindings
         foreach ($mergeQuery->bindings as $key => $binding) {
             // merge binding
             $mainQuery->bindings[$key] = array_merge($mainQuery->bindings[$key], $binding);

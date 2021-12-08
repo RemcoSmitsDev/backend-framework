@@ -1,8 +1,10 @@
 <?php
 
-namespace Framework\Database;
+namespace Framework\Database\JoinClause;
 
-class JoinClause extends Database
+use Framework\Database\QueryBuilder\QueryBuilder;
+
+class JoinClause extends QueryBuilder
 {
     /**
      * type of join query ( INNER | LEFT JOIN | RIGHT JOIN | CROSS JOIN)
@@ -20,19 +22,19 @@ class JoinClause extends Database
 
     /**
      * reference of group/parent query
-     * @var Database
+     * @var QueryBuilder
      */
 
-    protected Database $query;
+    protected QueryBuilder $query;
 
     /**
      * function __construct
-     * @param Database $query
+     * @param QueryBuilder $query
      * @param string $table
      * @param string $type
      */
 
-    public function __construct(Database $query, string $table, string $type)
+    public function __construct(QueryBuilder $query, string $table, string $type)
     {
         $this->query = $query;
         $this->table = $table;
@@ -45,7 +47,7 @@ class JoinClause extends Database
      * @param string $operator
      * @param string $value
      * @param string $boolean
-     * @return Database
+     * @return JoinClause
      */
 
     public function on(string $first, string $operator, string $value, string $boolean = 'AND'): self
@@ -55,11 +57,11 @@ class JoinClause extends Database
     }
 
     /**
-     * functio orOn
+     * function orOn
      * @param string $first
      * @param string $operator
      * @param string $value
-     * @return Database
+     * @return JoinClause
      */
 
     public function orOn(string $first, string $operator, string $value): self

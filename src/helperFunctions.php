@@ -43,17 +43,17 @@ function randomString(int $length = 15): string
 }
 
 /**
- * @param string|array|null $value
- * @return string|array|null
+ * @param string|array $value
+ * @return string|array
  */
 
-function clearInjections(string|array|null $value): string|array|null
+function clearInjections(string|array $value): string|array
 {
     // kijk of input value een array is
     if (is_array($value)) {
         // ga door alle keys/values heen
-        return array_map(function ($val){
-            return clearInjections($val);
+        return array_map(function ($value){
+            return clearInjections($value);
         },$value);
     }
 
@@ -61,11 +61,11 @@ function clearInjections(string|array|null $value): string|array|null
 }
 
 /**
- * @param ...$values
- * @return false|void
+ * @param mixed ...$values
+ * @return bool
  */
 
-function dd(...$values)
+function dd(mixed ...$values): bool
 {
     // check if is not development
     if (!IS_DEVELOPMENT_MODE) {
@@ -77,13 +77,17 @@ function dd(...$values)
         print_r($value);
     }
     echo "</pre>";
+
+    return true;
 }
 
 /**
+ * @param class-string<object>|object $class
+ * @return string
  * @throws ReflectionException
  */
 
-function getClassName($class): string
+function getClassName(object|string $class): string
 {
     $class = new \ReflectionClass($class);
 
@@ -140,11 +144,11 @@ function redirect(string $path, int $responseCode = 302, bool $secure = null): R
 }
 
 /**
- * @return Content
+ * @return object|null
  * @throws ReflectionException
  */
 
-function content(): Content
+function content(): object|null
 {
     global $content;
 
@@ -154,10 +158,11 @@ function content(): Content
 }
 
 /**
+ * @return object|null
  * @throws ReflectionException
  */
 
-function seo(): Seo
+function seo(): object|null
 {
     global $seo;
 
@@ -167,10 +172,11 @@ function seo(): Seo
 }
 
 /**
+ * @return object|null
  * @throws ReflectionException
  */
 
-function route(): Route
+function route(): object|null
 {
     global $route;
 
@@ -180,10 +186,11 @@ function route(): Route
 }
 
 /**
+ * @return object|null
  * @throws ReflectionException
  */
 
-function cache(): Cache
+function cache(): object|null
 {
     global $cache;
 
@@ -193,10 +200,12 @@ function cache(): Cache
 }
 
 /**
+ * @param Object|string|null $class
+ * @return object|null $class>
  * @throws ReflectionException
  */
 
-function app(Object|string $class = null): mixed
+function app(Object|string $class = null): object|null
 {
     global $app;
 
