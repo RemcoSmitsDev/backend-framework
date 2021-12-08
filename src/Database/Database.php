@@ -4,8 +4,8 @@ namespace Framework\Database;
 
 use Framework\Database\QueryBuilder\QueryBuilder;
 use Framework\Database\Connection\Connection;
-use mysql_xdevapi\Exception;
 use ReflectionException;
+use Exception;
 
 class Database extends QueryBuilder
 {

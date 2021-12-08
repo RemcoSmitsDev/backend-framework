@@ -19,6 +19,11 @@ class BaseModel extends Database
             strtolower(get_class($this))
         );
 
+        // when ending with y replace with ie for the plural
+        if(str_ends_with($table,'y')){
+            $table = substr($table, 0, -1).'ie';
+        }
+
         // set table name
         $this->table($table.'s');
 
