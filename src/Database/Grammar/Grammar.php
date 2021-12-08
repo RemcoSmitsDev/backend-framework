@@ -12,7 +12,6 @@ class Grammar
      * @param QueryBuilder $query
      * @return array
      */
-
     public function selectToSql(QueryBuilder $query): array
     {
         // format select columns into string
@@ -31,7 +30,6 @@ class Grammar
      * @param array $insertData
      * @return array
      */
-
     protected function insertToSql(QueryBuilder $builder, array $insertData): array
     {
         // check if array is multidimensional
@@ -84,7 +82,6 @@ class Grammar
      * @param array $updateData
      * @return array
      */
-
     protected function updateToSql(QueryBuilder $builder, array $updateData): array
     {
         // keep track of bind data
@@ -120,7 +117,6 @@ class Grammar
      * @param QueryBuilder $builder
      * @return array
      */
-
     protected function deleteToSql(QueryBuilder $builder): array
     {
         // return query and bindings
@@ -135,7 +131,6 @@ class Grammar
      * @param QueryBuilder $builder
      * @return string
      */
-
     protected function format(QueryBuilder $builder): string
     {
         // get formatted joins
@@ -168,10 +163,9 @@ class Grammar
      * @param array $groups
      * @return string
      */
-
     private function formatGroupBy(array $groups): string
     {
-        // loop trough all groups
+        // loop through all groups
         $groups = array_map(function ($group) {
             return preg_replace('/([A-z0-9_\-]+)/', '`$1`', $group);
         }, $groups);
@@ -185,7 +179,6 @@ class Grammar
      * @param array $orders
      * @return string
      */
-
     private function formatOrderBy(array $orders): string
     {
         // keep track of orders
@@ -206,7 +199,6 @@ class Grammar
      * @param QueryBuilder $builder
      * @return string
      */
-
     public function formatJoins(QueryBuilder $builder): string
     {
         // keep track of statement
@@ -229,7 +221,6 @@ class Grammar
      * @param array $where
      * @return array
      */
-
     public function formatSubSelect(QueryBuilder $builder, array $whereClause, array $where): array
     {
         // get where clause
@@ -252,7 +243,6 @@ class Grammar
      * @param array $where
      * @return string
      */
-
     protected function formatWhere(QueryBuilder $builder, array $where): string
     {
         // keep track of where clause

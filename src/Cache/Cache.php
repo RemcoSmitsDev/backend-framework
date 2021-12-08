@@ -2,7 +2,10 @@
 
 namespace Framework\Cache;
 
+use Closure;
 use DateTime;
+use Exception;
+use ReflectionException;
 
 class Cache
 {
@@ -16,8 +19,8 @@ class Cache
      * @param int $lifeTime
      * @param string $type (public | private)
      * @return self
-     **/
-
+     * @throws ReflectionException
+     */
     public function http(string $identifier, int $lifeTime = 3600, string $type = 'public'): self
     {
         // get debug trace
@@ -76,8 +79,9 @@ class Cache
      * @param int $lifeTime
      * @param int $lastModified
      * @return array
+     * @throws ReflectionException
+     * @throws Exception
      */
-
     private function holdCurrentCache(int $lifeTime, int $lastModified): array
     {
         // check if there exist and cache
@@ -120,13 +124,12 @@ class Cache
 
     /**
      * cache/get cached data
-     * @param string $identifier(unique identifier)
-     * @param \Closure $closure
+     * @param string $identifier (unique identifier)
+     * @param Closure $closure
      * @param int $lifeTime = 3600
      * @return mixed
      **/
-
-    public function data(string $identifier, \Closure $closure, int $lifeTime = 3600): mixed
+    public function data(string $identifier, Closure $closure, int $lifeTime = 3600): mixed
     {
         // krijg informatie terug van cache
         $cacheInfo = $this->getCacheItemInfo($identifier);
@@ -149,7 +152,7 @@ class Cache
 
     /**
      * get single cache file if exists
-     * @param string $identifier(unique identifier)
+     * @param string $identifier (unique identifier)
      * @return bool|object
      **/
 
@@ -164,10 +167,10 @@ class Cache
 
     /**
      * removes cache file
-     * @param string $identifier(unique identifier)
+     * @param string $identifier (unique identifier)
+     * @param bool $isFlushed
      * @return void
-     **/
-
+     */
     public function remove(string $identifier, bool $isFlushed = false): void
     {
         // krijg cache infor bij identifier
@@ -187,10 +190,9 @@ class Cache
 
     /**
      * gets inforamtion cache information by identifier
-     * @param string $identifier(unique identifier)
+     * @param string $identifier (unique identifier)
      * @return object
      **/
-
     private function getCacheItemInfo(string $identifier): object
     {
         // generate hash for identifier
@@ -231,10 +233,9 @@ class Cache
     /**
      * This function will check if the lifetime of an specific cache item is not expired
      * @param string $fileName
-     * @return bool|string
+     * @return bool|string|null
      */
-
-    public function checkCacheItemLifeTime(string $fileName): bool|string
+    public function checkCacheItemLifeTime(string $fileName): bool|string|null
     {
         // get cache item
         $cacheItemData = explode(';', file_get_contents($this->cacheFolderPath . $fileName), 2);
@@ -259,10 +260,9 @@ class Cache
 
     /**
      * checkes if cacheFiles are still valid and cacheConfig is up to date
-     * @return boolean|\DateTime
+     * @return string
      **/
-
-    public function flushEndOfLiveTimeCacheItems()
+    public function flushEndOfLiveTimeCacheItems(): string
     {
         // loop through alle cache items and check if the lifetime didn't passed
         // wrong files to filter out
@@ -287,7 +287,6 @@ class Cache
      * @param string $identifier
      * @return string
      **/
-
     private function generateFileName(string $identifier): string
     {
         return md5($identifier);
@@ -297,7 +296,6 @@ class Cache
      * This method will delete all cache files
      * @return self
      */
-
     public function flush(): self
     {
         // check if cache location exists

@@ -4,59 +4,55 @@ namespace Framework\Content;
 
 class Seo
 {
-  /**
-   * @var string $description Keeps track of description
-   */
-  public string $description = '';
+    /**
+     * @var string $description Keeps track of description
+     */
+    public string $description = '';
 
-  /**
-   * @var string $imageURL Keeps track of image url
-   */
-  public string $imageURL = '';
+    /**
+     * @var string $imageURL Keeps track of image url
+     */
+    public string $imageURL = '';
 
-  /**
-   * Set the description for seo tags
-   * @param string $description
-   * @return self
-   */
+    /**
+     * Set the description for seo tags
+     * @param string $description
+     * @return self
+     */
+    public function description(string $description): self
+    {
+        $this->description = $description;
 
-  public function description(string $description): self
-  {
-    $this->description = $description;
+        return $this;
+    }
 
-    return $this;
-  }
+    /**
+     * Set image url for seo tags
+     * @param string $imageURL
+     * @return self
+     */
+    public function image(string $imageURL): self
+    {
+        $this->imageURL = $imageURL;
 
-  /**
-   * Set image url for seo tags
-   * @param string $imageURL
-   * @return self
-   */
+        return $this;
+    }
 
-  public function image(string $imageURL): self
-  {
-    $this->imageURL = $imageURL;
+    /**
+     * Returns description
+     * @return string
+     */
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
 
-    return $this;
-  }
-
-  /**
-   * Returns description
-   * @return string
-   */
-
-  public function getDescription(): string
-  {
-    return $this->description;
-  }
-
-  /**
-   * Return image url
-   * @return string
-   */
-
-  public function getImageURL(): string
-  {
-    return $this->imageURL;
-  }
+    /**
+     * Return image url
+     * @return string
+     */
+    public function getImageURL(): string
+    {
+        return $this->imageURL;
+    }
 }

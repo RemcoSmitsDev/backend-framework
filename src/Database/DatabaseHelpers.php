@@ -12,7 +12,6 @@ trait DatabaseHelpers
      * valid query types
      * @var array
      */
-
     private array $validTypes = [
         'insert',
         'update',
@@ -41,7 +40,6 @@ trait DatabaseHelpers
      * @param string $columnName
      * @return string
      */
-
     public function formatColumnNames(string $columnName): string
     {
         return preg_replace('/([A-z0-9_\-]+)\.([A-z0-9_\-]+)/', ' `$1`.`$2`', $columnName);
@@ -52,7 +50,6 @@ trait DatabaseHelpers
      * @param mixed $selectColumn
      * @return array
      */
-
     protected function selectFormat(mixed $selectColumn): array
     {
         // keep track of select columns
@@ -78,7 +75,6 @@ trait DatabaseHelpers
      * @param array $where
      * @return array
      */
-
     protected function whereFormat(array $where): array
     {
         // keep track of wheres
@@ -111,7 +107,6 @@ trait DatabaseHelpers
      * @param string $boolean
      * @return DatabaseHelpers|QueryBuilder
      */
-
     protected function whereClosure(Closure $column, string $boolean): self
     {
         // call closure with new instance of database
@@ -125,8 +120,8 @@ trait DatabaseHelpers
 
         // get wheres from sub group
         $this->wheres[] = array_merge(
-            (array) $this->wheres,
-            (array) $query->wheres
+            (array)$this->wheres,
+            (array)$query->wheres
         );
 
         // merge bindings
@@ -142,8 +137,7 @@ trait DatabaseHelpers
      * @return array
      * @throws Exception
      */
-
-    protected function createSubSelect(string | Closure | Database $query): array
+    protected function createSubSelect(string|Closure|Database $query): array
     {
         // check if query is instance of \Closure
         if ($query instanceof Closure) {
@@ -166,7 +160,6 @@ trait DatabaseHelpers
      * @return array
      * @throws Exception
      */
-
     protected function parseSub(mixed $query): array
     {
         if ($query instanceof Database) {
@@ -188,7 +181,6 @@ trait DatabaseHelpers
      * @return bool
      * @throws Exception
      */
-
     protected function handleExecution(string $query, ?array $bindData, string &$type = null): mixed
     {
         // keep track of return value
@@ -256,7 +248,7 @@ trait DatabaseHelpers
             $this->hasBeenExecuted = true;
 
             // echo error message
-            if(!defined('IS_DEVELOPMENT_MODE') || IS_DEVELOPMENT_MODE){
+            if (!defined('IS_DEVELOPMENT_MODE') || IS_DEVELOPMENT_MODE) {
                 echo $error->getMessage();
             }
 
@@ -264,7 +256,7 @@ trait DatabaseHelpers
             $this->reset();
 
             // return value based on query type
-            return $type == 'select' ? $this->connection->statement : false;
+            return $type === 'select' ? $this->connection->statement : false;
         }
     }
 
@@ -274,7 +266,6 @@ trait DatabaseHelpers
      * @return string
      * @throws Exception
      */
-
     protected function getQueryType(string $query): string
     {
         // get type
@@ -295,7 +286,6 @@ trait DatabaseHelpers
      * @param array $bindData
      * @return false|void
      */
-
     private function logSqlQuery(string $query, array $bindData)
     {
         // check if query log was on
@@ -317,6 +307,10 @@ trait DatabaseHelpers
         echo $query . ' --- bindings: (' . implode(',', $formattedBindData) . ')<br>';
     }
 
+    /**
+     * @param QueryBuilder $mainQuery
+     * @param QueryBuilder $mergeQuery
+     */
     public function mergeBindings(QueryBuilder $mainQuery, QueryBuilder $mergeQuery)
     {
         // loop through all bindings

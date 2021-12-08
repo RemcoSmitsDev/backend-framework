@@ -7,6 +7,10 @@ use Framework\Http\Route\Route;
 
 class Middleware implements MiddlewareInterface
 {
+    /**
+     * @param array $middlewareRules
+     * @return bool
+     */
     public static function validate(array $middlewareRules): bool
     {
         // default geen middlewares;

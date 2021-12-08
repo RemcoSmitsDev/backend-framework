@@ -14,7 +14,6 @@ use Framework\App;
  * @param string $input
  * @return string
  */
-
 function stripAccents(string $input): string
 {
     //Unwanted array
@@ -28,7 +27,6 @@ function stripAccents(string $input): string
  * @param int $length
  * @return string
  */
-
 function randomString(int $length = 15): string
 {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -46,15 +44,14 @@ function randomString(int $length = 15): string
  * @param string|array $value
  * @return string|array
  */
-
 function clearInjections(string|array $value): string|array
 {
     // kijk of input value een array is
     if (is_array($value)) {
         // ga door alle keys/values heen
-        return array_map(function ($value){
+        return array_map(function ($value) {
             return clearInjections($value);
-        },$value);
+        }, $value);
     }
 
     return htmlspecialchars(trim($value));
@@ -64,7 +61,6 @@ function clearInjections(string|array $value): string|array
  * @param mixed ...$values
  * @return bool
  */
-
 function dd(mixed ...$values): bool
 {
     // check if is not development
@@ -86,7 +82,6 @@ function dd(mixed ...$values): bool
  * @return string
  * @throws ReflectionException
  */
-
 function getClassName(object|string $class): string
 {
     $class = new \ReflectionClass($class);
@@ -95,16 +90,17 @@ function getClassName(object|string $class): string
 }
 
 /**
+ * @param string|int|null $find
+ * @return mixed
  * @throws ReflectionException
  */
-
 function request(string|int $find = null): mixed
 {
     global $request;
 
     $request = app('request') ?? app(
-        $request instanceof Request ? $request : new Request()
-    );
+            $request instanceof Request ? $request : new Request()
+        );
 
     return !is_null($find) ?
         (property_exists($request->requestData, $find) ? $request->requestData->{$find} : null) :
@@ -114,7 +110,6 @@ function request(string|int $find = null): mixed
 /**
  * @return Http
  */
-
 function http(): Http
 {
     return new Http();
@@ -123,7 +118,6 @@ function http(): Http
 /**
  * @return Response
  */
-
 function response(): Response
 {
     global $response;
@@ -137,7 +131,6 @@ function response(): Response
  * @param bool|null $secure
  * @return Redirect
  */
-
 function redirect(string $path, int $responseCode = 302, bool $secure = null): Redirect
 {
     return new Redirect($path, $responseCode, $secure);
@@ -147,7 +140,6 @@ function redirect(string $path, int $responseCode = 302, bool $secure = null): R
  * @return object|null
  * @throws ReflectionException
  */
-
 function content(): object|null
 {
     global $content;
@@ -161,7 +153,6 @@ function content(): object|null
  * @return object|null
  * @throws ReflectionException
  */
-
 function seo(): object|null
 {
     global $seo;
@@ -175,7 +166,6 @@ function seo(): object|null
  * @return object|null
  * @throws ReflectionException
  */
-
 function route(): object|null
 {
     global $route;
@@ -189,7 +179,6 @@ function route(): object|null
  * @return object|null
  * @throws ReflectionException
  */
-
 function cache(): object|null
 {
     global $cache;
@@ -201,11 +190,10 @@ function cache(): object|null
 
 /**
  * @param Object|string|null $class
- * @return object|null $class>
+ * @return object|null
  * @throws ReflectionException
  */
-
-function app(Object|string $class = null): object|null
+function app(object|string $class = null): object|null
 {
     global $app;
 
@@ -217,8 +205,7 @@ function app(Object|string $class = null): object|null
     // check if is object
     if (is_object($class)) {
         return $app->instance($class)->{lcfirst(getClassName($class))};
-    }
-    // when you want to access an stored class
+    } // when you want to access an stored class
     elseif (is_string($class)) {
         return $app->{$class} ?? null;
     }

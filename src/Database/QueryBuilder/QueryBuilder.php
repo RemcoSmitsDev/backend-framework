@@ -13,6 +13,7 @@ use Closure;
 class QueryBuilder extends Grammar
 {
     use DatabaseHelpers;
+
     /**
      * keeps track of show query's
      * @var bool
@@ -24,14 +25,12 @@ class QueryBuilder extends Grammar
      * fetch mode
      * @var int
      */
-
     protected int $fetchMode = \PDO::FETCH_OBJ;
 
     /**
      * builder parts for making database query
      * @var array
      */
-
     protected array $bindings = [
         'select' => [],
         'from' => [],
@@ -45,56 +44,48 @@ class QueryBuilder extends Grammar
      * keeps track of select columns
      * @var array
      */
-
     protected array $columns = [];
 
     /**
      * keep track of main table name
      * @var string
      */
-
     protected string $from = '';
 
     /**
      * keeps track of joins
      * @var array
      */
-
     protected array $joins = [];
 
     /**
      * keeps track of where statements
      * @var array
      */
-
     protected array $wheres = [];
 
     /**
      * keeps track of limit amount
      * @var int
      */
-
     protected int $limit;
 
     /**
      * keeps track of offset
      * @var int
      */
-
     protected int $offset;
 
     /**
      * keeps track of all group statements
      * @var array
      */
-
     protected array $groups = [];
 
     /**
      * keeps track of all order statements
      * @var array
      */
-
     protected array $orders = [];
 
     /**
@@ -120,10 +111,10 @@ class QueryBuilder extends Grammar
     private Connection $connection;
 
     /**
-     * function __construct
+     * @param Connection $connection
      */
-
-    public function __construct(Connection $connection){
+    public function __construct(Connection $connection)
+    {
         // set reset data
         $this->resetData = get_object_vars($this);
 
@@ -134,7 +125,6 @@ class QueryBuilder extends Grammar
     /**
      * @return $this
      */
-
     public function logSql(): self
     {
         // set logSql to true
@@ -151,7 +141,6 @@ class QueryBuilder extends Grammar
      * @return self
      * @throws Exception
      */
-
     public function table(string $tableName, string|array $select = '*'): self
     {
         // add table name
@@ -168,7 +157,6 @@ class QueryBuilder extends Grammar
      * @return self
      * @throws Exception
      */
-
     public function select(string|array $select = ['*']): self
     {
         // make select
@@ -211,7 +199,6 @@ class QueryBuilder extends Grammar
      * @return void
      * @throws Exception
      */
-
     public function subSelect(string|Closure $query, string $as): void
     {
         // get bindings from query
@@ -236,7 +223,6 @@ class QueryBuilder extends Grammar
      * @param string $boolean
      * @return self
      */
-
     public function where($column, array|string $operator = null, $value = null, string $boolean = 'AND'): self
     {
         // check is instanceof \Closure
@@ -295,7 +281,6 @@ class QueryBuilder extends Grammar
      * @param string $boolean
      * @return QueryBuilder
      */
-
     public function whereRaw(string|Closure $query, array $bindData = [], string $boolean = 'AND'): static
     {
         // keep track of query type
@@ -347,7 +332,6 @@ class QueryBuilder extends Grammar
      * @param mixed|null $value
      * @return self
      */
-
     public function orWhere(mixed $column, ?string $operator = null, mixed $value = null): self
     {
         // return self and make where statement with OR
@@ -362,7 +346,6 @@ class QueryBuilder extends Grammar
      * @return self
      * @throws Exception
      */
-
     public function whereIn(string|Closure $column, ?array $values = null, string $boolean = 'AND'): self
     {
         // check if $column is instance of closure that means that whereIn will be an subWhere
@@ -410,7 +393,6 @@ class QueryBuilder extends Grammar
      * @return self
      * @throws Exception
      */
-
     public function whereExists(Closure $callback, string $boolean = 'AND', bool $not = false): self
     {
         // call closure
@@ -443,7 +425,6 @@ class QueryBuilder extends Grammar
      * @return self
      * @throws Exception
      */
-
     public function whereNotExists(Closure $callback, string $boolean = 'AND'): self
     {
         return $this->whereExists($callback, $boolean, true);
@@ -458,7 +439,6 @@ class QueryBuilder extends Grammar
      * @param string $boolean
      * @return QueryBuilder
      */
-
     public function whereColumn(string $column, ?string $operator = null, ?string $value = null, string $boolean = 'AND'): static
     {
         // add to where statement
@@ -486,7 +466,6 @@ class QueryBuilder extends Grammar
      * @param string $type
      * @return $this
      */
-
     public function join(string $table, string|Closure $first, string $operator = null, string $value = null, string $type = 'INNER'): self
     {
         // make instance of
@@ -517,7 +496,6 @@ class QueryBuilder extends Grammar
      * @param string|null $value
      * @return QueryBuilder
      */
-
     public function leftJoin(string $table, string|Closure $first, string $operator = null, string $value = null): self
     {
         return $this->join($table, $first, $operator, $value, 'left');
@@ -531,7 +509,6 @@ class QueryBuilder extends Grammar
      * @param string|null $value
      * @return QueryBuilder
      */
-
     public function rightJoin(string $table, string|Closure $first, string $operator = null, string $value = null): self
     {
         return $this->join($table, $first, $operator, $value, 'right');
@@ -548,7 +525,6 @@ class QueryBuilder extends Grammar
      * @return mixed
      * @throws Exception
      */
-
     public function all(mixed $fallbackReturnType = false, int $fetchMode = null): mixed
     {
         // return all results
@@ -565,7 +541,6 @@ class QueryBuilder extends Grammar
      * @return mixed
      * @throws Exception
      */
-
     public function one(mixed $fallbackReturnType = false, int $fetchMode = null): mixed
     {
         // make sure that limit is 1
@@ -581,15 +556,14 @@ class QueryBuilder extends Grammar
     /**
      * function column
      * @param mixed $fallbackReturnType
-     * @param int|null $fetchMode
+     * @param int $column
      * @return mixed
      * @throws Exception
      */
-
-    public function column(mixed $fallbackReturnType = false, int $fetchMode = null): mixed
+    public function column(mixed $fallbackReturnType = false, int $column = 0): mixed
     {
         // get return value
-        $returnValue = $this->handleExecution(...$this->selectToSql($this))->fetchColumn($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
+        $returnValue = $this->handleExecution(...$this->selectToSql($this))->fetchColumn($column) ?: $fallbackReturnType;
 
         // return fallback return value
         return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;

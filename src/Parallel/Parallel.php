@@ -3,7 +3,7 @@
 namespace Framework\Parallel;
 
 use Opis\Closure\SerializableClosure;
-use function Opis\Closure\{serialize as s, unserialize as u};
+use Exception;
 
 class Parallel
 {
@@ -12,21 +12,25 @@ class Parallel
     private array $queue = [];
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct()
     {
         if (!function_exists('pcntl_fork')) {
-            throw new \Exception("Cannot create process forks: PCNTL is not supported on this system.");
+            throw new Exception("Cannot create process forks: PCNTL is not supported on this system.");
         }
     }
 
+    /**
+     * @param callable ...$callbacks
+     * @return mixed|void
+     */
     public function add(callable ...$callbacks)
     {
         // keep track of all file names
         $serializedCallbacks = [];
 
-        // loop trough all callbacks
+        // loop through all callbacks
         foreach ($callbacks as $callback) {
             // serialize callback
             $serializedCallbacks[] = serialize(new SerializableClosure($callback));
@@ -41,7 +45,7 @@ class Parallel
         try {
             return unserialize($output[0]);
         } catch (\Throwable $th) {
-            // dump reponse frome execution process
+            // dump response from execution process
             echo $th->getMessage();
 
             // set conflict response code
@@ -49,7 +53,11 @@ class Parallel
         }
     }
 
-    public function run(...$callbacks): array
+    /**
+     * @param callable ...$callbacks
+     * @return array
+     */
+    public function run(callable ...$callbacks): array
     {
         // keep track of tasks
         $tasks = [];
@@ -64,6 +72,10 @@ class Parallel
         return $this->wait(...$tasks);
     }
 
+    /**
+     * @param Task ...$queue
+     * @return array
+     */
     private function wait(Task ...$queue): array
     {
         // keep track of response
@@ -98,7 +110,11 @@ class Parallel
         return $response;
     }
 
-    protected function runQueue(array $queue)
+    /**
+     * @param array $queue
+     * @return void
+     */
+    protected function runQueue(array $queue): void
     {
         // set queue
         $this->queue = $queue;
@@ -113,6 +129,10 @@ class Parallel
         }
     }
 
+    /**
+     * @param Task $task
+     * @return mixed
+     */
     public function finishTask(Task $task): mixed
     {
         $response = $task->output();
@@ -124,15 +144,22 @@ class Parallel
         return $response;
     }
 
-    protected function isRunning(): bool
+    /**
+     * @return bool
+     */
+    private function isRunning(): bool
     {
         return count($this->runningTasks) > 0;
     }
 
-    private function shiftTaskFromQueue(){
+    /**
+     * @return void
+     */
+    private function shiftTaskFromQueue(): void
+    {
         // check if the queue is empty
-        if (!count($this->queue)){
-            return false;
+        if (!count($this->queue)) {
+            return;
         }
         // remove first item
         $firstTask = array_shift($this->queue);

@@ -2,19 +2,32 @@
 
 namespace Framework\Parallel;
 
-use function Opis\Closure\{serialize as s, unserialize as u};
+use Generator;
 
 class SocketConnection
 {
+    /**
+     * @var int
+     */
     private int $bufferSize = 1024;
+
+    /**
+     * @var float
+     */
     private float $timeout = 0.1;
 
+    /**
+     * @param \Socket $socket
+     */
     public function __construct(private \Socket $socket)
     {
         // set nonblock
         socket_set_nonblock($this->socket);
     }
 
+    /**
+     * @return SocketConnection[]
+     */
     public static function createSocketPair(): array
     {
         // make socket
@@ -30,6 +43,9 @@ class SocketConnection
         ];
     }
 
+    /**
+     * @return false|int
+     */
     private function selectSocket(): false|int
     {
         $write = [$this->socket];
@@ -39,6 +55,10 @@ class SocketConnection
         return socket_select($read, $write, $except, $this->timeout);
     }
 
+    /**
+     * @param string $payload
+     * @return $this
+     */
     public function write(string $payload): self
     {
         // set nonblock mode
@@ -72,7 +92,10 @@ class SocketConnection
         return $this;
     }
 
-    public function read(): \Generator
+    /**
+     * @return Generator
+     */
+    public function read(): Generator
     {
         // set nonblock mode
         socket_set_nonblock($this->socket);
@@ -99,6 +122,9 @@ class SocketConnection
         }
     }
 
+    /**
+     * @return $this
+     */
     public function close(): self
     {
         // close socket connection

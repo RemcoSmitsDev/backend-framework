@@ -29,7 +29,9 @@ class Content
      */
     private array $data = [];
 
-
+    /**
+     * @param string|null $viewPath
+     */
     public function __construct(string $viewPath = null)
     {
         $this->viewPath = rtrim($viewPath ?: SERVER_ROOT . '/../templates/') . '/';
@@ -42,7 +44,6 @@ class Content
      * @param array $data
      * @return self
      */
-
     public function template(string $template, array $data = []): self
     {
         // merge old data into deeper view
@@ -59,7 +60,6 @@ class Content
      * @param string $layout
      * @return Content
      */
-
     public function layout(string $layout): self
     {
         // set layout
@@ -75,7 +75,6 @@ class Content
      * @param array $data
      * @return self
      */
-
     public function view(string $view, array $data = []): self
     {
         // merge old data into deeper view
@@ -99,7 +98,6 @@ class Content
      * @param string $title
      * @return self
      */
-
     public function title(string $title): self
     {
         // set title 
@@ -113,7 +111,6 @@ class Content
      * Get content title
      * @return string
      */
-
     public function getTitle(): string
     {
         return $this->title;
@@ -123,7 +120,6 @@ class Content
      * Listen if there is an template set
      * @return void
      */
-
     public function listen(): void
     {
         // check if content wrapper exists
@@ -137,7 +133,6 @@ class Content
      * This renders the given template with extracted data
      * @return void
      */
-
     public function renderTemplate(): void
     {
         // view main template

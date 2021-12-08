@@ -3,6 +3,7 @@
 namespace Framework;
 
 use Framework\Http\Api;
+use ReflectionException;
 
 class App
 {
@@ -10,7 +11,6 @@ class App
      * This function will start all needed functions
      * @return void
      */
-
     public static function start()
     {
         // start output buffer
@@ -64,7 +64,6 @@ class App
      * This function will set all needed security headers
      * @return void
      */
-
     private static function setSecurityHeaders(): void
     {
         // block all iframes
@@ -81,7 +80,6 @@ class App
      * This function will set all secure session headers and start session
      * @return void
      */
-
     private static function setSession(): void
     {
         // voeg http only session.cookie toe als de app niet op development mode staat
@@ -101,7 +99,6 @@ class App
      * This function handles/enables error reporting
      * @return void
      */
-
     private static function catchErrors(): void
     {
         // shows errors when debug mode is on
@@ -124,7 +121,6 @@ class App
      * This function checks app state(local|live) based on host
      * @return void
      */
-
     private static function checkAppState(): void
     {
         // define localhost ips to check if is development
@@ -147,9 +143,9 @@ class App
      * This function will store an instance of all classes
      * @param object[] $classes
      * @return self
+     * @throws ReflectionException
      */
-
-    public function instance(Object ...$classes): self
+    public function instance(object ...$classes): self
     {
         // loop trough all classes
         foreach ($classes as $class) {

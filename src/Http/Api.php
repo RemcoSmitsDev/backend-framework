@@ -2,8 +2,14 @@
 
 namespace Framework\Http;
 
+use ReflectionException;
+
 class Api
 {
+    /**
+     * @return bool
+     * @throws ReflectionException
+     */
     public static function listen(): bool
     {
         // allow only request from same origin
@@ -62,6 +68,9 @@ class Api
         exit(0);
     }
 
+    /**
+     * @return bool
+     */
     public static function fromOwnServer(): bool
     {
         if (!isset($_SERVER['HTTP_REFERER'])) {
@@ -75,6 +84,9 @@ class Api
         return true;
     }
 
+    /**
+     * @return bool
+     */
     public static function fromAjax(): bool
     {
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -83,6 +95,9 @@ class Api
         return false;
     }
 
+    /**
+     * @return bool
+     */
     private static function validateToken(): bool
     {
         // kijk of authToken bestaat in de request headers
@@ -100,6 +115,9 @@ class Api
         return $tokenFromRequest === $_SESSION['requestToken'] || (isset($_SESSION['_requestToken']) && $_SESSION['_requestToken'] === $tokenFromRequest);
     }
 
+    /**
+     * @return static
+     */
     public static function generateRequestToken(): self
     {
         // kijk of er al een request token bestaat voeg die dan toe als old `_` request token

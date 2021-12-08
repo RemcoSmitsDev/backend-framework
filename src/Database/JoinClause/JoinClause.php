@@ -10,21 +10,18 @@ class JoinClause extends QueryBuilder
      * type of join query ( INNER | LEFT JOIN | RIGHT JOIN | CROSS JOIN)
      * @var string
      */
-
     public string $type;
 
     /**
      * table of join table
      * @var string
      */
-
     public string $table;
 
     /**
      * reference of group/parent query
      * @var QueryBuilder
      */
-
     protected QueryBuilder $query;
 
     /**
@@ -33,7 +30,6 @@ class JoinClause extends QueryBuilder
      * @param string $table
      * @param string $type
      */
-
     public function __construct(QueryBuilder $query, string $table, string $type)
     {
         $this->query = $query;
@@ -49,7 +45,6 @@ class JoinClause extends QueryBuilder
      * @param string $boolean
      * @return JoinClause
      */
-
     public function on(string $first, string $operator, string $value, string $boolean = 'AND'): self
     {
         // add where statement and return self
@@ -63,7 +58,6 @@ class JoinClause extends QueryBuilder
      * @param string $value
      * @return JoinClause
      */
-
     public function orOn(string $first, string $operator, string $value): self
     {
         return $this->on($first, $operator, $value, 'OR');

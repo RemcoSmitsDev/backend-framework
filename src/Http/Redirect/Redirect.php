@@ -4,13 +4,18 @@ namespace Framework\Http\Redirect;
 
 class Redirect
 {
+    /**
+     * @param string $path
+     * @param int $responseCode
+     * @param bool|null $secure
+     */
     public function __construct(string $path, int $responseCode = 302, bool $secure = null)
     {
         // match http/https
         $path = preg_replace('/(http|https):\/\//i', '', $path);
 
         // check if server protocol must be secure(https) or http
-        $secure = (!is_null($secure) && $secure || preg_match('/https/i', $_SERVER['SERVER_PROTOCOL'] ?? '')) ? 'https://' : 'http://';
+        $secure = ($secure || preg_match('/https/i', $_SERVER['SERVER_PROTOCOL'] ?? '')) ? 'https://' : 'http://';
 
         // check if path has host inside path
         preg_match('/^(www\.)*([A-z\.0-9]+)/', $path, $match);

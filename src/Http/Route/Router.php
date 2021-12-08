@@ -2,6 +2,7 @@
 
 namespace Framework\Http\Route;
 
+use Closure;
 use Exception;
 use Framework\DependencyInjectionContainer\DependencyInjectionContainer;
 use Framework\Http\Request;
@@ -46,7 +47,7 @@ class Router
 
     /**
      * Keeps track of current Route
-     * @var array $currentRoute
+     * @var ?array $currentRoute
      */
     protected ?array $currentRoute = null;
 
@@ -82,7 +83,6 @@ class Router
      * @return void
      * @throws Exception
      */
-
     protected function handleRouteAction(array $route, array $data = []): void
     {
         // set action function
@@ -116,7 +116,7 @@ class Router
         }
 
         // check if action is and closure
-        if (!$action instanceof \Closure) {
+        if (!$action instanceof Closure) {
             throw new Exception("Action must be an instanceof and \Closure or and [Test::class,'index']", 1);
         }
 
@@ -128,7 +128,6 @@ class Router
      * Get all routes bij a requestMethod
      * @return null|array
      */
-
     public function getRoutes(): ?array
     {
         return $this->routes ?? null;
@@ -138,10 +137,10 @@ class Router
      * add route to routes array based on requestMethod
      * @param array $methods
      * @param string $uri
-     * @param \Closure|array $action
+     * @param Closure|array $action
+     * @return Router
      */
-
-    protected function addRoute(array $methods, string $uri, \Closure|array $action): self
+    protected function addRoute(array $methods, string $uri, Closure|array $action): self
     {
         // replace alle dubbele slashes
         $uri = preg_replace("/\/+/", "/", '/' . $this->prefix . '/' . $uri);
@@ -176,7 +175,6 @@ class Router
      * @param array $route
      * @return string
      */
-
     private function replaceRouteURLPatterns(string $uri, array $route): string
     {
         // check if there where patterns set
@@ -199,7 +197,6 @@ class Router
      * @param array $route
      * @return boolean|array
      */
-
     private function validateDynamicUri(array $route): bool|array
     {
         // get regex pattern by routeURL
@@ -237,7 +234,6 @@ class Router
      * @return string
      * @throws Exception
      */
-
     protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = []): string
     {
         // check if there are dynamic params in route url
@@ -280,8 +276,9 @@ class Router
 
     /**
      * This method will handle when an middleware fails
+     * @param array $failedRoute
+     * @throws \ReflectionException
      */
-
     private function handleOnMiddlewareFail(array $failedRoute): void
     {
         // check if there is a middle fallback callback
@@ -303,12 +300,10 @@ class Router
         }
     }
 
-
     /**
      * get route by current request url
      * @throws Exception
      */
-
     public function init()
     {
         // check if there are no routes yet

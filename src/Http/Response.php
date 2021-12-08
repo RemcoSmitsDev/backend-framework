@@ -3,6 +3,7 @@
 namespace Framework\Http;
 
 use Framework\Interfaces\Http\ResponseInterface;
+use ReflectionException;
 
 class Response implements ResponseInterface
 {
@@ -107,7 +108,7 @@ class Response implements ResponseInterface
 
     /**
      * Keeps track of view name
-     * @var string $view
+     * @var ?string $view
      */
     private ?string $view = null;
 
@@ -122,7 +123,6 @@ class Response implements ResponseInterface
      * @param mixed $responseData
      * @return self
      **/
-
     public function json(mixed $responseData): self
     {
         // set response data
@@ -139,7 +139,6 @@ class Response implements ResponseInterface
      * @param string $responseData
      * @return self
      **/
-
     public function text(string $responseData): self
     {
         // set response data
@@ -156,7 +155,6 @@ class Response implements ResponseInterface
      * @param int $responseCode = 200
      * @return self
      **/
-
     public function code(int $responseCode = 200): self
     {
         // set response code
@@ -171,7 +169,6 @@ class Response implements ResponseInterface
      * @param array $headers
      * @return self
      **/
-
     public function headers(array $headers): self
     {
         // loop trough all headers
@@ -189,10 +186,9 @@ class Response implements ResponseInterface
 
     /**
      * stops the page for rendering other data with responseCode
-     * @param string|int $responseData
+     * @param string|int $status
      * @return self
-     **/
-
+     */
     public function exit(string|int $status = 0): self
     {
         // set exit to true with status value
@@ -209,7 +205,6 @@ class Response implements ResponseInterface
      * @param array $data
      * @return self
      */
-
     public function view(string $view, array $data = []): self
     {
         // get output buffer
@@ -225,16 +220,15 @@ class Response implements ResponseInterface
      * @param int|null $responseCode
      * @return string
      */
-
     public function getMessage(?int $responseCode = null): string
     {
-        return $this->statusTexts[$responseCode ?: http_response_code()];
+        return $this->statusTexts[$responseCode ?: http_response_code()] ?? '';
     }
 
     /**
      * handles response to user when class closes
+     * @throws ReflectionException
      */
-
     public function __destruct()
     {
         // check if the headers are already send

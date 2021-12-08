@@ -42,7 +42,6 @@ class Connection
      * function start
      * @return Connection
      */
-
     public function start(): self
     {
         // check if there already exists an connection
@@ -100,7 +99,6 @@ class Connection
      * function close
      * @return void
      */
-
     public function close(): void
     {
         $this->pdo = null;

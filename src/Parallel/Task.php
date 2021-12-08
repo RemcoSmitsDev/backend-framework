@@ -6,19 +6,43 @@ use function Opis\Closure\{serialize as s, unserialize as u};
 
 class Task
 {
+    /**
+     * @var SocketConnection
+     */
     private SocketConnection $connection;
 
+    /**
+     * @var string
+     */
     private string $token = '[[serialized::';
 
+    /**
+     * @var string
+     */
     protected string $output = '';
+
+    /**
+     * @var \Closure
+     */
     private \Closure $callback;
+
+    /**
+     * @var int
+     */
     private int $processId;
 
+    /**
+     * @param callable $callback
+     * @param int $order
+     */
     public function __construct(callable $callback, private int $order)
     {
         $this->callback = \Closure::fromCallable($callback);
     }
 
+    /**
+     * @return string
+     */
     private function execute(): string
     {
         // call tasks and get response
@@ -33,6 +57,9 @@ class Task
         return base64_encode($this->token . serialize($response));
     }
 
+    /**
+     * @param SocketConnection $connection
+     */
     public function executeChild(SocketConnection $connection): void
     {
         // call closure
@@ -45,6 +72,9 @@ class Task
         $connection->write($response)->close();
     }
 
+    /**
+     * @return false|mixed|string
+     */
     public function output()
     {
         // loop trough generator and get all outputs
@@ -70,7 +100,10 @@ class Task
         return $output;
     }
 
-    public function runTask()
+    /**
+     * @return $this
+     */
+    public function runTask(): self
     {
         // get sockets
         [$socketToParent, $socketToChild] = SocketConnection::createSocketPair();
@@ -94,7 +127,12 @@ class Task
         return $this->setProcessId($processId);
     }
 
-    private function runChildTask(SocketConnection $socketToChild, SocketConnection $socketToParent)
+    /**
+     * @param SocketConnection $socketToChild
+     * @param SocketConnection $socketToParent
+     * @return void
+     */
+    private function runChildTask(SocketConnection $socketToChild, SocketConnection $socketToParent): void
     {
         // close child
         $socketToChild->close();
@@ -106,6 +144,9 @@ class Task
         exit;
     }
 
+    /**
+     * @return bool
+     */
     public function isFinished(): bool
     {
         $this->output .= $this->connection->read()->current();
@@ -116,16 +157,26 @@ class Task
         return $status === $this->getProcessId();
     }
 
+    /**
+     * @return int
+     */
     public function getOrder(): int
     {
         return $this->order;
     }
 
+    /**
+     * @return SocketConnection
+     */
     public function getConnection(): SocketConnection
     {
         return $this->connection;
     }
 
+    /**
+     * @param SocketConnection $connection
+     * @return $this
+     */
     public function setConnection(SocketConnection $connection): self
     {
         // set connection
@@ -135,6 +186,10 @@ class Task
         return $this;
     }
 
+    /**
+     * @param int $processId
+     * @return $this
+     */
     public function setProcessId(int $processId): self
     {
         // set processId
@@ -144,6 +199,9 @@ class Task
         return $this;
     }
 
+    /**
+     * @return int
+     */
     public function getProcessId(): int
     {
         return $this->processId;

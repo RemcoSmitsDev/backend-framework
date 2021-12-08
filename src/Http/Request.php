@@ -2,13 +2,30 @@
 
 namespace Framework\Http;
 
+use ReflectionException;
+
 class Request
 {
+    /**
+     * @var string
+     */
     private string $method;
+
+    /**
+     * @var object|null
+     */
     private ?object $getData;
+
+    /**
+     * @var object|null
+     */
     private ?object $postData;
 
+    /**
+     * @var object
+     */
     public object $requestData;
+
 
     public function __construct()
     {
@@ -36,7 +53,6 @@ class Request
      * @param string $name
      * @return mixed
      */
-
     public function __get(string $name): mixed
     {
         return property_exists($this->requestData, $name) ? $this->requestData->{$name} : null;
@@ -64,7 +80,6 @@ class Request
      * @param string|int|null $find
      * @return mixed
      */
-
     public function post(string|int $find = null): mixed
     {
         // check if find is null
@@ -81,7 +96,6 @@ class Request
      * @param string[] $requestKey
      * @return bool
      */
-
     public function exists(string ...$requestKey): bool
     {
         // loop trough all func args
@@ -97,7 +111,6 @@ class Request
     /**
      * @return string
      */
-
     public function csrf(): string
     {
         return $_SESSION['_csrf_token'] ?? $_SESSION['_csrf_token'] = randomString();
@@ -105,9 +118,8 @@ class Request
 
     /**
      * @return bool
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
-
     public function validateCsrf(): bool
     {
         return \request('_token') === $this->csrf();
@@ -117,7 +129,6 @@ class Request
      * This function will return current uri like: /route/to
      * @return string
      */
-
     public function uri(): string
     {
         // krijg de huidige url zonden get waardes
@@ -128,7 +139,6 @@ class Request
      * This function will return the query string
      * @return string
      */
-
     public function query(): string
     {
         return parse_url(rawurldecode($this->url()),PHP_URL_QUERY) ?? '';
@@ -138,7 +148,6 @@ class Request
      * This function will return current URL with params
      * @return string
      */
-
     public function url(): string
     {
         // krijg de huidige url zonden get waardes
@@ -150,7 +159,6 @@ class Request
      * @param string|null $findHeader
      * @return array|string|null
      */
-
     public function headers(?string $findHeader = null): array|string|null
     {
         // keep track of all headers
@@ -186,7 +194,6 @@ class Request
      * This function will return current request type
      * @return string
      */
-
     public function method(): string
     {
         // Take the method as found in $_SERVER
