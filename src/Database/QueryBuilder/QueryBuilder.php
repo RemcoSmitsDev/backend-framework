@@ -202,7 +202,7 @@ class QueryBuilder extends Grammar
     public function subSelect(string|Closure $query, string $as): void
     {
         // get bindings from query
-        [$query, $bindData] = $this->createSubSelect($query, $as);
+        [$query, ] = $this->createSubSelect($query);
 
         // add bind data
         // $this->bindings['select'] = array_merge($this->bindings['select'], $bindData);
@@ -402,7 +402,7 @@ class QueryBuilder extends Grammar
         $this->mergeBindings($this, $query);
 
         // get bindings from query
-        [$query, $bindings] = $this->createSubSelect($query);
+        [$query, ] = $this->createSubSelect($query);
 
         // get type based on not value
         $type = $not ? 'notExists' : 'exists';
@@ -631,18 +631,20 @@ class QueryBuilder extends Grammar
      * @return mixed
      * @throws Exception
      */
-
     public function raw(string $query, array $bindData = []): mixed
     {
+        $before = $this;
         // handle execution of query
         $response = $this->handleExecution(
             $query,
-            $this->flattenArray((array)$bindData),
+            $this->flattenArray($bindData),
             $type
         );
 
+        $this->hasBeenExecuted = true;
+
         // return value based on query type
-        return $type === 'select' ? $this : $response;
+        return $type === 'select' ? $before : $response;
     }
 
     //
@@ -654,11 +656,16 @@ class QueryBuilder extends Grammar
      * @param int $limit
      * @return self
      */
-
     public function limit(int $limit): self
     {
-        // add limit to builderparts
+        // add limit to builder parts
         $this->limit = $limit;
+
+        // check if offset was set
+        if(!isset($this->offset)){
+            // set offset
+            return $this->offset(0);
+        }
 
         // return self
         return $this;
@@ -669,7 +676,6 @@ class QueryBuilder extends Grammar
      * @param int $offset
      * @return self
      */
-
     public function offset(int $offset): self
     {
         // add offset to builderparts(min value of 0)
@@ -683,12 +689,12 @@ class QueryBuilder extends Grammar
      * function paginate
      * @param int $page
      * @param int $perPage
-     * @return Database
+     * @return array
+     * @throws Exception
      */
-
-    public function paginate(int $page, int $perPage = 15): self
+    public function paginate(int $page, int $perPage = 15): array
     {
-        return $this->offset(($page - 1) * $perPage)->limit($perPage);
+        return $this->offset(($page - 1) * $perPage)->limit($perPage)->all([]);
     }
 
     /**
@@ -697,7 +703,6 @@ class QueryBuilder extends Grammar
      * @param string $direction
      * @return self
      */
-
     public function orderBy(string $column, string $direction = 'ASC'): self
     {
         // make direction to uppercase
@@ -718,11 +723,33 @@ class QueryBuilder extends Grammar
      * @param string|array $groups
      * @return self
      */
-
     public function groupBy(string ...$groups): self
     {
         // loop through all groups
         $this->groups = array_merge($this->groups, $this->flattenArray($groups));
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * @param bool $when
+     * @param callable $callback
+     * @return QueryBuilder
+     */
+    public function when(bool $when, callable $callback): self
+    {
+        // make closure from callback
+        $callback = Closure::fromCallable($callback);
+
+        // when
+        if($when){
+            // call callable
+            $callback($builder = $this);
+
+            // return new builder
+            return $builder;
+        }
 
         // return self
         return $this;

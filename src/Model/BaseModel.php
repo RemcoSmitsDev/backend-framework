@@ -8,6 +8,11 @@ use Exception;
 class BaseModel extends Database
 {
     /**
+     * @var string
+     */
+    protected string $primaryKey = 'id';
+
+    /**
      * @throws Exception
      */
     public function __construct()
@@ -25,9 +30,19 @@ class BaseModel extends Database
         }
 
         // set table name
-        $this->table($table.'s');
+        $this->table($this->table ?? $table.'s');
 
         // call database constructor
         parent::__construct();
+    }
+
+    /**
+     * @param mixed $find
+     * @return mixed
+     * @throws Exception
+     */
+    public function find(mixed $find): mixed
+    {
+        return $this->where($this->primaryKey,'=', $find)->one();
     }
 }
