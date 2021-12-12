@@ -162,7 +162,7 @@ trait DatabaseHelpers
      */
     protected function parseSub(mixed $query): array
     {
-        if ($query instanceof Database) {
+        if ($query instanceof QueryBuilder) {
             // return formatted query string with bindings
             return $query->selectToSql($query);
         } elseif (is_string($query)) {

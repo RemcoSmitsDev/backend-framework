@@ -184,10 +184,10 @@ class Grammar
         // keep track of orders
         $orderBy = [];
 
-        // loop trough all orders
+        // loop through all orders
         foreach ($orders as $order) {
             // add order to orderBy array
-            $orderBy[] = "`{$order['column']}` {$order['direction']}";
+            $orderBy[] = preg_replace('/([A-z0-9_\-]+)/', '`$1`', $order['column']) . ' ' . $order['direction'];
         }
 
         // return string with comma as separator

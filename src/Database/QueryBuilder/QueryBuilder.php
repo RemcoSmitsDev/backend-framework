@@ -141,7 +141,7 @@ class QueryBuilder extends Grammar
      * @return self
      * @throws Exception
      */
-    public function table(string $tableName, string|array $select = '*'): self
+    public function table(string $tableName, string|array $select = ['*']): self
     {
         // add table name
         $this->from = $tableName;
@@ -159,29 +159,30 @@ class QueryBuilder extends Grammar
      */
     public function select(string|array $select = ['*']): self
     {
-        // make select
-        $columns = (array)$select;
+        // check if column was already set
+        if (($key = array_search('*', $this->columns)) !== false) {
+            unset($this->columns[$key]);
+        }
 
-        // loop trough all columns
+        // make select
+        $columns = is_string($select) ? func_get_args() : $select;
+
+        // loop through all columns
         foreach ($columns as $as => $column) {
             // check if is subSelect with as name
-            if (is_string($as) && $column instanceof Closure) {
+            if ($column instanceof Closure) {
                 // make subSelect
-                $this->subSelect($column, $as);
+                $this->columns[] = $this->subSelect($column, $as);
             } // when column is an array
             elseif (is_array($column)) {
-                $this->columns = array_merge($this->columns, $this->selectFormat($column));
+                $this->columns = array_merge(
+                    $this->columns,
+                    $this->selectFormat($column)
+                );
             } // else is string
             else {
-                // trim spaces
-                $column = trim($column);
-
-                // check if * is in column string
-                if (preg_match('/\*|\w+\(.+?\)|DISTINCT/i', $column)) {
-                    $this->columns[] = "$column";
-                } else {
-                    $this->columns[] = "`$column`";
-                }
+                // add column to columns array
+                $this->columns[] = preg_replace('/^([A-z0-9\_\-]+)$/','`$1`', trim($column));
             }
         }
 
@@ -195,20 +196,21 @@ class QueryBuilder extends Grammar
     /**
      * function subSelect
      * @param string|Closure $query
-     * @param string $as
-     * @return void
+     * @param string|int $as
+     * @return string
      * @throws Exception
      */
-    public function subSelect(string|Closure $query, string $as): void
+    public function subSelect(string|Closure $query, string|int $as): string
     {
         // get bindings from query
-        [$query, ] = $this->createSubSelect($query);
-
-        // add bind data
-        // $this->bindings['select'] = array_merge($this->bindings['select'], $bindData);
+        [$query, $bindings] = $this->createSubSelect($query);
 
         // format subSelect
-        $this->columns[] = "({$query}) as {$as}";
+        if(is_string($as)){
+            return "({$query}) as {$as}";
+        }else {
+            return "({$query})";
+        }
     }
 
     //
@@ -295,7 +297,7 @@ class QueryBuilder extends Grammar
                 'boolean'
             );
 
-            // add binddata to builder parts
+            // add bind data to builder parts
             $this->bindings['where'] = array_merge($this->bindings['where'], $this->flattenArray((array)$bindData));
 
             // return self
@@ -402,7 +404,7 @@ class QueryBuilder extends Grammar
         $this->mergeBindings($this, $query);
 
         // get bindings from query
-        [$query, ] = $this->createSubSelect($query);
+        [$query,] = $this->createSubSelect($query);
 
         // get type based on not value
         $type = $not ? 'notExists' : 'exists';
@@ -662,7 +664,7 @@ class QueryBuilder extends Grammar
         $this->limit = $limit;
 
         // check if offset was set
-        if(!isset($this->offset)){
+        if (!isset($this->offset)) {
             // set offset
             return $this->offset(0);
         }
@@ -743,7 +745,7 @@ class QueryBuilder extends Grammar
         $callback = Closure::fromCallable($callback);
 
         // when
-        if($when){
+        if ($when) {
             // call callable
             $callback($builder = $this);
 
