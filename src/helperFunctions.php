@@ -7,7 +7,8 @@ use Framework\Http\Response;
 use Framework\Http\Request;
 use Framework\Cache\Cache;
 use Framework\Content\Seo;
-use \Framework\Http\Http;
+use Framework\Http\Http;
+use Framework\Debug\Ray;
 use Framework\App;
 
 /**
@@ -99,8 +100,8 @@ function request(string|int $find = null): mixed
     global $request;
 
     $request = app('request') ?? app(
-            $request instanceof Request ? $request : new Request()
-        );
+        $request instanceof Request ? $request : new Request()
+    );
 
     return !is_null($find) ?
         (property_exists($request->requestData, $find) ? $request->requestData->{$find} : null) :
@@ -213,3 +214,39 @@ function app(object|string $class = null): object|null
     return $app;
 }
 
+/**
+ * @param mixed ...$data
+ * @return Ray
+ */
+function ray(mixed ...$data)
+{
+    return new class($data, debug_backtrace()) extends Ray
+    {
+        public function __construct(private mixed $_data, array $trace)
+        {
+            // call parent constructor
+            parent::__construct();
+
+            // set backtrace
+            $this->backtrace = $trace;
+
+            // check if there exists an global instance
+            if (app('ray')) {
+                // keep track of measure info
+                $this->measure = app('ray')->measure;
+            }
+        }
+
+        public function __destruct()
+        {
+            if ($this->_data) {
+                $this->data($this->_data)->send();
+            } else {
+                $this->send();
+            }
+
+            // update global instance to keep track of information that need to be keeped
+            app()->ray = $this;
+        }
+    };
+}

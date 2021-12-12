@@ -4,7 +4,10 @@
     "autoload": {
         "psr-4": {
             "Framework\\": "src/"
-        }
+        },
+        "files": [
+            "src/helperFunctions.php"
+        ]
     },
     "authors": [
         {
@@ -13,13 +16,13 @@
         }
     ],
     "license": "MIT",
-  "require": {
-    "ext-pcntl": "*",
-    "ext-sockets": "*",
-    "opis/closure": "^3.6",
-    "php-curl-class/php-curl-class": "^9.5",
-    "ext-pdo": "*"
-  },
+    "require": {
+        "ext-pcntl": "*",
+        "ext-sockets": "*",
+        "opis/closure": "^3.6",
+        "php-curl-class/php-curl-class": "^9.5",
+        "ext-pdo": "*"
+    },
     "require-dev": {
         "phpunit/phpunit": "^9",
         "phpstan/phpstan": "^1.2"

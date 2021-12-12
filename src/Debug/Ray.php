@@ -38,7 +38,7 @@ class Ray
     /**
      * This will be displayed when measure was ended
      */
-    private array $measure = [
+    public array $measure = [
         'startTime' => 0,
         'endTime' => 0,
         'totalExecutionTime' => 0,
@@ -47,6 +47,11 @@ class Ray
         'totalMemoryUsage' => 0,
         'done' => false
     ];
+
+    /**
+     * 
+     */
+    protected array $backtrace = [];
 
     public function __construct()
     {
@@ -58,7 +63,7 @@ class Ray
         $this->type = 'normal';
         $this->data = $data;
 
-        return $this->send();
+        return $this;
     }
 
     public function fresh(): self
@@ -82,7 +87,7 @@ class Ray
             $this->measure['startTime'] = microtime(true) * 100;
             $this->measure['startMemory'] = memory_get_usage();
             // send messages
-            $this->title('Start measuring performance...')->send();
+            $this->title('Start measuring performance...');
         } else {
             $this->measure['endTime'] = microtime(true) * 100;
             $this->measure['peekMemory'] = memory_get_peak_usage();
@@ -90,9 +95,6 @@ class Ray
 
             $this->measure['totalExecutionTime'] = ceil($this->measure['endTime'] - $this->measure['startTime']) / 100;
             $this->measure['totalMemoryUsage'] = round($this->measure['startMemory'] / pow(1024, ($x = floor(log($this->measure['startMemory'], 1024)))), 2) . ' ' . $memoryUnit[$x];
-
-            // send
-            $this->send();
         }
 
         // return self
@@ -129,8 +131,12 @@ class Ray
             $xdebug = ob_get_clean();
         }
 
+        // get caller info
+        $caller = array_shift($this->backtrace);
+
         // make data to send to application
         $debugData = [
+            'id' => time() + random_int(1, 10000),
             'type' => $this->type,
             'fresh' => $this->fresh,
             'title' => $this->title,
@@ -141,11 +147,11 @@ class Ray
                 'xdebug' => $xdebug ?? ''
             ],
             'path' => __FILE__,
-            'fileName' => basename(__FILE__) . ':' . '1',
+            'fileName' => basename($caller['file']) . ':' . $caller['line'],
             'time' => strval(gmdate("H:i:s", time())),
             'trace' => [
-                'found' => !empty($trace),
-                'data' => ''
+                'found' => !empty($this->backtrace),
+                'data' => var_export($this->backtrace, true)
             ],
             'measure' => $this->measure
         ];

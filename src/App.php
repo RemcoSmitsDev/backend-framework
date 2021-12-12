@@ -33,7 +33,7 @@ class App
                     ob_get_clean();
                 }
                 // return error page
-                //                response()->code(500)->view('responseView')->exit();
+                response()->code(500)->view('responseView')->exit();
             }
         });
 
@@ -49,9 +49,6 @@ class App
 
         // set session settings
         self::setSession();
-
-        // require helper functions
-        require_once(__DIR__ . '/helperFunctions.php');
 
         // kijk of een van de tokens niet bestaat generate dan een token
         // om later ajax request te kunnen valideren
