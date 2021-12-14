@@ -2,7 +2,7 @@
 
 namespace Framework\Http;
 
-class RequestValidator extends Request
+class RequestValidator
 {
 	/**
 	 * All validation rules
@@ -31,13 +31,6 @@ class RequestValidator extends Request
 	 * @var array
 	 */
 	private array $passedRules = [];
-
-
-	public function __construct()
-	{
-		// call parent constructor
-		parent::__construct();
-	}
 
 	/**
 	 *
