@@ -180,9 +180,7 @@ class Ray
         $this->reset($this->measure['done'] === true);
 
         // exec send to ray application
-        exec('php ' . __DIR__ . '/Sender.php ' . base64_encode(serialize($debugData)), $output);
-
-        dd($output);
+        exec('php ' . __DIR__ . '/Sender.php ' . base64_encode(serialize($debugData)) . ' > /dev/null &');
 
         // return self
         return $this;
