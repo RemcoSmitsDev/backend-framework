@@ -30,7 +30,7 @@ $route->init();
 ```
 
 #### Basic routing
-Supported request methods: `GET`, `POST`, `PUT`, `UPDATE`, `DELETE`
+Supported request methods: `GET`, `POST`, `PUT`, `DELETE`
 ```php
 // route using callback function
 $route->get('/account', function () {
@@ -43,7 +43,6 @@ $route->get('/account', [AccountController::class,'index']);
 $route->get();
 $route->post();
 $route->put();
-$route->update();
 $route->delete();
 ```
 
@@ -119,7 +118,7 @@ $route->prefix('account')->group(function (Route $route) {
             // Get accountID from URL
             echo "AccountID: {$accountID}";
         })->pattern(['accountID' => '[0-9]+']);
-        // you can change the dynamic route prefix pattern after all (get, post, put, update, delete, match) methods
+        // you can change the dynamic route prefix pattern after all (get, post, put, delete, match) methods
     });
 });
 ```
