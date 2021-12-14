@@ -242,7 +242,7 @@ class Request
         }
 
         // If it's a POST request, check for a method override header
-        elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(strtoupper($this->headers('X-HTTP-Method-Override')), ['PUT', 'DELETE', 'PATCH'])) {
+        elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(strtoupper($this->headers('X-HTTP-Method-Override') ?? ''), ['PUT', 'DELETE', 'PATCH'])) {
             // check if headers exists
             $method = $this->headers('X-HTTP-Method-Override');
         }
