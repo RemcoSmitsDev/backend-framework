@@ -8,6 +8,12 @@ use ReflectionException;
 class App
 {
     /**
+     * @static
+     * @var bool $enableRay
+     */
+    private static bool $enableRay = false;
+
+    /**
      * This function will start all needed functions
      * @return void
      */
@@ -25,6 +31,15 @@ class App
             if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
                 ob_get_clean();
             }
+
+            // no error
+            if (!error_get_last()) {
+                return false;
+            }
+
+            // send request to ray
+            ray(error_get_last())->type('error')->color('orange');
+
             // check if there are internal server errors
             if (error_get_last() && error_get_last()['type'] === E_ERROR) {
                 // check when to get buffer
@@ -32,6 +47,7 @@ class App
                     // get all diplayed errors from buffer
                     ob_get_clean();
                 }
+
                 // return error page
                 response()->code(500)->view('responseView')->exit();
             }
@@ -105,10 +121,12 @@ class App
             error_reporting(E_ALL);
         } else {
             // vang alle errors en echo alleen een empty string
-            set_error_handler(function () {
+            set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+                ray([$errno, $errstr, $errfile, $errline])->title('Error')->color('orange');
                 echo '';
             });
-            set_exception_handler(function () {
+            set_exception_handler(function ($exception) {
+                ray($exception)->title('Exception error')->color('orange');
                 echo '';
             });
         }
@@ -152,5 +170,22 @@ class App
 
         // return self
         return $this;
+    }
+
+    /**
+     * This function will enable ray
+     * @return void
+     */
+    public static function enableRay()
+    {
+        self::$enableRay = true;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function rayIsEnabled(): bool
+    {
+        return self::$enableRay;
     }
 }

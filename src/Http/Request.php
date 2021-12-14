@@ -22,6 +22,11 @@ class Request
     private ?object $postData;
 
     /**
+     * @var object|null
+     */
+    private ?object $fileData;
+
+    /**
      * @var object
      */
     public object $requestData;
@@ -41,10 +46,14 @@ class Request
             $_POST
         ));
 
+        // add all request files(upload)
+        $this->fileData = (object) $_FILES;
+
         // merge all request data
         $this->requestData = (object) array_merge(
             (array) $this->getData,
-            (array) $this->postData
+            (array) $this->postData,
+            (array) $this->fileData
         );
     }
 
@@ -64,7 +73,7 @@ class Request
      * @return mixed
      */
 
-    public function get(string|int $find = null): mixed
+    public function get(string|int|null $find = null): mixed
     {
         // check if find is null
         if (is_null($find)) {
@@ -80,7 +89,7 @@ class Request
      * @param string|int|null $find
      * @return mixed
      */
-    public function post(string|int $find = null): mixed
+    public function post(string|int|null $find = null): mixed
     {
         // check if find is null
         if (is_null($find)) {
@@ -89,6 +98,30 @@ class Request
 
         // return get data based on find value
         return property_exists($this->postData, $find) ? $this->postData->{$find} : null;
+    }
+
+    /**
+     * This function will return all request file(s)
+     * @param string|null $find
+     */
+    public function file(?string $find = null): mixed
+    {
+        // check if find is null
+        if (is_null($find)) {
+            return $this->fileData;
+        }
+
+        // return get data based on find value
+        return property_exists($this->fileData, $find) ? $this->fileData->{$find} : null;
+    }
+
+    /**
+     * This function will return all request information
+     * @return ?object
+     */
+    public function all(): ?object
+    {
+        return $this->requestData;
     }
 
     /**
@@ -132,7 +165,7 @@ class Request
     public function uri(): string
     {
         // krijg de huidige url zonden get waardes
-        return parse_url(rawurldecode($this->url()),PHP_URL_PATH);
+        return parse_url(rawurldecode($this->url()), PHP_URL_PATH);
     }
 
     /**
@@ -141,7 +174,7 @@ class Request
      */
     public function query(): string
     {
-        return parse_url(rawurldecode($this->url()),PHP_URL_QUERY) ?? '';
+        return parse_url(rawurldecode($this->url()), PHP_URL_QUERY) ?? '';
     }
 
     /**
@@ -178,11 +211,11 @@ class Request
         // Method getallheaders() not available or went wrong: manually extract 'm
         foreach ($_SERVER as $name => $value) {
             if ((str_starts_with($name, 'HTTP_')) || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH')) {
-                $headers[
-                    str_replace([' ', 'Http'],
+                $headers[str_replace(
+                    [' ', 'Http'],
                     ['-', 'HTTP'],
-                    ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))
-                ] = $value;
+                    ucwords(strtolower(str_replace('_', ' ', substr($name, 5))))
+                )] = $value;
             }
         }
 

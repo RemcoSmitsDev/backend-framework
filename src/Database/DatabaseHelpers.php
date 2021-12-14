@@ -22,6 +22,11 @@ trait DatabaseHelpers
     ];
 
     /**
+     * @var $executionTime
+     */
+    protected $executionTime = 0;
+
+    /**
      * function flattenArray
      * @param array $array
      * @return array
@@ -186,11 +191,11 @@ trait DatabaseHelpers
         // keep track of return value
         $returnValue = null;
 
+        // set start time for execution measure
+        $this->executionTime = microtime(true) * 100;
+
         // get type
         $type = $this->getQueryType($query);
-
-        // check if query log was on
-        $this->logSqlQuery($query, $bindData);
 
         // check if connection not already was started
         $this->connection->start();
@@ -223,8 +228,16 @@ trait DatabaseHelpers
                 array_values($bindData) ?: null
             );
 
+            // get end time
+            $endTime = microtime(true) * 100;
+            // calc execution time
+            $this->executionTime = ceil($endTime - $this->executionTime) / 100;
+
             // update has been executed to true
             $this->hasBeenExecuted = true;
+
+            // check if query log was on
+            $this->logSqlQuery($query, $bindData);
 
             // return insert id
             if ($type === 'insert') {
@@ -244,8 +257,16 @@ trait DatabaseHelpers
             // set errorWhileExecuting to true
             $this->errorWhileExecuting = true;
 
+            // get end time
+            $endTime = microtime(true) * 100;
+            // calc execution time
+            $this->executionTime = ceil($endTime - $this->executionTime) / 100;
+
             // update has been executed to true
             $this->hasBeenExecuted = true;
+
+            // check if query log was on
+            $this->logSqlQuery($query, $bindData);
 
             // echo error message
             if (!defined('IS_DEVELOPMENT_MODE') || IS_DEVELOPMENT_MODE) {
@@ -303,8 +324,14 @@ trait DatabaseHelpers
             return $data;
         }, $bindData);
 
-        // echo query
-        echo $query . ' --- bindings: (' . implode(',', $formattedBindData) . ')<br>';
+        // check if ray is enabled
+        if (app()->rayIsEnabled()) {
+            // log inside ray
+            ray(SqlFormatter::format($query), $formattedBindData, 'Execution time: ' . $this->executionTime . ' seconds')->type('query')->title('Database query');
+        } else {
+            // echo query
+            echo $query . ' --- bindings: (' . implode(',', $formattedBindData) . ')<br>';
+        }
     }
 
     /**

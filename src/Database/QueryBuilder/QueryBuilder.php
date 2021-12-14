@@ -182,7 +182,7 @@ class QueryBuilder extends Grammar
             } // else is string
             else {
                 // add column to columns array
-                $this->columns[] = preg_replace('/^([A-z0-9\_\-]+)$/','`$1`', trim($column));
+                $this->columns[] = preg_replace('/^([A-z0-9\_\-]+)$/', '`$1`', trim($column));
             }
         }
 
@@ -206,9 +206,9 @@ class QueryBuilder extends Grammar
         [$query, $bindings] = $this->createSubSelect($query);
 
         // format subSelect
-        if(is_string($as)){
+        if (is_string($as)) {
             return "({$query}) as {$as}";
-        }else {
+        } else {
             return "({$query})";
         }
     }

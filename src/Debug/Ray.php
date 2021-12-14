@@ -28,7 +28,7 @@ class Ray
     /**
      * Data that will be displayed
      */
-    public mixed $data = null;
+    public mixed $data = [];
 
     /**
      * Show an fresh page
@@ -58,9 +58,17 @@ class Ray
         $this->defaultValues = get_object_vars($this);
     }
 
+    public function type(string $type)
+    {
+        // set type
+        $this->type = $type;
+
+        // return self
+        return $this;
+    }
+
     public function data(mixed $data): self
     {
-        $this->type = 'normal';
         $this->data = $data;
 
         return $this;
@@ -121,18 +129,25 @@ class Ray
 
     public function send()
     {
-        ob_start();
-        dd($this->data);
-        $dd = ob_get_clean();
-
-        if (function_exists('xdebug_var_dump')) {
-            ob_start();
-            xdebug_var_dump($this->data);
-            $xdebug = ob_get_clean();
-        }
-
         // get caller info
-        $caller = array_shift($this->backtrace);
+        array_shift($this->backtrace);
+
+        // get caller
+        $caller = $this->backtrace[array_key_last(array_filter($this->backtrace, function ($trace) {
+            return isset($trace['file']);
+        }))] ?? null;
+
+        // keep track of xdebug data if extention exists
+        $xdebug = [];
+
+        // check if xdebug var_dump function exists
+        if (function_exists('xdebug_var_dump') && $this->type !== 'query') {
+            foreach ($this->data as $value) {
+                ob_start();
+                xdebug_var_dump($value);
+                $xdebug[] = ob_get_clean();
+            }
+        }
 
         // make data to send to application
         $debugData = [
@@ -143,15 +158,20 @@ class Ray
             'color' => $this->color,
             'data' => [
                 'found' => !empty($this->data),
-                'dd' => $dd,
-                'xdebug' => $xdebug ?? ''
+                'request' => [
+                    'GET' => (array) request()->get(),
+                    'POST' => (array) request()->post(),
+                    'FILE' => (array) request()->file()
+                ],
+                'original' => $this->data,
+                'dd' => [],
+                'xdebug' => $xdebug
             ],
-            'path' => __FILE__,
-            'fileName' => basename($caller['file']) . ':' . $caller['line'],
+            'fileName' => isset($caller['file']) ? basename($caller['file']) . ':' . $caller['line'] : '',
             'time' => strval(gmdate("H:i:s", time())),
             'trace' => [
                 'found' => !empty($this->backtrace),
-                'data' => var_export($this->backtrace, true)
+                'data' => json_encode($this->backtrace)
             ],
             'measure' => $this->measure
         ];
@@ -160,7 +180,9 @@ class Ray
         $this->reset($this->measure['done'] === true);
 
         // exec send to ray application
-        exec('php ' . __DIR__ . '/Sender.php ' . base64_encode(serialize($debugData)) . ' > /dev/null &');
+        exec('php ' . __DIR__ . '/Sender.php ' . base64_encode(serialize($debugData)), $output);
+
+        dd($output);
 
         // return self
         return $this;

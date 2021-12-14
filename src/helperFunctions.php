@@ -65,7 +65,7 @@ function clearInjections(string|array $value): string|array
 function dd(mixed ...$values): bool
 {
     // check if is not development
-    if (!IS_DEVELOPMENT_MODE) {
+    if (defined('IS_DEVELOPMENT_MODE') && !IS_DEVELOPMENT_MODE) {
         return false;
     }
 
