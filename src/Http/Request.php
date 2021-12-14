@@ -4,7 +4,7 @@ namespace Framework\Http;
 
 use ReflectionException;
 
-class Request
+class Request extends RequestValidator
 {
     /**
      * @var string
