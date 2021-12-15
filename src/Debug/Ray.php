@@ -179,11 +179,78 @@ class Ray
         // reset values
         $this->reset($this->measure['done'] === true);
 
-        // exec send to ray application
-        exec('php ' . __DIR__ . '/Sender.php ' . base64_encode(serialize($debugData)) . ' > /dev/null &');
+        // loop trough data and format as dump
+        foreach ($debugData['data']['original'] as $value) {
+            ob_start();
+            dd($value);
+            $debugData['data']['dd'][] = ob_get_clean();
+        }
+
+        // check if type is error
+        if ($debugData['type'] === 'error') {
+            // keep track of error previews
+            $codePreviews = [];
+
+            // loop through all errors
+            foreach ($debugData['data']['original'] as $error) {
+                // get error lines with format
+                $codePreviews[] = $this->getErrorFileLines($error);
+            }
+
+            // add previews to data
+            $debugData['data']['codePreviews'] = $codePreviews;
+        }
+
+        // send request to ray application
+        Http()->post('http://localhost:9890', json_encode($debugData));
 
         // return self
         return $this;
+    }
+
+    public function getErrorFileLines(array $error)
+    {
+        // calc start line
+        $errorLine = intval($error['line']);
+        $start = $errorLine - 10;
+        $end = $errorLine + 10;
+
+        // check if start line need to get changed
+        if ($errorLine <= 10) {
+            $start = 1;
+        }
+
+        // keep track of all information
+        $str = '';
+        $strLineNumbers = '';
+
+        // make linenumbers string(sidebar)
+        for ($i = $start + 1; $i <= $end; $i++) {
+            $strLineNumbers .= "<div>$i</div>";
+        }
+
+        // slice lines
+        $lines = array_slice(file($error['file']), $start, $end);
+
+        // loop trough all lines
+        foreach ($lines as $key => $line) {
+            // make sure that html characters are escaped
+            // $line = clearInjections($line);
+
+            // check if is current error line(place where the error was througn)
+            if (($start + $key + 1) === $errorLine) {
+                $str .= '<div class="line error"><span>' . preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line) . '</span></div>';
+            } else {
+                $str .= '<div class="line"><span>' . preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line) . '</span></div>';
+            }
+
+            // check if end was reached
+            if ($start + $key === $end) {
+                break;
+            }
+        }
+
+        return '<div class="line-numbers">' . $strLineNumbers . '</div><div class="code">' . $str . '</div>';
     }
 
     private function reset(bool $canResetMeasure = false)
