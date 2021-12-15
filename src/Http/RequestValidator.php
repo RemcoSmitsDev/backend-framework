@@ -11,11 +11,12 @@ class RequestValidator
 		'bool' => FILTER_VALIDATE_BOOLEAN,
 		'float' => FILTER_VALIDATE_FLOAT,
 		'int' => FILTER_VALIDATE_INT,
+		'string',
 		'email' => FILTER_VALIDATE_EMAIL,
 		'url' => FILTER_VALIDATE_URL,
 		'regex' => FILTER_VALIDATE_REGEXP,
 		'min' => 0,
-		'max' => INF
+		'max' => INF,
 	];
 
 	/**
@@ -33,6 +34,27 @@ class RequestValidator
 	private array $passedRules = [];
 
 	/**
+	 * Keeps track if value need to exists on request
+	 *
+	 * @var boolean
+	 */
+	private bool $required = false;
+
+	/**
+	 * Keeps track of failed status
+	 *
+	 * @var boolean
+	 */
+	private bool $failed = false;
+
+	/**
+	 * Keeps track of which request data to send back
+	 *
+	 * @var array
+	 */
+	private array $returnData = [];
+
+	/**
 	 *
 	 * @param array $rules
 	 * @return bool|array
@@ -44,17 +66,47 @@ class RequestValidator
 			// check if rules exists else it need to be this value
 			if (is_string($rule)) {
 				$rule = explode('|', $rule);
-			} elseif (!is_array($rule)) {
-				$rule = [$rule];
+			} elseif (is_array($rule)) {
+				$rule = flattenArray($rule);
 			}
+
+			// find required inside rules array
+			$requiredIndex = array_search('required', $rule);
+
+			// set required status
+			$this->required = $requiredIndex !== false;
+
+			// when required was found remove from rule(s)
+			if ($this->required) {
+				unset($rule[$requiredIndex]);
+			}
+
+			// when has only required rule
+			if (empty($rule)) {
+				// set passed rules
+				$this->passedRules[$key] = [
+					'rule' => $rule,
+					'key' => $key,
+					'value' => request($key),
+				];
+
+				// add to return data
+				$this->returnData[$key] = request($key);
+			}
+
 			// loop trough all rules
 			foreach ($rule as $r) {
-				$this->validateRule($key, $r, !isset(self::VALIDATE_RULES[preg_replace('/:[0-9]+|\s+/', '', $r)]));
+				// validate rule
+				$this->validateRule(
+					$key,
+					$r,
+					!isset(self::VALIDATE_RULES[preg_replace('/:(.+)|\s+/', '', $r)])
+				);
 			}
 		}
 
 		// return bool when failed return data when passed
-		return $this->failedRules ? false : $this->passedRules;
+		return $this->failed ? false : $this->returnData;
 	}
 
 	/**
@@ -75,7 +127,7 @@ class RequestValidator
 			$expected = $rule;
 		}
 		// validate min/max string length
-		elseif (preg_match('/(max|min):([0-9]+)/', $rule, $match)) {
+		elseif (preg_match('/^(max|min):([0-9]+)/', $rule, $match)) {
 			// check if passed validation
 			$failed = !$this->validateStringLength($match[1], intval($match[2]), $key);
 
@@ -84,6 +136,26 @@ class RequestValidator
 
 			// expected value
 			$expected = ($rule === 'max' ? ' < ' : ' > ') . $match[2];
+		}
+		// when is regex rule
+		elseif (preg_match('/^regex:(.+)/', $rule, $match)) {
+			// check if regex match failed
+			$failed = !filter_var(request($key), FILTER_VALIDATE_REGEXP, [
+				'options' => [
+					'regexp' => '/' . $match[1] . '/'
+				]
+			]);
+
+			// set rule name
+			$rule = 'regex';
+
+			// expected value
+			$expected = 'Regex match: ' . $match[1];
+		}
+		// when rule must be an type of string
+		elseif ($rule === 'string') {
+			// check if is string
+			$failed = !is_string(request($key));
 		}
 		// when is normal filter_var validation
 		else {
@@ -94,8 +166,11 @@ class RequestValidator
 			$expected = ' typeof ' . $key;
 		}
 
+		// set failed status
+		$this->setFailed($failed);
+
 		// check if rule failed
-		if ($failed) {
+		if ($this->required && $failed) {
 			// add to failed value
 			$this->failedRules[$key] = [
 				'rule' => $rule,
@@ -104,11 +179,15 @@ class RequestValidator
 				'expected' => $expected
 			];
 		} else {
+			// set passed rules
 			$this->passedRules[$key] = [
 				'rule' => $rule,
 				'key' => $key,
 				'value' => request($key),
 			];
+
+			// add to return data
+			$this->returnData[$key] = request($key);
 		}
 	}
 
@@ -120,9 +199,26 @@ class RequestValidator
 	 */
 	private function validateStringLength(string $type, int $length, string $key)
 	{
-		if ($type === 'min') {
-			return strlen(request($key)) >= $length;
+		// get value from request
+		$value = request($key);
+
+		// check if value is numeric
+		if (($value = filter_var($value, FILTER_SANITIZE_NUMBER_INT)) !== false) {
+			// validate
+			return filter_var($value, FILTER_VALIDATE_INT, ['options' => [
+				$type . '_range' => $length
+			]]);
+		} elseif (($value = filter_var($value, FILTER_SANITIZE_NUMBER_FLOAT)) !== false) {
+			// validate
+			return filter_var($value, FILTER_SANITIZE_NUMBER_FLOAT, ['options' => [
+				$type . '_range' => $length
+			]]);
 		} else {
+			// when type is min
+			if ($type === 'min') {
+				return strlen(request($key)) >= $length;
+			}
+			// validate
 			return strlen(request($key)) <= $length;
 		}
 	}
@@ -145,5 +241,22 @@ class RequestValidator
 	public function getPassedRules(): array
 	{
 		return $this->passedRules;
+	}
+
+	/**
+	 * sets failed status
+	 *
+	 * @param boolean $failed
+	 */
+	private function setFailed(bool $failed)
+	{
+		// stop when is optional
+		// stop when is alreay failed
+		if (!$this->required || $this->failed) {
+			return false;
+		}
+
+		// set status
+		$this->failed = $failed;
 	}
 }

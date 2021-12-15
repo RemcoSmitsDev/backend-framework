@@ -126,7 +126,7 @@ class Request extends RequestValidator
 
     /**
      * This function will check if all keys exists in the current request
-     * @param string[] $requestKey
+     * @param string $requestKey
      * @return bool
      */
     public function exists(string ...$requestKey): bool

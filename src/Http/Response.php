@@ -3,9 +3,10 @@
 namespace Framework\Http;
 
 use Framework\Interfaces\Http\ResponseInterface;
+use Framework\Content\Content;
 use ReflectionException;
 
-class Response implements ResponseInterface
+class Response extends Content implements ResponseInterface
 {
     /**
      * Holds all response messages by response code
@@ -232,9 +233,9 @@ class Response implements ResponseInterface
     public function __destruct()
     {
         // check if the headers are already send
-        if (!headers_sent() ) {
+        if (!headers_sent()) {
             // check if there was an response code set
-            if (isset($this->responseCode)){
+            if (isset($this->responseCode)) {
                 // set response code
                 header('HTTP/1.1 ' . $this->responseCode . ' ' . ($this->statusTexts[$this->responseCode] ?? ''));
             }

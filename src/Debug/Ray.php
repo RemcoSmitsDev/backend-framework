@@ -58,6 +58,12 @@ class Ray
         $this->defaultValues = get_object_vars($this);
     }
 
+    /**
+     * This method will set the type
+     *
+     * @param string $type
+     * @return void
+     */
     public function type(string $type)
     {
         // set type
@@ -67,6 +73,12 @@ class Ray
         return $this;
     }
 
+    /**
+     * This method will set data to send to ray app
+     *
+     * @param mixed $data
+     * @return self
+     */
     public function data(mixed $data): self
     {
         $this->data = $data;
@@ -74,6 +86,11 @@ class Ray
         return $this;
     }
 
+    /**
+     * This method will trigger fresh app
+     *
+     * @return self
+     */
     public function fresh(): self
     {
         $this->fresh = true;
@@ -81,6 +98,11 @@ class Ray
         return $this;
     }
 
+    /**
+     * This method start/stop measure
+     *
+     * @return void
+     */
     public function measure()
     {
         // set type
@@ -109,6 +131,12 @@ class Ray
         return $this;
     }
 
+    /**
+     * $this method will set the color
+     *
+     * @param string $color
+     * @return self
+     */
     public function color(string $color): self
     {
         // set color
@@ -118,6 +146,12 @@ class Ray
         return $this;
     }
 
+    /**
+     * This method will set the title
+     *
+     * @param string $title
+     * @return self
+     */
     public function title(string $title): self
     {
         // set title
@@ -127,27 +161,22 @@ class Ray
         return $this;
     }
 
-    public function send()
+    /**
+     * This function will send request to ray application
+     * 
+     * @return self
+     */
+    public function send(): self
     {
         // get caller info
         array_shift($this->backtrace);
 
         // get caller
-        $caller = $this->backtrace[array_key_last(array_filter($this->backtrace, function ($trace) {
-            return isset($trace['file']);
-        }))] ?? null;
-
-        // keep track of xdebug data if extention exists
-        $xdebug = [];
-
-        // check if xdebug var_dump function exists
-        if (function_exists('xdebug_var_dump') && $this->type !== 'query') {
-            foreach ($this->data as $value) {
-                ob_start();
-                xdebug_var_dump($value);
-                $xdebug[] = ob_get_clean();
-            }
-        }
+        $caller = $this->backtrace[array_key_last(
+            array_filter($this->backtrace, function ($trace) {
+                return isset($trace['file']);
+            })
+        )] ?? null;
 
         // make data to send to application
         $debugData = [
@@ -165,13 +194,13 @@ class Ray
                 ],
                 'original' => $this->data,
                 'dd' => [],
-                'xdebug' => $xdebug
+                'xdebug' => []
             ],
             'fileName' => isset($caller['file']) ? basename($caller['file']) . ':' . $caller['line'] : '',
             'time' => strval(gmdate("H:i:s", time())),
             'trace' => [
                 'found' => !empty($this->backtrace),
-                'data' => json_encode($this->backtrace)
+                'data' => $this->backtrace
             ],
             'measure' => $this->measure
         ];
@@ -184,6 +213,15 @@ class Ray
             ob_start();
             dd($value);
             $debugData['data']['dd'][] = ob_get_clean();
+        }
+
+        // check if xdebug var_dump function exists
+        if (function_exists('xdebug_var_dump') && $this->type !== 'query') {
+            foreach ($debugData['data']['original'] as $value) {
+                ob_start();
+                xdebug_var_dump($value);
+                $debugData['data']['xdebug'][] = ob_get_clean();
+            }
         }
 
         // check if type is error
@@ -202,12 +240,18 @@ class Ray
         }
 
         // send request to ray application
-        Http()->post('http://localhost:9890', json_encode($debugData));
+        http()->post('http://localhost:9890', json_encode($debugData));
 
         // return self
         return $this;
     }
 
+    /**
+     * This function will format error file to lines with numbers
+     *
+     * @param array $error
+     * @return void
+     */
     public function getErrorFileLines(array $error)
     {
         // calc start line
@@ -226,7 +270,7 @@ class Ray
 
         // make linenumbers string(sidebar)
         for ($i = $start + 1; $i <= $end; $i++) {
-            $strLineNumbers .= "<div>$i</div>";
+            $strLineNumbers .= "<div>{$i}</div>";
         }
 
         // slice lines
@@ -234,14 +278,11 @@ class Ray
 
         // loop trough all lines
         foreach ($lines as $key => $line) {
-            // make sure that html characters are escaped
-            // $line = clearInjections($line);
-
             // check if is current error line(place where the error was througn)
             if (($start + $key + 1) === $errorLine) {
-                $str .= '<div class="line error"><span>' . preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line) . '</span></div>';
+                $str .= '<div class="line error"><span>' . htmlspecialchars(preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line)) . '</span></div>';
             } else {
-                $str .= '<div class="line"><span>' . preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line) . '</span></div>';
+                $str .= '<div class="line"><span>' . htmlspecialchars(preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line)) . '</span></div>';
             }
 
             // check if end was reached
@@ -253,6 +294,12 @@ class Ray
         return '<div class="line-numbers">' . $strLineNumbers . '</div><div class="code">' . $str . '</div>';
     }
 
+    /**
+     * This will reset all class properties
+     *
+     * @param boolean $canResetMeasure
+     * @return void
+     */
     private function reset(bool $canResetMeasure = false)
     {
         foreach ($this->defaultValues as $key => $value) {

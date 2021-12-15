@@ -109,7 +109,7 @@ function request(string|int $find = null): mixed
 }
 
 /**
- * @return Http
+ * @return Http;
  */
 function http(): Http
 {
@@ -249,4 +249,18 @@ function ray(mixed ...$data)
             app()->ray = $this;
         }
     };
+}
+
+/**
+ * This function flatten an array to one layer
+ *
+ * @param array $array
+ * @return array
+ */
+function flattenArray(array $array): array
+{
+    return array_reduce($array, function ($array, $item) {
+        // merge flatten array with new value
+        return array_merge($array, is_array($item) ? flattenArray($item) : [$item]);
+    }, []);
 }
