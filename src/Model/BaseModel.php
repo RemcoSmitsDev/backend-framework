@@ -21,7 +21,7 @@ class BaseModel extends Database
         $table = str_replace(
             'controller',
             '',
-            strtolower(get_class($this))
+            strtolower(getClassName(get_class($this)))
         );
 
         // when ending with y replace with ie for the plural
