@@ -18,7 +18,7 @@
     "license": "MIT",
     "require": {
         "opis/closure": "^3.6",
-        "php-curl-class/php-curl-class": "^9.5",
+        "php-curl-class/php-curl-class": "^9.5"
     },
     "require-dev": {
         "phpunit/phpunit": "^9",
