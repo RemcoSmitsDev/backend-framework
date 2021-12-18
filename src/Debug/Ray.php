@@ -180,7 +180,7 @@ class Ray
 
         // make data to send to application
         $debugData = [
-            'id' => time() + random_int(1, 10000),
+            'id' => uniqid(strval(time() + random_int(1, 10000))),
             'type' => $this->type,
             'fresh' => $this->fresh,
             'title' => $this->title,
@@ -202,7 +202,8 @@ class Ray
                 'found' => !empty($this->backtrace),
                 'data' => $this->backtrace
             ],
-            'measure' => $this->measure
+            'measure' => $this->measure,
+            'host' => HTTP_HOST
         ];
 
         // reset values
@@ -286,7 +287,7 @@ class Ray
             }
 
             // check if end was reached
-            if ($start + $key === $end) {
+            if ($start + $key === $end - 1) {
                 break;
             }
         }
