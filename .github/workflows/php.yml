@@ -32,4 +32,4 @@ jobs:
       # Docs: https://getcomposer.org/doc/articles/scripts.md
 
       - name: Run test suites
-        run: composer run-script tests
+        run: composer run-script test
