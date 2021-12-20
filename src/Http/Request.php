@@ -165,7 +165,10 @@ class Request extends RequestValidator
     public function uri(): string
     {
         // krijg de huidige url zonden get waardes
-        return parse_url(rawurldecode($this->url()), PHP_URL_PATH);
+        return rtrim(
+            parse_url(rawurldecode($this->url()), PHP_URL_PATH),
+            '/'
+        );
     }
 
     /**
