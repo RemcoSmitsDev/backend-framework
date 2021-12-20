@@ -6,7 +6,7 @@ use Framework\Interfaces\Http\ResponseInterface;
 use Framework\Content\Content;
 use ReflectionException;
 
-class Response extends Content implements ResponseInterface
+class Response implements ResponseInterface
 {
     /**
      * Holds all response messages by response code
@@ -108,16 +108,10 @@ class Response extends Content implements ResponseInterface
     private bool $exit = false;
 
     /**
-     * Keeps track of view name
-     * @var ?string $view
+     * Keeps track of content class
+     * @var bool $content
      */
-    private ?string $view = null;
-
-    /**
-     * Keeps track of view data
-     * @var array $data
-     */
-    private array $data = [];
+    private bool $content = false;
 
     /**
      * formats responseData into json based in input data
@@ -209,8 +203,10 @@ class Response extends Content implements ResponseInterface
     public function view(string $view, array $data = []): self
     {
         // get output buffer
-        $this->view = $view;
-        $this->data = $data;
+        content()->template($view, $data);
+
+        // set content use to true
+        $this->content = true;
 
         // return self
         return $this;
@@ -254,8 +250,8 @@ class Response extends Content implements ResponseInterface
         echo $this->responseData;
 
         // check if there
-        if ($this->view) {
-            content()->view($this->view, $this->data);
+        if ($this->content) {
+            content()->layout(false)->renderTemplate();
         }
 
         // check if exit function need to be set

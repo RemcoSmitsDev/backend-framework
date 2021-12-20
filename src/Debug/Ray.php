@@ -2,8 +2,9 @@
 
 namespace Framework\Debug;
 
+use Framework\Interfaces\Debug\RayInterface;
 
-class Ray
+class Ray implements RayInterface
 {
     /**
      * keep track of default propery values
@@ -28,7 +29,7 @@ class Ray
     /**
      * Data that will be displayed
      */
-    public mixed $data = [];
+    private mixed $data = [];
 
     /**
      * Show an fresh page
@@ -62,9 +63,9 @@ class Ray
      * This method will set the type
      *
      * @param string $type
-     * @return void
+     * @return self
      */
-    public function type(string $type)
+    public function type(string $type): self
     {
         // set type
         $this->type = $type;
@@ -76,11 +77,16 @@ class Ray
     /**
      * This method will set data to send to ray app
      *
-     * @param mixed $data
+     * @param array $data
      * @return self
      */
-    public function data(mixed $data): self
+    public function data(array $data): self
     {
+        foreach ($data as &$value) {
+            if (is_bool($value)) {
+                $value = $value ? 'true' : 'false';
+            }
+        }
         $this->data = $data;
 
         return $this;
@@ -101,9 +107,9 @@ class Ray
     /**
      * This method start/stop measure
      *
-     * @return void
+     * @return self
      */
-    public function measure()
+    public function measure(): self
     {
         // set type
         $this->type = 'measure';
@@ -161,12 +167,7 @@ class Ray
         return $this;
     }
 
-    /**
-     * This function will send request to ray application
-     * 
-     * @return self
-     */
-    public function send(): self
+    private function buildDebugArray()
     {
         // get caller info
         array_shift($this->backtrace);
@@ -177,6 +178,9 @@ class Ray
                 return isset($trace['file']);
             })
         )] ?? null;
+
+        $date = new \DateTime();
+        $date->setTimezone(new \DateTimeZone('Europe/Amsterdam'));
 
         // make data to send to application
         $debugData = [
@@ -197,13 +201,14 @@ class Ray
                 'xdebug' => []
             ],
             'fileName' => isset($caller['file']) ? basename($caller['file']) . ':' . $caller['line'] : '',
-            'time' => strval(gmdate("H:i:s", time())),
+            'time' => $date->format('H:i:s'),
             'trace' => [
                 'found' => !empty($this->backtrace),
                 'data' => $this->backtrace
             ],
             'measure' => $this->measure,
-            'host' => HTTP_HOST
+            'enableAutoShow' => app()->getRaySettings()['enableAutoShow'],
+            'host' => $_SERVER['HTTP_HOST']
         ];
 
         // reset values
@@ -240,8 +245,19 @@ class Ray
             $debugData['data']['codePreviews'] = $codePreviews;
         }
 
-        // send request to ray application
-        http()->post('http://localhost:9890', json_encode($debugData));
+        // return debug array
+        return $debugData;
+    }
+
+    /**
+     * This function will send request to ray application
+     * 
+     * @return self
+     */
+    protected function send(): self
+    {
+        // send curl request without waiting for response
+        exec("curl --location --request POST 'http://localhost:9890' --header 'Content-Type: application/json' --header 'Accept: application/json' -d '" . base64_encode(json_encode($this->buildDebugArray())) . "' > /dev/null &");
 
         // return self
         return $this;
@@ -251,9 +267,9 @@ class Ray
      * This function will format error file to lines with numbers
      *
      * @param array $error
-     * @return void
+     * @return string
      */
-    public function getErrorFileLines(array $error)
+    private function getErrorFileLines(array $error)
     {
         // calc start line
         $errorLine = intval($error['line']);

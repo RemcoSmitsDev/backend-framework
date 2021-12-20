@@ -121,9 +121,7 @@ function http(): Http
  */
 function response(): Response
 {
-    global $response;
-
-    return $response instanceof Response ? $response : new Response();
+    return new Response();
 }
 
 /**
@@ -220,6 +218,16 @@ function app(object|string $class = null): object|null
  */
 function ray(mixed ...$data)
 {
+    if (!app()->rayIsEnabled()) {
+        return new class
+        {
+            public function __call($name, $arguments)
+            {
+                return $this;
+            }
+        };
+    }
+
     return new class($data, debug_backtrace()) extends Ray
     {
         public function __construct(private mixed $_data, array $trace)

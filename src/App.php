@@ -9,9 +9,12 @@ class App
 {
     /**
      * @static
-     * @var bool $enableRay
+     * @var array $raySettings
      */
-    private static bool $enableRay = false;
+    private static array $raySettings = [
+        'enabled' => false,
+        'enableAutoShow' => true
+    ];
 
     /**
      * This function will start all needed functions
@@ -37,11 +40,8 @@ class App
                 return false;
             }
 
-            // send request to ray
-            ray(error_get_last())->type('error')->color('orange');
-
             // check if there are internal server errors
-            if (error_get_last() && error_get_last()['type'] === E_ERROR) {
+            if (error_get_last()['type'] === E_ERROR) {
                 // check when to get buffer
                 if (!IS_DEVELOPMENT_MODE) {
                     // get all diplayed errors from buffer
@@ -156,7 +156,7 @@ class App
 
     /**
      * This function will store an instance of all classes
-     * @param object[] $classes
+     * @param ...object $classes
      * @return self
      * @throws ReflectionException
      */
@@ -176,9 +176,12 @@ class App
      * This function will enable ray
      * @return void
      */
-    public static function enableRay()
+    public static function enableRay(bool $enableAutoShow = true)
     {
-        self::$enableRay = true;
+        self::$raySettings = [
+            'enabled' => true,
+            'enableAutoShow' => $enableAutoShow
+        ];
     }
 
     /**
@@ -186,6 +189,14 @@ class App
      */
     public static function rayIsEnabled(): bool
     {
-        return self::$enableRay;
+        return self::getRaySettings()['enabled'];
+    }
+
+    /**
+     * @return array This will return current ray settings
+     */
+    public static function getRaySettings(): array
+    {
+        return self::$raySettings;
     }
 }

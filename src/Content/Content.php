@@ -12,17 +12,22 @@ class Content
     /**
      * @var string $template Keeps track of all
      */
-    public string $template = '404';
+    private string $template = '404';
 
     /**
-     * @var string $layout Keeps track of layout(head, global structure, footer)
+     * @var string|false $layout Keeps track of layout(head, global structure, footer)
      */
-    public string $layout = '';
+    private string|false $layout = '';
+
+    /**
+     * @var string|false $defaultLayout Keeps track of an default template
+     */
+    private string|false $defaultLayout = false;
 
     /**
      * @var string $title Keeps track of page title
      */
-    public string $title = '';
+    private string $title = '';
 
     /**
      * @var array Keeps track of all data to extract for all views
@@ -31,10 +36,15 @@ class Content
 
     /**
      * @param string|null $viewPath
+     * @param string|false $defaultLayout
      */
-    public function __construct(string $viewPath = null)
+    public function __construct(?string $viewPath = null, string|false $defaultLayout = false)
     {
-        $this->viewPath = rtrim($viewPath ?: SERVER_ROOT . '/../templates/') . '/';
+        $this->viewPath = rtrim(
+            $viewPath ?: SERVER_ROOT . '/../templates',
+            '/'
+        ) . '/';
+        $this->defaultLayout = $defaultLayout;
     }
 
     /**
@@ -57,10 +67,10 @@ class Content
 
     /**
      * This function sets the layout type, this wil make an file path like: include{type}Content.php
-     * @param string $layout
+     * @param string|false $layout
      * @return Content
      */
-    public function layout(string $layout): self
+    public function layout(string|false $layout): self
     {
         // set layout
         $this->layout = $layout;
@@ -122,6 +132,9 @@ class Content
      */
     public function listen(): void
     {
+        if ($this->layout !== false) {
+            $this->layout($this->defaultLayout);
+        }
         // check if content wrapper exists
         if (file_exists($path = $this->viewPath . "{$this->layout}.php")) {
             // require wrapper template
@@ -139,7 +152,5 @@ class Content
         $this->view($this->template);
         // reset template
         $this->template = '';
-        // reset content wrapper type
-        $this->layout('');
     }
 }

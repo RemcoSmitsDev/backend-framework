@@ -6,7 +6,8 @@
             "Framework\\": "src/"
         },
         "files": [
-            "src/helperFunctions.php"
+            "src/helperFunctions.php",
+            "src/Debug/startScript.php"
         ]
     },
     "authors": [
@@ -15,6 +16,9 @@
             "email": "djsmits12@gmail.com"
         }
     ],
+    "scripts": {
+        "test": "./vendor/bin/phpunit tests"
+    },
     "license": "MIT",
     "require": {
         "opis/closure": "^3.6",
