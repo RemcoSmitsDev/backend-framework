@@ -169,8 +169,10 @@ class RequestValidator
 			$this->required = $requiredIndex !== false;
 
 			// when required was found remove from rule(s)
-			if ($this->required) {
+			if ($this->required && is_array($rule)) {
 				unset($rule[$requiredIndex]);
+			} elseif ($this->required && is_string($rule)) {
+				continue;
 			}
 
 			// set found data
