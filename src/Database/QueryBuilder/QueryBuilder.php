@@ -66,15 +66,15 @@ class QueryBuilder extends Grammar
 
     /**
      * keeps track of limit amount
-     * @var int
+     * @var int|null
      */
-    protected int $limit;
+    protected ?int $limit = null;
 
     /**
      * keeps track of offset
      * @var int
      */
-    protected int $offset;
+    protected ?int $offset = null;
 
     /**
      * keeps track of all group statements
@@ -101,14 +101,14 @@ class QueryBuilder extends Grammar
     private bool $hasBeenExecuted = false;
 
     /**
-     * @var array
+     * @var array|null
      */
-    private array $resetData;
+    private ?array $resetData;
 
     /**
-     * @var Connection
+     * @var Connection|null
      */
-    private Connection $connection;
+    private ?Connection $connection;
 
     /**
      * @param Connection $connection
