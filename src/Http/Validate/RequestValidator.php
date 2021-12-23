@@ -163,7 +163,7 @@ class RequestValidator
 		// loop trough all rules
 		foreach ($rules as $key => $rule) {
 			// find required inside rules array
-			$requiredIndex = array_search('required', $rule);
+			$requiredIndex = array_search('required', (array) $rule);
 
 			// set required status
 			$this->required = $requiredIndex !== false;
