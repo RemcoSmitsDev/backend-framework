@@ -2,6 +2,7 @@
 
 namespace Framework\Http;
 
+use Framework\Http\validate\RequestValidator;
 use ReflectionException;
 
 class Request extends RequestValidator

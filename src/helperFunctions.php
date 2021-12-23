@@ -17,11 +17,11 @@ use Framework\App;
  */
 function stripAccents(string $input): string
 {
-    //Unwanted array
-    $unwantedArray = ['Š' => 'S', 'š' => 's', 'Ž' => 'Z', 'ž' => 'z', 'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A', 'Æ' => 'A', 'Ç' => 'C', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E', 'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I', 'Ñ' => 'N', 'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O', 'Ø' => 'O', 'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U', 'Ý' => 'Y', 'Þ' => 'B', 'ß' => 'Ss', 'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a', 'æ' => 'a', 'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i', 'ð' => 'o', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ø' => 'o', 'ù' => 'u', 'ú' => 'u', 'ü' => 'u', 'û' => 'u', 'ý' => 'y', 'þ' => 'b', 'ÿ' => 'y'];
+	//Unwanted array
+	$unwantedArray = ['Š' => 'S', 'š' => 's', 'Ž' => 'Z', 'ž' => 'z', 'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A', 'Æ' => 'A', 'Ç' => 'C', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E', 'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I', 'Ñ' => 'N', 'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O', 'Ø' => 'O', 'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U', 'Ý' => 'Y', 'Þ' => 'B', 'ß' => 'Ss', 'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a', 'æ' => 'a', 'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i', 'ð' => 'o', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ø' => 'o', 'ù' => 'u', 'ú' => 'u', 'ü' => 'u', 'û' => 'u', 'ý' => 'y', 'þ' => 'b', 'ÿ' => 'y'];
 
-    //Return the input
-    return strtr($input, $unwantedArray);
+	//Return the input
+	return strtr($input, $unwantedArray);
 }
 
 /**
@@ -30,15 +30,15 @@ function stripAccents(string $input): string
  */
 function randomString(int $length = 15): string
 {
-    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $charactersLength = strlen($characters);
-    $randomString = '';
+	$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	$charactersLength = strlen($characters);
+	$randomString = '';
 
-    for ($i = 0; $i < $length; $i++) {
-        $randomString .= $characters[rand(0, $charactersLength - 1)];
-    }
+	for ($i = 0; $i < $length; $i++) {
+		$randomString .= $characters[rand(0, $charactersLength - 1)];
+	}
 
-    return $randomString;
+	return $randomString;
 }
 
 /**
@@ -47,15 +47,15 @@ function randomString(int $length = 15): string
  */
 function clearInjections(string|array $value): string|array
 {
-    // kijk of input value een array is
-    if (is_array($value)) {
-        // ga door alle keys/values heen
-        return array_map(function ($value) {
-            return clearInjections($value);
-        }, $value);
-    }
+	// kijk of input value een array is
+	if (is_array($value)) {
+		// ga door alle keys/values heen
+		return array_map(function ($value) {
+			return clearInjections($value);
+		}, $value);
+	}
 
-    return htmlspecialchars(trim($value));
+	return htmlspecialchars(trim($value));
 }
 
 /**
@@ -64,18 +64,18 @@ function clearInjections(string|array $value): string|array
  */
 function dd(mixed ...$values): bool
 {
-    // check if is not development
-    if (defined('IS_DEVELOPMENT_MODE') && !IS_DEVELOPMENT_MODE) {
-        return false;
-    }
+	// check if is not development
+	if (defined('IS_DEVELOPMENT_MODE') && !IS_DEVELOPMENT_MODE) {
+		return false;
+	}
 
-    echo "<pre style='width:auto;overflow:auto;'>";
-    foreach ($values as $value) {
-        print_r($value);
-    }
-    echo "</pre>";
+	echo "<pre style='width:auto;overflow:auto;'>";
+	foreach ($values as $value) {
+		print_r($value);
+	}
+	echo "</pre>";
 
-    return true;
+	return true;
 }
 
 /**
@@ -85,9 +85,9 @@ function dd(mixed ...$values): bool
  */
 function getClassName(object|string $class): string
 {
-    $class = new \ReflectionClass($class);
+	$class = new \ReflectionClass($class);
 
-    return $class->getShortName();
+	return $class->getShortName();
 }
 
 /**
@@ -97,15 +97,15 @@ function getClassName(object|string $class): string
  */
 function request(string|int $find = null): mixed
 {
-    global $request;
+	global $request;
 
-    $request = app('request') ?? app(
-        $request instanceof Request ? $request : new Request()
-    );
+	$request = app('request') ?? app(
+		$request instanceof Request ? $request : new Request()
+	);
 
-    return !is_null($find) ?
-        (property_exists($request->requestData, $find) ? $request->requestData->{$find} : null) :
-        $request;
+	return !is_null($find) ?
+		(property_exists($request->requestData, $find) ? $request->requestData->{$find} : null) :
+		$request;
 }
 
 /**
@@ -113,7 +113,7 @@ function request(string|int $find = null): mixed
  */
 function http(): Http
 {
-    return new Http();
+	return new Http();
 }
 
 /**
@@ -121,7 +121,7 @@ function http(): Http
  */
 function response(): Response
 {
-    return new Response();
+	return new Response();
 }
 
 /**
@@ -132,7 +132,7 @@ function response(): Response
  */
 function redirect(string $path, int $responseCode = 302, bool $secure = null): Redirect
 {
-    return new Redirect($path, $responseCode, $secure);
+	return new Redirect($path, $responseCode, $secure);
 }
 
 /**
@@ -141,11 +141,11 @@ function redirect(string $path, int $responseCode = 302, bool $secure = null): R
  */
 function content(): object|null
 {
-    global $content;
+	global $content;
 
-    return app('content') ?: app(
-        $content instanceof Content ? $content : new Content()
-    );
+	return app('content') ?: app(
+		$content instanceof Content ? $content : new Content()
+	);
 }
 
 /**
@@ -154,11 +154,11 @@ function content(): object|null
  */
 function seo(): object|null
 {
-    global $seo;
+	global $seo;
 
-    return app('seo') ?: app(
-        $seo instanceof Seo ? $seo : new Seo()
-    );
+	return app('seo') ?: app(
+		$seo instanceof Seo ? $seo : new Seo()
+	);
 }
 
 /**
@@ -167,11 +167,11 @@ function seo(): object|null
  */
 function route(): object|null
 {
-    global $route;
+	global $route;
 
-    return app('route') ?: app(
-        $route instanceof Route ? $route : new Route()
-    );
+	return app('route') ?: app(
+		$route instanceof Route ? $route : new Route()
+	);
 }
 
 /**
@@ -180,11 +180,11 @@ function route(): object|null
  */
 function cache(): object|null
 {
-    global $cache;
+	global $cache;
 
-    return app('cache') ?: app(
-        $cache instanceof Cache ? $cache : new Cache()
-    );
+	return app('cache') ?: app(
+		$cache instanceof Cache ? $cache : new Cache()
+	);
 }
 
 /**
@@ -194,22 +194,22 @@ function cache(): object|null
  */
 function app(object|string $class = null): object|null
 {
-    global $app;
+	global $app;
 
-    // check if app is an instance of app class
-    if (!$app instanceof App) {
-        $app = new App;
-    }
+	// check if app is an instance of app class
+	if (!$app instanceof App) {
+		$app = new App;
+	}
 
-    // check if is object
-    if (is_object($class)) {
-        return $app->instance($class)->{lcfirst(getClassName($class))};
-    } // when you want to access an stored class
-    elseif (is_string($class)) {
-        return $app->{$class} ?? null;
-    }
+	// check if is object
+	if (is_object($class)) {
+		return $app->instance($class)->{lcfirst(getClassName($class))};
+	} // when you want to access an stored class
+	elseif (is_string($class)) {
+		return $app->{$class} ?? null;
+	}
 
-    return $app;
+	return $app;
 }
 
 /**
@@ -218,45 +218,45 @@ function app(object|string $class = null): object|null
  */
 function ray(mixed ...$data)
 {
-    if (!app()->rayIsEnabled()) {
-        return new class
-        {
-            public function __call($name, $arguments)
-            {
-                return $this;
-            }
-        };
-    }
+	if (!app()->rayIsEnabled()) {
+		return new class
+		{
+			public function __call($name, $arguments)
+			{
+				return $this;
+			}
+		};
+	}
 
-    return new class($data, debug_backtrace()) extends Ray
-    {
-        public function __construct(private mixed $_data, array $trace)
-        {
-            // call parent constructor
-            parent::__construct();
+	return new class($data, debug_backtrace()) extends Ray
+	{
+		public function __construct(private mixed $_data, array $trace)
+		{
+			// call parent constructor
+			parent::__construct();
 
-            // set backtrace
-            $this->backtrace = $trace;
+			// set backtrace
+			$this->backtrace = $trace;
 
-            // check if there exists an global instance
-            if (app('ray')) {
-                // keep track of measure info
-                $this->measure = app('ray')->measure;
-            }
-        }
+			// check if there exists an global instance
+			if (app('ray')) {
+				// keep track of measure info
+				$this->measure = app('ray')->measure;
+			}
+		}
 
-        public function __destruct()
-        {
-            if ($this->_data) {
-                $this->data($this->_data)->send();
-            } else {
-                $this->send();
-            }
+		public function __destruct()
+		{
+			if ($this->_data) {
+				$this->data($this->_data)->send();
+			} else {
+				$this->send();
+			}
 
-            // update global instance to keep track of information that need to be keeped
-            app()->ray = $this;
-        }
-    };
+			// update global instance to keep track of information that need to be keeped
+			app()->ray = $this;
+		}
+	};
 }
 
 /**
@@ -267,8 +267,19 @@ function ray(mixed ...$data)
  */
 function flattenArray(array $array): array
 {
-    return array_reduce($array, function ($array, $item) {
-        // merge flatten array with new value
-        return array_merge($array, is_array($item) ? flattenArray($item) : [$item]);
-    }, []);
+	return array_reduce($array, function ($array, $item) {
+		// merge flatten array with new value
+		return array_merge($array, is_array($item) ? flattenArray($item) : [$item]);
+	}, []);
+}
+
+/**
+ * This method will detect if an value is an multidimensional array
+ *
+ * @param mixed $value
+ * @return boolean
+ */
+function isMultidimensional(mixed $value): bool
+{
+	return is_array($value) && isset($value[0]);
 }
