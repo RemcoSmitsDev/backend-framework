@@ -171,7 +171,11 @@ class RequestValidator
 			// when required was found remove from rule(s)
 			if ($this->required && is_array($rule)) {
 				unset($rule[$requiredIndex]);
-			} elseif ($this->required && is_string($rule)) {
+			} elseif ($this->required && is_string($rule) && count((array) $rule) === 1) {
+				// add to return data
+				$this->returnData[$key] = request($key);
+
+				// force to go to the next rule
 				continue;
 			}
 
