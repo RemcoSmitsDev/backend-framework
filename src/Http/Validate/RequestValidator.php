@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Framework\Http\validate;
+namespace Framework\Http\Validate;
 
 use Framework\Http\Validate\ValidateRule;
 
