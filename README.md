@@ -5,7 +5,7 @@ Advanced Routing with dynamic routes(middlewares,grouping,prefix)
 To setup this PHP Backend Framework you need to install this package with composer:
 #### Install
 ```terminal
-composer require remcosmits/backend-framework:dev-master
+composer require remcosmits/backend-framework
 ```
 
 #### Setup
