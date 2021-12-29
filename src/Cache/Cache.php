@@ -2,23 +2,36 @@
 
 namespace Framework\Cache;
 
-use Closure;
-use DateTime;
-use Exception;
 use ReflectionException;
+use Exception;
+use DateTime;
+use Closure;
 
 class Cache
 {
     /**
-     * @var string $cacheFolderPath
-     **/
-    private string $cacheFolderPath = SERVER_ROOT . '/../cache/';
+     * This will create the cache dir
+     *
+     * @param [type] $cacheFolderPath
+     */
+    public function __construct(
+        private string $cacheFolderPath = SERVER_ROOT . '/../cache/'
+    ) {
+        // add last slash
+        $this->cacheFolderPath = rtrim($this->cacheFolderPath, '/') . '/';
+
+        // check if cache folder exists
+        if (!file_exists($this->cacheFolderPath)) {
+            mkdir($this->cacheFolderPath);
+        }
+    }
 
     /**
      * @param string $identifier
      * @param int $lifeTime
      * @param string $type (public | private)
      * @return self
+     * 
      * @throws ReflectionException
      */
     public function http(string $identifier, int $lifeTime = 3600, string $type = 'public'): self
@@ -46,7 +59,7 @@ class Cache
 
         // check if there is an current http cache make sure the max-age us incrementing
         // based on the lifetime and last modified date
-        [$newLifeTime, $lastModified] = $this->holdCurrentCache($lifeTime, $lastModified);
+        [$newLifeTime, $lastModified] = $this->holdCurrentHttpCache($lifeTime, $lastModified);
 
         // make etag to match for specific content
         $etag = '"' . md5(clearInjections($identifier . $file . $lastModified)) . '"';
@@ -79,10 +92,11 @@ class Cache
      * @param int $lifeTime
      * @param int $lastModified
      * @return array
+     * 
      * @throws ReflectionException
      * @throws Exception
      */
-    private function holdCurrentCache(int $lifeTime, int $lastModified): array
+    private function holdCurrentHttpCache(int $lifeTime, int $lastModified): array
     {
         // check if there exist and cache
         if (!request()->headers('If-Modified-Since')) {
@@ -153,10 +167,10 @@ class Cache
     /**
      * get single cache file if exists
      * @param string $identifier (unique identifier)
-     * @return bool|object
+     * @return bool|array
      **/
 
-    public function get(string $identifier): bool|object
+    public function get(string $identifier): bool|array
     {
         // krijg cache infor bij identifier
         $cacheInfo = $this->getCacheItemInfo($identifier);
@@ -235,7 +249,7 @@ class Cache
      * @param string $fileName
      * @return bool|string|null
      */
-    public function checkCacheItemLifeTime(string $fileName): bool|string|null
+    private function checkCacheItemLifeTime(string $fileName): bool|string|null
     {
         // get cache item
         $cacheItemData = explode(';', file_get_contents($this->cacheFolderPath . $fileName), 2);
@@ -264,19 +278,11 @@ class Cache
      **/
     public function flushEndOfLiveTimeCacheItems(): string
     {
-        // loop through alle cache items and check if the lifetime didn't passed
-        // wrong files to filter out
-        $wrongFiles = ['..', '.'];
-
-        // loop trough all files and delete them
-        foreach (scandir(SERVER_ROOT . '/../cache') as $file) {
-            // let only valid files pass
-            if (in_array($file, $wrongFiles)) {
-                continue;
-            }
+        // scan through all cache files and check if lifetime passed
+        $this->scanCacheFolder(function ($file) {
             // remove cache item if the lifetime is expired
             $this->checkCacheItemLifeTime($file);
-        }
+        });
 
         // return last updated date
         return (new \DateTime())->format('Y-m-d H:i:s');
@@ -303,20 +309,39 @@ class Cache
             return false;
         }
 
+        // loop through files and remove file 
+        $this->scanCacheFolder(function ($file) {
+            // delete cache file
+            unlink($this->cacheFolderPath . $file);
+        });
+
+        // return self
+        return $this;
+    }
+
+    /**
+     * This method will loop trough all cache files and calls the action that is needed
+     *
+     * @param callable $callback
+     * @return void
+     */
+    private function scanCacheFolder(callable $callback)
+    {
+        // make closure from callable
+        $callback = Closure::fromCallable($callback);
+
         // wrong files to filter out
         $wrongFiles = ['..', '.'];
 
         // loop trough all files and delete them
-        foreach (scandir(SERVER_ROOT . '/../cache') as $file) {
+        foreach (scandir($this->cacheFolderPath) ?: [] as $file) {
             // let only valid files pass
             if (in_array($file, $wrongFiles)) {
                 continue;
             }
-            // delete cache file
-            unlink($this->cacheFolderPath . $file);
-        }
 
-        // return self
-        return $this;
+            // execute action
+            $callback($file);
+        }
     }
 }

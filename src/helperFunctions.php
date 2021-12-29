@@ -174,10 +174,11 @@ function route(): ?Route
 }
 
 /**
- * @return Cache|null
+ * @return Cache
+ * 
  * @throws ReflectionException
  */
-function cache(): ?Cache
+function cache(): Cache
 {
 	global $cache;
 
