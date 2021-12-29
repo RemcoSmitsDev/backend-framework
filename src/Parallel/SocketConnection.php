@@ -7,6 +7,16 @@ use Generator;
 class SocketConnection
 {
     /**
+     * @var integer
+     */
+    protected int $timeoutSeconds;
+
+    /**
+     * @var integer
+     */
+    protected int $timeoutMicroseconds;
+
+    /**
      * @var int
      */
     private int $bufferSize = 1024;
@@ -14,7 +24,7 @@ class SocketConnection
     /**
      * @var float
      */
-    private float $timeout = 0.1;
+    private float $timeout = 0.0001;
 
     /**
      * @param \Socket $socket
@@ -23,6 +33,12 @@ class SocketConnection
     {
         // set nonblock
         socket_set_nonblock($this->socket);
+
+        // round number
+        $this->timeoutSeconds = floor($this->timeout);
+
+        // calc timeout microseconds
+        $this->timeoutMicroseconds = ($this->timeout * 1_000_000) - ($this->timeoutSeconds * 1_000_000);
     }
 
     /**
@@ -52,7 +68,7 @@ class SocketConnection
         $read = null;
         $except = null;
 
-        return socket_select($read, $write, $except, $this->timeout);
+        return socket_select($read, $write, $except, $this->timeoutSeconds, $this->timeoutMicroseconds);
     }
 
     /**

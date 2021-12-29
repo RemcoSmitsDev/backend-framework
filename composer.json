@@ -3,7 +3,8 @@
     "description": "Framework for file structure that i work with",
     "autoload": {
         "psr-4": {
-            "Framework\\": "src/"
+            "Framework\\": "src/",
+            "Framework\\tests\\": "tests/"
         },
         "files": [
             "src/helperFunctions.php",

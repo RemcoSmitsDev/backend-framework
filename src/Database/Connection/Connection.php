@@ -34,8 +34,7 @@ class Connection
         private string $hostname = 'localhost',
         private string $charset = 'utf8',
         private int    $port = 3306,
-    )
-    {
+    ) {
     }
 
     /**

@@ -9,7 +9,6 @@ use PHPUnit\Framework\TestCase;
 
 class ParallelTest extends TestCase
 {
-    /* @test */
     public function testParallelResultEquals()
     {
         $parallel = new Parallel();

@@ -79,7 +79,7 @@ function dd(mixed ...$values): bool
 }
 
 /**
- * @param class-string<object>|object $class
+ * @param string|object $class
  * @return string
  * @throws ReflectionException
  */
@@ -95,13 +95,12 @@ function getClassName(object|string $class): string
  * @return mixed
  * @throws ReflectionException
  */
-function request(string|int $find = null): mixed
+function request(string|int|null $find = null): mixed
 {
 	global $request;
 
-	$request = app('request') ?? app(
-		$request instanceof Request ? $request : new Request()
-	);
+	// TODO: kijken of ik hier want aan kan doen zodat alle data niet in de app state blijven hangen
+	$request = new Request();
 
 	return !is_null($find) ?
 		(property_exists($request->requestData, $find) ? $request->requestData->{$find} : null) :
@@ -136,10 +135,10 @@ function redirect(string $path, int $responseCode = 302, bool $secure = null): R
 }
 
 /**
- * @return object|null
+ * @return Content|null
  * @throws ReflectionException
  */
-function content(): object|null
+function content(): ?Content
 {
 	global $content;
 
@@ -149,10 +148,10 @@ function content(): object|null
 }
 
 /**
- * @return object|null
+ * @return Seo|null
  * @throws ReflectionException
  */
-function seo(): object|null
+function seo(): ?Seo
 {
 	global $seo;
 
@@ -162,10 +161,10 @@ function seo(): object|null
 }
 
 /**
- * @return object|null
+ * @return Route|null
  * @throws ReflectionException
  */
-function route(): object|null
+function route(): ?Route
 {
 	global $route;
 
@@ -175,10 +174,10 @@ function route(): object|null
 }
 
 /**
- * @return object|null
+ * @return Cache|null
  * @throws ReflectionException
  */
-function cache(): object|null
+function cache(): ?Cache
 {
 	global $cache;
 
@@ -192,7 +191,7 @@ function cache(): object|null
  * @return object|null
  * @throws ReflectionException
  */
-function app(object|string $class = null): object|null
+function app(object|string|null $class = null): object|null
 {
 	global $app;
 
@@ -281,5 +280,5 @@ function flattenArray(array $array): array
  */
 function isMultidimensional(mixed $value): bool
 {
-	return is_array($value) && isset($value[0]);
+	return is_array($value) && is_array($value[array_key_first($value)]);
 }

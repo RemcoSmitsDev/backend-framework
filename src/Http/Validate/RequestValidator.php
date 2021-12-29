@@ -51,6 +51,20 @@ class RequestValidator
 	private bool $foundData = false;
 
 	/**
+	 * This will keep track of the request key
+	 *
+	 * @var string|null
+	 */
+	private ?string $key = null;
+
+	/**
+	 * This will keep track of error messages
+	 *
+	 * @var array
+	 */
+	private array $errorMessages = [];
+
+	/**
 	 * This method will loop recursive through all rules
 	 *
 	 * @param array $rules
@@ -62,7 +76,6 @@ class RequestValidator
 	{
 		// loop trough all rules
 		foreach ($rules as $key => $rule) {
-
 			// when [
 			// 'name' => 'string'
 			// ]
@@ -86,14 +99,10 @@ class RequestValidator
 				// check if array is isMultidimensional
 				if (!isMultidimensional($value)) {
 					// add failed rule to array
-					$this->failedRules[] = [
-						'rule' => $rule,
-						'key' => $key,
-						'value' => $value
-					];
+					$this->addToFailedRules($rule, $key, $value);
 
-					// set failed to true
-					$this->setFailed(true);
+					// append to messages array
+					$this->errorMessages[] = "`{$this->key}` zou een reeks of waardes moeten zijn.";
 
 					// force to got to the next in the array
 					continue;
@@ -109,18 +118,16 @@ class RequestValidator
 			}
 			// when rule key is string and has array of rules
 			elseif (is_string($key) && is_array($rule)) {
-
 				// check if key exists inside value
 				if (!array_key_exists($key, (array) $value)) {
 					// add to failed rules
-					$this->failedRules[] = [
-						'rule' => $rule,
-						'key' => $key,
-						'value' => $value
-					];
+					$this->addToFailedRules($rule, $key, $value);
 
-					// set failed to true
-					$this->setFailed(true);
+					// set key
+					$this->key .= '.' . $key;
+
+					// append to messages array
+					$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
 				} else {
 					$this->recursiveLoop($rule, $value[$key]);
 				}
@@ -130,18 +137,13 @@ class RequestValidator
 			}
 			// when is normal validation rule
 			else {
-
 				// check if key exists inside value
 				if (!array_key_exists($key, (array) $value)) {
 					// added to failed rules
-					$this->failedRules[] = [
-						'rule' => $rule,
-						'key' => $key,
-						'value' => $value
-					];
+					$this->addToFailedRules($rule, $key, $value);
 
-					// set failed to true
-					$this->setFailed(true);
+					// append to messages array
+					$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
 
 					// go to the nex rule
 					continue;
@@ -156,14 +158,20 @@ class RequestValidator
 	/**
 	 *
 	 * @param array $rules
-	 * @return bool|array
+	 * @return self
 	 */
-	public function validate(array $rules): bool|array
+	public function validate(array $rules): self
 	{
 		// loop trough all rules
-		foreach ($rules as $key => $rule) {
+		foreach ((array) $rules as $key => $rule) {
+			// force rule to be array
+			$rule = (array) $rule;
+
 			// find required inside rules array
-			$requiredIndex = array_search('required', (array) $rule);
+			$requiredIndex = array_search('required', $rule);
+
+			// set key
+			$this->key = $key;
 
 			// set required status
 			$this->required = $requiredIndex !== false;
@@ -171,7 +179,7 @@ class RequestValidator
 			// when required was found remove from rule(s)
 			if ($this->required && is_array($rule)) {
 				unset($rule[$requiredIndex]);
-			} elseif ($this->required && is_string($rule) && count((array) $rule) === 1) {
+			} elseif ($this->required && is_string($rule) && count($rule) === 1) {
 				// add to return data
 				$this->returnData[$key] = request($key);
 
@@ -182,8 +190,22 @@ class RequestValidator
 			// set found data
 			$this->foundData = request()->exists($key);
 
+			// when there is no data found but rule is required
+			if (!$this->foundData && $this->required) {
+				// add to failed rules
+				$this->addToFailedRules($rule, $key, null);
+
+				// set key
+				$this->key .= '.' . $key;
+
+				// append to messages array
+				$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
+
+				continue;
+			}
+
 			// loop recursive through all rules
-			$this->recursiveLoop((array) $rule, request($key));
+			$this->recursiveLoop($rule, request($key));
 
 			// check if rule failed
 			if (!$this->failed) {
@@ -193,7 +215,7 @@ class RequestValidator
 		}
 
 		// return bool when failed return data when passed
-		return $this->failed() ? false : $this->returnData;
+		return $this;
 	}
 
 	/**
@@ -208,7 +230,8 @@ class RequestValidator
 	{
 		// validate rule
 		$validateRule = new ValidateRule(
-			type: preg_replace('/:(.+)|\s+/', '', $rule),
+			rule: preg_replace('/:(.+)|\s+/', '', $rule),
+			key: $this->key,
 			expected: $rule,
 			required: $this->required,
 			value: $value
@@ -219,15 +242,11 @@ class RequestValidator
 
 		// check if validation passed
 		if (!$passed) {
-			// added to failed rules
-			$this->failedRules[] = [
-				'rule' => $rule,
-				'key' => $key,
-				'value' => $value
-			];
+			// append to error messages
+			$this->errorMessages[] = $validateRule->getMessage();
 
-			// set failed to true
-			$this->setFailed(true);
+			// added to failed rules
+			$this->addToFailedRules($rule, $key, $value);
 		} else {
 			// add to passed rules
 			$this->passedRules[] = [
@@ -239,6 +258,27 @@ class RequestValidator
 	}
 
 	/**
+	 * This will add a failed rule to the failed rules array
+	 *
+	 * @param mixed $rule
+	 * @param string|integer $key
+	 * @param mixed $value
+	 * @return void
+	 */
+	public function addToFailedRules(mixed $rule, string|int $key, mixed $value): void
+	{
+		// add failed rule to array
+		$this->failedRules[] = [
+			'rule' => $rule,
+			'key' => $key,
+			'value' => $value
+		];
+
+		// set failed to true
+		$this->setFailed(true);
+	}
+
+	/**
 	 * This method will return if the validation passed
 	 *
 	 * @return boolean
@@ -246,6 +286,16 @@ class RequestValidator
 	public function failed(): bool
 	{
 		return $this->failed;
+	}
+
+	/**
+	 * This method will get all that that passed the rules
+	 *
+	 * @return array|null
+	 */
+	public function getData(): ?array
+	{
+		return $this->returnData;
 	}
 
 	/**

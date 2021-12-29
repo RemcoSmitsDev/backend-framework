@@ -8,6 +8,8 @@ use ReflectionException;
 use ReflectionFunction;
 use ReflectionMethod;
 
+use function PHPUnit\Framework\isType;
+
 class DependencyInjectionContainer implements DependencyInjectionContainerInterface
 {
     /**
@@ -30,7 +32,7 @@ class DependencyInjectionContainer implements DependencyInjectionContainerInterf
      * get all parameters from class method reflection
      * @param string $className
      * @param string $method
-     * @param array $arguments = []
+     * @param array $arguments
      * @return array parameters
      * @throws ReflectionException
      * @throws Exception
@@ -59,7 +61,7 @@ class DependencyInjectionContainer implements DependencyInjectionContainerInterf
     private static function getParameters(ReflectionMethod|ReflectionFunction $reflection, array $parameters = []): array
     {
         // types to skip
-        $skipTypes = ['string', 'array', 'object', 'stdclass'];
+        $skipTypes = ['string', 'int', 'float', 'bool', 'array', 'object', 'stdclass', 'mixed'];
 
         // dependencies
         $dependencies = [];
