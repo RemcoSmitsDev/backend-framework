@@ -129,7 +129,7 @@ function response(): Response
  * @param bool|null $secure
  * @return Redirect
  */
-function redirect(string $path, int $responseCode = 302, bool $secure = null): Redirect
+function redirect(?string $path = null, int $responseCode = 302, bool|null $secure = null): Redirect
 {
 	return new Redirect($path, $responseCode, $secure);
 }
