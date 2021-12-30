@@ -30,20 +30,6 @@ final class Redirect
 	}
 
 	/**
-	 * This method will format the host for the redirect url
-	 *
-	 * @return string
-	 */
-	private function formatHost(): string
-	{
-		// check if path has host inside path
-		preg_match('/^(www\.)*([A-z\.0-9]+)/', $this->to, $match);
-
-		// set host
-		return empty($match) ? HTTP_HOST : $match[0];
-	}
-
-	/**
 	 * This method will get 
 	 *
 	 * @return string
@@ -60,6 +46,20 @@ final class Redirect
 
 		// get protocol from server protocol
 		return preg_match('/^https/i', $_SERVER['SERVER_PROTOCOL'] ?? '') ? 'https://' : 'http://';
+	}
+
+	/**
+	 * This method will format the host for the redirect url
+	 *
+	 * @return string
+	 */
+	private function formatHost(): string
+	{
+		// check if path has host inside path
+		preg_match('/^(www\.)*([A-z\.0-9]+)/', $this->to, $match);
+
+		// set host
+		return empty($match) ? HTTP_HOST : $match[0];
 	}
 
 	/**
