@@ -27,20 +27,6 @@ trait DatabaseHelpers
     protected $executionTime = 0;
 
     /**
-     * function flattenArray
-     * @param array $array
-     * @return array
-     */
-    protected function flattenArray(array $array): array
-    {
-        // flatten array
-        return array_reduce($array, function ($array, $item) {
-            // merge flatten array with new value
-            return array_merge($array, is_array($item) ? $this->flattenArray($item) : [$item]);
-        }, []);
-    }
-
-    /**
      * function formatColumnNames
      * @param string $columnName
      * @return string
@@ -183,7 +169,7 @@ trait DatabaseHelpers
      * @param string $query
      * @param ?array $bindData
      * @param string|null $type
-     * @return bool
+     * @return mixed
      * @throws Exception
      */
     protected function handleExecution(string $query, ?array $bindData, string &$type = null): mixed

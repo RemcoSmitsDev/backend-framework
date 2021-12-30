@@ -298,7 +298,7 @@ class QueryBuilder extends Grammar
             );
 
             // add bind data to builder parts
-            $this->bindings['where'] = array_merge($this->bindings['where'], $this->flattenArray((array)$bindData));
+            $this->bindings['where'] = array_merge($this->bindings['where'], flattenArray((array) $bindData));
 
             // return self
             return $this;
@@ -639,7 +639,7 @@ class QueryBuilder extends Grammar
         // handle execution of query
         $response = $this->handleExecution(
             $query,
-            $this->flattenArray($bindData),
+            flattenArray($bindData),
             $type
         );
 
@@ -728,7 +728,7 @@ class QueryBuilder extends Grammar
     public function groupBy(string ...$groups): self
     {
         // loop through all groups
-        $this->groups = array_merge($this->groups, $this->flattenArray($groups));
+        $this->groups = array_merge($this->groups, flattenArray($groups));
 
         // return self
         return $this;

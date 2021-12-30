@@ -25,12 +25,12 @@ class BaseModel extends Database
         );
 
         // when ending with y replace with ie for the plural
-        if(str_ends_with($table,'y')){
-            $table = substr($table, 0, -1).'ie';
+        if (str_ends_with($table, 'y')) {
+            $table = substr($table, 0, -1) . 'ie';
         }
 
         // set table name
-        $this->table($this->table ?? $table.'s');
+        $this->table($this->table ?? $table . 's');
 
         // call database constructor
         parent::__construct();
@@ -43,6 +43,6 @@ class BaseModel extends Database
      */
     public function find(mixed $find): mixed
     {
-        return $this->where($this->primaryKey,'=', $find)->one();
+        return $this->where($this->primaryKey, '=', $find)->one();
     }
 }

@@ -20,7 +20,7 @@ class Grammar
         // return select query
         return [
             "SELECT {$select} FROM `{$query->from}`" . $this->format($query),
-            $query->flattenArray($query->bindings)
+            flattenArray($query->bindings)
         ];
     }
 
@@ -72,7 +72,7 @@ class Grammar
         // return insert query
         return [
             "INSERT INTO `{$builder->from}` (`{$columns}`) VALUES ({$valuePlaceholders})",
-            $builder->flattenArray($insertData)
+            flattenArray($insertData)
         ];
     }
 
@@ -108,7 +108,7 @@ class Grammar
         // return query and bindings
         return [
             "UPDATE `{$builder->from}` SET {$setPlaceholders}" . $this->format($builder),
-            array_merge($bindData, $builder->flattenArray($builder->bindings))
+            array_merge($bindData, flattenArray($builder->bindings))
         ];
     }
 
@@ -122,7 +122,7 @@ class Grammar
         // return query and bindings
         return [
             "DELETE FROM `{$builder->from}`" . $this->format($builder),
-            $builder->flattenArray($builder->bindings)
+            flattenArray($builder->bindings)
         ];
     }
 
