@@ -1,16 +1,15 @@
 <?php
 
-namespace Framework\DependencyInjectionContainer;
+namespace Framework\Container;
 
-use Exception;
-use Framework\Interfaces\DependencyInjectionContainerInterface;
+use Framework\Interfaces\ContainerInterface;
 use ReflectionException;
+use ReflectionNamedType;
 use ReflectionFunction;
 use ReflectionMethod;
+use Exception;
 
-use function PHPUnit\Framework\isType;
-
-class DependencyInjectionContainer implements DependencyInjectionContainerInterface
+class Container implements ContainerInterface
 {
     /**
      * handleClosure function
@@ -60,17 +59,17 @@ class DependencyInjectionContainer implements DependencyInjectionContainerInterf
 
     private static function getParameters(ReflectionMethod|ReflectionFunction $reflection, array $parameters = []): array
     {
-        // types to skip
-        $skipTypes = ['string', 'int', 'float', 'bool', 'array', 'object', 'stdclass', 'mixed'];
-
         // dependencies
         $dependencies = [];
 
         // loop trough parameters
         foreach ($reflection->getParameters() as $parameter) {
 
+            // define type of variabel to string
+            $type = $parameter->getType();
+
             // check if type exists
-            if (!($type = $parameter->getType())) {
+            if (!$type instanceof ReflectionNamedType || $type->isBuiltin() || !$parameter->hasType()) {
                 // check if parameter already exists
                 if (isset($parameters[$name = $parameter->getName()])) {
                     $dependencies[] = $parameters[$name];
@@ -79,16 +78,8 @@ class DependencyInjectionContainer implements DependencyInjectionContainerInterf
                 continue;
             }
 
-            // define type of variabel to string
-            $type = (string)$type;
-
-            // check if type is in skip array
-            if (in_array(strtolower($type), $skipTypes)) {
-                // add type as depency
-                $dependencies[] = $type;
-                // go to the next in the function
-                continue;
-            }
+            // get param type
+            $type = (string) $type;
 
             // make reflection of class
             $reflect = new \ReflectionClass($type);

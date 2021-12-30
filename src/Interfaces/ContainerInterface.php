@@ -2,7 +2,7 @@
 
 namespace Framework\Interfaces;
 
-interface DependencyInjectionContainerInterface
+interface ContainerInterface
 {
     /**
      * @param callable $callback

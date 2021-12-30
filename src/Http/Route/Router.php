@@ -4,7 +4,7 @@ namespace Framework\Http\Route;
 
 use Closure;
 use Exception;
-use Framework\DependencyInjectionContainer\DependencyInjectionContainer;
+use Framework\Container\Container;
 use Framework\Http\Request;
 
 class Router
@@ -110,7 +110,7 @@ class Router
             }
 
             // call method with dependencies
-            $class->{$action[1]}(...DependencyInjectionContainer::handleClassMethod($action[0], $action[1], $data));
+            $class->{$action[1]}(...Container::handleClassMethod($action[0], $action[1], $data));
             // stop function
             return;
         }
@@ -121,7 +121,7 @@ class Router
         }
 
         // call function
-        call_user_func($action, ...DependencyInjectionContainer::handleClosure($action, $data));
+        call_user_func($action, ...Container::handleClosure($action, $data));
     }
 
     /**
@@ -282,19 +282,19 @@ class Router
     private function handleOnMiddlewareFail(array $failedRoute): void
     {
         // check if there is a middle fallback callback
-        if(isset($this->onMiddlewareFailCallback)){
+        if (isset($this->onMiddlewareFailCallback)) {
             // return response code
             response()->code(403);
 
             // call on middleware fail callback
-            call_user_func($this->onMiddlewareFailCallback, ...DependencyInjectionContainer::handleClosure(
+            call_user_func($this->onMiddlewareFailCallback, ...Container::handleClosure(
                 $this->onMiddlewareFailCallback,
-                [ 'route' => $failedRoute ]
+                ['route' => $failedRoute]
             ));
 
             // stop other actions
             response()->exit();
-        }else{
+        } else {
             // send forbidden response code
             response()->code(403)->view('responseView')->exit();
         }

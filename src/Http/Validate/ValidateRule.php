@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Framework\Http\Validate;
 
-use Exception;
-use Framework\DependencyInjectionContainer\DependencyInjectionContainer;
 use PHPUnit\Framework\MockObject\InvalidMethodNameException;
+use Framework\Container\Container;
 use ReflectionClass;
+use Exception;
 
 class ValidateRule
 {
@@ -141,7 +141,7 @@ class ValidateRule
 		}
 
 		// call method with dependency injection container
-		$parameters = DependencyInjectionContainer::handleClassMethod($this->rule, 'validate', ['value' => $this->value]);
+		$parameters = Container::handleClassMethod($this->rule, 'validate', ['value' => $this->value]);
 
 		// make instance of class
 		$customRuleClass = new ($this->rule)();
