@@ -183,9 +183,6 @@ trait DatabaseHelpers
         // get type
         $type = $this->getQueryType($query);
 
-        // check if connection not already was started
-        $this->connection->start();
-
         // check if has already been executed
         if ($this->hasBeenExecuted) {
             // return insert id

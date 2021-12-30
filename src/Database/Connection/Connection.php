@@ -72,7 +72,7 @@ class Connection
      */
     public function prepare(string $query): self
     {
-        $this->statement = $this->pdo->prepare($query);
+        $this->statement = $this->start()->pdo->prepare($query);
 
         return $this;
     }
@@ -83,7 +83,7 @@ class Connection
      */
     public function execute(?array $bindData): bool
     {
-        return $this->statement->execute($bindData);
+        return $this->start()->statement->execute($bindData);
     }
 
     /**
