@@ -5,7 +5,7 @@ namespace Framework\Model;
 use Framework\Database\Database;
 use Exception;
 
-class BaseModel extends Database
+abstract class BaseModel extends Database
 {
     /**
      * @var string
@@ -38,11 +38,14 @@ class BaseModel extends Database
 
     /**
      * @param mixed $find
+     * @param string|null $key
+     * 
      * @return mixed
+     * 
      * @throws Exception
      */
-    public function find(mixed $find): mixed
+    public function find(mixed $find, ?string $key = null): mixed
     {
-        return $this->where($this->primaryKey, '=', $find)->one();
+        return $this->where($key ?: $this->primaryKey, '=', $find)->one();
     }
 }
