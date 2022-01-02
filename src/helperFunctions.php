@@ -1,6 +1,7 @@
 <?php
 
 use Framework\Http\Redirect\Redirect;
+use Framework\Collection\Collection;
 use Framework\Http\Route\Route;
 use Framework\Content\Content;
 use Framework\Http\Response;
@@ -257,6 +258,17 @@ function ray(mixed ...$data)
 			app()->ray = $this;
 		}
 	};
+}
+
+/**
+ * This method will create a new collection
+ *
+ * @param array|object $collection
+ * @return Collection
+ */
+function collection(array|object $collection): Collection
+{
+	return Collection::make($collection);
 }
 
 /**
