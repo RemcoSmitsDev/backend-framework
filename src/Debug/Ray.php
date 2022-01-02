@@ -115,7 +115,14 @@ class Ray implements RayInterface
         $this->type = 'measure';
 
         // memory formats
-        $memoryUnit = array('Bytes', 'KB', 'MB', 'GB', 'TB', 'PB');
+        $memoryUnit = [
+            'Bytes',
+            'KB',
+            'MB',
+            'GB',
+            'TB',
+            'PB'
+        ];
 
         // set measure time
         if (!$this->measure['startTime']) {
@@ -130,7 +137,15 @@ class Ray implements RayInterface
             $this->measure['done'] = true;
 
             $this->measure['totalExecutionTime'] = ceil($this->measure['endTime'] - $this->measure['startTime']) / 100;
-            $this->measure['totalMemoryUsage'] = round($this->measure['startMemory'] / pow(1024, ($x = floor(log($this->measure['startMemory'], 1024)))), 2) . ' ' . $memoryUnit[$x];
+            $this->measure['totalMemoryUsage'] = round(
+                $this->measure['startMemory'] / pow(
+                    1024,
+                    ($x = floor(
+                            log($this->measure['startMemory'], 1024)
+                        ))
+                ),
+                2
+            ) . ' ' . $memoryUnit[$x];
         }
 
         // return self
@@ -257,7 +272,7 @@ class Ray implements RayInterface
     protected function send(): self
     {
         // send curl request without waiting for response
-        exec("curl --location --request POST 'http://localhost:9890' --header 'Content-Type: application/json' --header 'Accept: application/json' -d '" . base64_encode(json_encode($this->buildDebugArray())) . "' > /dev/null &");
+        exec("curl --location --request POST 'http://localhost:9890' -d '" . base64_encode(json_encode($this->buildDebugArray())) . "' > /dev/null &");
 
         // return self
         return $this;
