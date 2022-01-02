@@ -33,7 +33,7 @@ trait DatabaseHelpers
      */
     public function formatColumnNames(string $columnName): string
     {
-        return preg_replace('/([A-z0-9_\-]+)\.([A-z0-9_\-]+)/', ' `$1`.`$2`', $columnName);
+        return preg_replace('/^([A-z0-9_\-]+)\.([A-z0-9_\-]+)$/', ' `$1`.`$2`', $columnName);
     }
 
     /**

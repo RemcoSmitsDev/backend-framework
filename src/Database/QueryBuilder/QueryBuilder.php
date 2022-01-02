@@ -3,14 +3,15 @@
 namespace Framework\Database\QueryBuilder;
 
 use Framework\Database\Connection\Connection;
-use Framework\Database\Database;
+use Framework\Database\JoinClause\JoinClause;
 use Framework\Database\DatabaseHelpers;
 use Framework\Database\Grammar\Grammar;
-use Framework\Database\JoinClause\JoinClause;
+use IteratorAggregate;
+use ArrayIterator;
 use Exception;
 use Closure;
 
-class QueryBuilder extends Grammar
+class QueryBuilder extends Grammar implements IteratorAggregate
 {
     use DatabaseHelpers;
 
@@ -160,7 +161,7 @@ class QueryBuilder extends Grammar
     public function select(string|array $select = ['*']): self
     {
         // check if column was already set
-        if (($key = array_search('*', $this->columns)) !== false) {
+        if ($key = $this->checkIfColumnWasAlreadySet('*')) {
             unset($this->columns[$key]);
         }
 
@@ -191,6 +192,21 @@ class QueryBuilder extends Grammar
 
         // return self
         return $this;
+    }
+
+    /**
+     * This method will check if an column already exists
+     *
+     * @param string $column
+     * @return false|integer
+     */
+    private function checkIfColumnWasAlreadySet(string $column): false|int
+    {
+        // find column
+        $key = array_search($column, $this->columns);
+
+        // check if column was found
+        return $key === false ? false : $key;
     }
 
     /**
@@ -692,11 +708,44 @@ class QueryBuilder extends Grammar
      * @param int $page
      * @param int $perPage
      * @return array
+     * 
      * @throws Exception
      */
     public function paginate(int $page, int $perPage = 15): array
     {
-        return $this->offset(($page - 1) * $perPage)->limit($perPage)->all([]);
+        // clone current query
+        $clone = clone $this;
+
+        // overwrite select columns
+        $clone->columns = ['count(*) as total_results'];
+
+        // fetch total_results count
+        $totalResults = $clone->column();
+
+        // calculate 
+        $totalPages = ceil($totalResults / $perPage);
+
+        // get all results
+        $results = $this->offset(($page - 1) * $perPage)->limit($perPage)->all([]);
+
+        // format return data
+        return [
+            'first_page' => 1,
+            'prev_page' => [
+                'exists' => $page - 1 > 0,
+                'page' => $page - 1 > 0 ? $page - 1 : 1
+            ],
+            'current_page' => $page > 0 ? $page : 1,
+            'next_page' => [
+                'exists' => $page + 1 <= $totalPages,
+                'page' => $page + 1 > $totalPages ? $totalPages : $page + 1
+            ],
+            'last_page' => $totalPages,
+            'total_pages' => $totalPages,
+            'total_results' => $totalResults,
+            'per_page' => $perPage,
+            'results' => $results,
+        ];
     }
 
     /**
@@ -758,6 +807,8 @@ class QueryBuilder extends Grammar
     }
 
     /**
+     * This method will reset all class properties
+     * 
      * @return void
      */
     public function reset(): void
@@ -766,5 +817,15 @@ class QueryBuilder extends Grammar
         foreach ($this->resetData as $key => $value) {
             $this->{$key} = $value;
         }
+    }
+
+    /**
+     * This method will return all results when you use queryBuilder without all, one, column inside a foreach
+     *
+     * @return ArrayIterator
+     */
+    public function getIterator(): ArrayIterator
+    {
+        return new ArrayIterator($this->all([]));
     }
 }
