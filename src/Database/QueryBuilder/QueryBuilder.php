@@ -720,7 +720,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
         $clone->columns = ['count(*) as total_results'];
 
         // fetch total_results count
-        $totalResults = $clone->column(0);
+        $totalResults = intval($clone->column(0));
 
         // calculate 
         $totalPages = ceil($totalResults / $perPage);
