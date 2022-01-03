@@ -307,6 +307,15 @@ class RequestValidator
 		// keep track of errrors
 		return $this->failedRules;
 	}
+	
+	/**
+	 * Returns all error messages
+	 * @return array
+	*/
+	public function getErrorMessages(): array
+	{
+		return $this->errorMessages;
+	}
 
 	/**
 	 * Undocumented function
