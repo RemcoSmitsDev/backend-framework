@@ -19,6 +19,7 @@ trait DatabaseHelpers
         'delete',
         'truncate',
         'drop',
+        'describe'
     ];
 
     /**
@@ -189,7 +190,7 @@ trait DatabaseHelpers
             if ($type === 'insert') {
                 // get insert id
                 $returnValue = $this->connection->insertId();
-            } elseif ($type === 'select') {
+            } elseif ($type === 'select' || $type === 'describe') {
                 // return statement
                 $returnValue = $this->connection->statement;
             }
@@ -226,7 +227,7 @@ trait DatabaseHelpers
             if ($type === 'insert') {
                 // get insert id
                 $returnValue = $this->connection->insertId();
-            } elseif ($type === 'select') {
+            } elseif ($type === 'select' || $type === 'describe') {
                 // return statement
                 $returnValue = $this->connection->statement;
             }
@@ -260,7 +261,7 @@ trait DatabaseHelpers
             $this->reset();
 
             // return value based on query type
-            return $type === 'select' ? $this->connection->statement : false;
+            return ($type === 'select' || $type === 'describe') ? $this->connection->statement : false;
         }
     }
 
