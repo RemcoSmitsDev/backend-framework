@@ -51,12 +51,12 @@ function clearInjections(string|array $value): string|array
 	// kijk of input value een array is
 	if (is_array($value)) {
 		// ga door alle keys/values heen
-		return array_map(function ($value) {
-			return clearInjections($value);
-		}, $value);
+		return collection($value)->map(function ($item, $key) {
+			return clearInjections($item);
+		})->toArray();
 	}
 
-	return htmlspecialchars(trim($value));
+	return htmlentities(trim($value));
 }
 
 /**
