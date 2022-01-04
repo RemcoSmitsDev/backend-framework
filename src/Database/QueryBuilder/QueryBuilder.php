@@ -146,6 +146,9 @@ class QueryBuilder extends Grammar implements IteratorAggregate
     {
         // add table name
         $this->from = $tableName;
+        
+        // reset columns
+		$this->columns = [];
 
         // make select statement
         // and return self
