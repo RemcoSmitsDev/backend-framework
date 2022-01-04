@@ -147,7 +147,7 @@ class Request extends RequestValidator
 	 */
 	public function csrf(): string
 	{
-		return $_SESSION['_csrf_token'] ?? $_SESSION['_csrf_token'] = randomString();
+		return $_SESSION['_csrf_token'] ?? $_SESSION['_csrf_token'] = randomString(40);
 	}
 
 	/**
