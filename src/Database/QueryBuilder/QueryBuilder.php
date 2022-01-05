@@ -20,7 +20,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * @var bool
 	 */
 
-	private bool $logSql = false;
+	public bool $logSql = false;
 
 	/**
 	 * fetch mode
@@ -90,18 +90,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	protected array $orders = [];
 
 	/**
-	 * keep track if there went something wrong
-	 * @var bool
-	 */
-	protected bool $errorWhileExecuting = false;
-
-	/**
-	 * keep track of already executed query
-	 * @var bool
-	 */
-	private bool $hasBeenExecuted = false;
-
-	/**
 	 * @var array|null
 	 */
 	private ?array $resetData;
@@ -110,6 +98,16 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * @var Connection|null
 	 */
 	private ?Connection $connection;
+
+	/**
+	 * @var boolean
+	 */
+	public bool $isRaw = false;
+
+	/**
+	 * @var array
+	 */
+	public array $rawQuery = [];
 
 	/**
 	 * @param Connection $connection
@@ -541,53 +539,59 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 
 	/**
 	 * function all
-	 * @param mixed $fallbackReturnType
+	 * @param mixed $fallbackReturnValue
 	 * @param int|null $fetchMode
 	 * @return mixed
 	 * @throws Exception
 	 */
-	public function all(mixed $fallbackReturnType = false, int $fetchMode = null): mixed
+	public function all(mixed $fallbackReturnValue = false, int $fetchMode = null): mixed
 	{
-		// return all results
-		$returnValue = $this->handleExecution(...$this->selectToSql($this))->fetchAll($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
+		// handle execution
+		$connection = $this->connection->handleExecution(
+			$this,
+			...($this->isRaw ? $this->rawQuery : $this->selectToSql($this))
+		);
 
 		// return fallback return value
-		return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
+		return $connection->failed() ? $fallbackReturnValue : $connection->statement->fetchAll($fetchMode ?: $this->fetchMode);
 	}
 
 	/**
 	 * function one
-	 * @param mixed $fallbackReturnType
+	 * @param mixed $fallbackReturnValue
 	 * @param int|null $fetchMode
 	 * @return mixed
 	 * @throws Exception
 	 */
-	public function one(mixed $fallbackReturnType = false, int $fetchMode = null): mixed
+	public function one(mixed $fallbackReturnValue = false, int $fetchMode = null): mixed
 	{
-		// make sure that limit is 1
-		$this->limit(1);
-
-		// return one result
-		$returnValue = $this->handleExecution(...$this->selectToSql($this))->fetch($fetchMode ?: $this->fetchMode) ?: $fallbackReturnType;
+		// handle execution
+		$connection = $this->connection->handleExecution(
+			$this->limit(1),
+			...($this->isRaw ? $this->rawQuery : $this->selectToSql($this))
+		);
 
 		// return fallback return value
-		return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
+		return $connection->failed() ? $fallbackReturnValue : $connection->statement->fetch($fetchMode ?: $this->fetchMode);
 	}
 
 	/**
 	 * function column
-	 * @param mixed $fallbackReturnType
+	 * @param mixed $fallbackReturnValue
 	 * @param int $column
 	 * @return mixed
 	 * @throws Exception
 	 */
-	public function column(mixed $fallbackReturnType = false, int $column = 0): mixed
+	public function column(mixed $fallbackReturnValue = false, int $column = 0): mixed
 	{
-		// get return value
-		$returnValue = $this->handleExecution(...$this->selectToSql($this))->fetchColumn($column) ?: $fallbackReturnType;
+		// handle execution
+		$connection = $this->connection->handleExecution(
+			$this,
+			...($this->isRaw ? $this->rawQuery : $this->selectToSql($this))
+		);
 
 		// return fallback return value
-		return $this->errorWhileExecuting ? $fallbackReturnType : $returnValue;
+		return $connection->failed() ? $fallbackReturnValue : $connection->statement->fetchColumn($column);
 	}
 
 	//
@@ -603,12 +607,18 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	public function insert(array $insertData): bool|int
 	{
 		// check if there exists an table
-		if (empty($this->from)) {
+		if (empty($insertData && $this->from)) {
 			return false;
 		}
 
+		// handle execution
+		$connection = $this->connection->handleExecution(
+			$this,
+			...($this->isRaw ? $this->rawQuery : $this->insertToSql($this, $insertData))
+		);
+
 		// return insert id(s) or false when execution was failed
-		return $this->handleExecution(...$this->insertToSql($this, $insertData));
+		return $connection->failed() ? false : $connection->insertId();
 	}
 
 	/**
@@ -624,8 +634,14 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 			return false;
 		}
 
+		// handle execution
+		$connection = $this->connection->handleExecution(
+			$this,
+			...($this->isRaw ? $this->rawQuery : $this->updateToSql($this, $updateData))
+		);
+
 		// return true or false (based on status of execution)
-		return $this->handleExecution(...$this->updateToSql($this, $updateData));
+		return !$connection->failed();
 	}
 
 	/**
@@ -640,32 +656,34 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 			return false;
 		}
 
+		// handle execution
+		$connection = $this->connection->handleExecution(
+			$this,
+			...($this->isRaw ? $this->rawQuery : $this->deleteToSql($this))
+		);
+
 		// return true or false (based on status of execution)
-		return $this->handleExecution(...$this->deleteToSql($this));
+		return !$connection->failed();
 	}
 
 
 	/**
 	 * function raw
 	 * @param string $query
-	 * @param array $bindData
+	 * @param array $bindings
 	 * @return mixed
 	 * @throws Exception
 	 */
-	public function raw(string $query, array $bindData = []): mixed
+	public function raw(string $query, array $bindings = []): mixed
 	{
-		$before = $this;
-		// handle execution of query
-		$response = $this->handleExecution(
-			$query,
-			flattenArray($bindData),
-			$type
-		);
+		// set raw is true
+		$this->isRaw = true;
 
-		$this->hasBeenExecuted = true;
+		// set raw query
+		$this->rawQuery = [$query, $bindings];
 
-		// return value based on query type
-		return ($type === 'select' || $type === 'describe') ? $before : $response;
+		// return self
+		return $this;
 	}
 
 	//
