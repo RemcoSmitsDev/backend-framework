@@ -146,9 +146,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		// add table name
 		$this->from = $tableName;
 
-		// reset columns
-		$this->columns = [];
-
 		// make select statement
 		// and return self
 		return $this->select($select);
@@ -162,6 +159,9 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 */
 	public function select(string|array $select = ['*']): self
 	{
+		// reset columns
+		$this->columns = [];
+
 		// check if column was already set
 		if ($key = $this->checkIfColumnWasAlreadySet('*')) {
 			unset($this->columns[$key]);
