@@ -35,11 +35,7 @@ trait CollectionHelpers
 		$keys = array_keys($this->toArray());
 
 		// map over the items and keep the keys
-		$items = array_map(
-			$callback,
-			$this->toArray(),
-			$keys
-		);
+		$items = array_map($callback, $this->toArray(), $keys);
 
 		// combine new array with old keys
 		return new static(array_combine($keys, $items));
@@ -103,5 +99,17 @@ trait CollectionHelpers
 		return Collection::make(
 			array_reverse($this->toArray(), true)
 		)->first($callback);
+	}
+
+	/**
+	 * This method will slice collection
+	 *
+	 * @param integer $offset
+	 * @param integer $length
+	 * @return static
+	 */
+	public function slice(int $offset, int $length): static
+	{
+		return new static(array_slice($this->toArray(), $offset, $length, true));
 	}
 }

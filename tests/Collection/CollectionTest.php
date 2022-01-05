@@ -53,4 +53,11 @@ class CollectionTest extends TestCase
 
 		$this->assertEquals('ajsdfkjasldkfjkl', $collection->last());
 	}
+
+	public function testSliceArray()
+	{
+		$collection = Collection::make(['test', 'ajsdfkjasldkfjkl']);
+
+		$this->assertEquals(['test'], $collection->slice(0, 1)->toArray());
+	}
 }

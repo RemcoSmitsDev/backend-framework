@@ -3,19 +3,13 @@
 namespace Framework\Collection;
 
 use IteratorAggregate;
+use JsonSerializable;
 use ArrayIterator;
 use Countable;
 
-class Collection implements IteratorAggregate, Countable
+class Collection implements IteratorAggregate, Countable, JsonSerializable
 {
 	use CollectionHelpers;
-
-	/**
-	 * This will keep track of source of collection
-	 *
-	 * @var mixed
-	 */
-	protected mixed $source;
 
 	/**
 	 * This will keep track of all items of the collection
@@ -29,16 +23,16 @@ class Collection implements IteratorAggregate, Countable
 	 */
 	public function __construct(array|object $collection)
 	{
-		$this->source = $this->items = $this->getCollection($collection);
+		$this->items = $this->getCollection($collection);
 	}
 
 	/**
 	 * This method wil create an instance of a new collection
 	 *
 	 * @param array|object $collection
-	 * @return self
+	 * @return static
 	 */
-	public static function make(array|object $collection): self
+	public static function make(array|object $collection): static
 	{
 		return new static($collection);
 	}
@@ -61,16 +55,6 @@ class Collection implements IteratorAggregate, Countable
 	}
 
 	/**
-	 * This method will return the source of the collection
-	 *
-	 * @return mixed
-	 */
-	public function source(): mixed
-	{
-		return $this->source;
-	}
-
-	/**
 	 * This method will 
 	 *
 	 * @return array
@@ -81,13 +65,23 @@ class Collection implements IteratorAggregate, Countable
 	}
 
 	/**
+	 * this will allow collection to be formatted to json
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize(): array
+	{
+		return $this->toArray();
+	}
+
+	/**
 	 * This method will return all results when you use the is without getting is to an array first
 	 *
 	 * @return ArrayIterator
 	 */
 	public function getIterator(): ArrayIterator
 	{
-		return new ArrayIterator($this->items);
+		return new ArrayIterator($this->toArray());
 	}
 
 	/**
@@ -97,6 +91,6 @@ class Collection implements IteratorAggregate, Countable
 	 */
 	public function count(): int
 	{
-		return count($this->items);
+		return count($this->toArray());
 	}
 }

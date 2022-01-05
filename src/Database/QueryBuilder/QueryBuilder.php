@@ -10,6 +10,7 @@ use IteratorAggregate;
 use ArrayIterator;
 use Exception;
 use Closure;
+use Framework\Database\Paginator\Paginator;
 
 class QueryBuilder extends Grammar implements IteratorAggregate
 {
@@ -732,7 +733,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * 
 	 * @throws Exception
 	 */
-	public function paginate(int $page, int $perPage = 15): array
+	public function paginate(int $currentPage, int $perPage = 15): array
 	{
 		// clone current query
 		$clone = clone $this;
@@ -743,30 +744,8 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		// fetch total_results count
 		$totalResults = intval($clone->column(0));
 
-		// calculate 
-		$totalPages = ceil($totalResults / $perPage);
-
-		// get all results
-		$results = $this->offset(($page - 1) * $perPage)->limit($perPage)->all([]);
-
-		// format return data
-		return [
-			'first_page' => 1,
-			'prev_page' => [
-				'exists' => $page - 1 > 0,
-				'page' => $page - 1 > 0 ? $page - 1 : 1
-			],
-			'current_page' => $page > 0 ? $page : 1,
-			'next_page' => [
-				'exists' => $page + 1 <= $totalPages,
-				'page' => $page + 1 > $totalPages ? $totalPages : $page + 1
-			],
-			'last_page' => $totalPages,
-			'total_pages' => $totalPages,
-			'total_results' => $totalResults,
-			'per_page' => $perPage,
-			'results' => $results,
-		];
+		// return new instance of paginator
+		return Paginator::make($this, $totalResults, $perPage, $currentPage)->toArray();
 	}
 
 	/**
