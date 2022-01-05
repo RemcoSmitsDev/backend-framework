@@ -3,6 +3,7 @@
 namespace Framework\Database\Connection;
 
 use Framework\Database\QueryBuilder\QueryBuilder;
+use Framework\Database\SqlFormatter;
 use PDOStatement;
 use PDO;
 
@@ -92,11 +93,12 @@ class Connection
 		// set start time for execution measure
 		$this->executionTime = microtime(true) * 100;
 
-		// prepare query
-		$this->prepare($query);
 
 		// try to execute query
 		try {
+			// prepare query
+			$this->prepare($query);
+
 			// execute query
 			$this->execute(
 				array_values($bindings) ?: null
@@ -109,8 +111,14 @@ class Connection
 			$this->calcExecutionTime();
 		}
 
+		// check if query failed
+		if ($this->failed) {
+			// handle show error
+			$this->showError($query, $bindings, $th->getMessage());
+		}
+
 		// check if need to log query
-		if ($queryBuilder->logSql) {
+		if ($queryBuilder->logSql && !$this->failed) {
 			$queryBuilder->logSqlQuery($query, $bindings, $this->executionTime());
 		}
 
@@ -190,6 +198,27 @@ class Connection
 	public function executionTime(): int|float
 	{
 		return $this->executionTime;
+	}
+
+	/**
+	 * This method will handle if to show error and how
+	 *
+	 * @param string $query
+	 * @param array $bindings
+	 * @param string $error
+	 */
+	private function showError(string $query, array $bindings, string $error)
+	{
+		// check if can show error message
+		if (!defined('IS_DEVELOPMENT_MODE') || !IS_DEVELOPMENT_MODE) {
+			return false;
+		}
+
+		if (app()->rayIsEnabled()) {
+			ray(SqlFormatter::format($query), $error, $bindings, 'Execution time: ' . $this->executionTime() . ' seconds')->type('query')->title('Database query error');
+		} else {
+			echo $error;
+		}
 	}
 
 	/**
