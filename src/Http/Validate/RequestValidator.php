@@ -273,6 +273,11 @@ class RequestValidator
 			'key' => $key,
 			'value' => $value
 		];
+		
+		// check if is optional and value is empty
+		if (!$this->required && empty($value)) {
+			return;
+		}
 
 		// set failed to true
 		$this->setFailed(true);
