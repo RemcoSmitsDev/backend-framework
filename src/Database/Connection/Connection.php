@@ -93,6 +93,7 @@ class Connection
 		// set start time for execution measure
 		$this->executionTime = microtime(true) * 100;
 
+		echo $query . '<br>';
 
 		// try to execute query
 		try {
@@ -163,6 +164,7 @@ class Connection
 	 */
 	public function close(): void
 	{
+		echo 'clone connection';
 		$this->pdo = null;
 	}
 

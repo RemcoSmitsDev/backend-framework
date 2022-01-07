@@ -11,10 +11,11 @@ use ArrayIterator;
 use Exception;
 use Closure;
 use Framework\Database\Paginator\Paginator;
+use Framework\Database\Relations\HasRelations;
 
 class QueryBuilder extends Grammar implements IteratorAggregate
 {
-	use DatabaseHelpers;
+	use DatabaseHelpers, HasRelations;
 
 	/**
 	 * keeps track of show query's
@@ -145,6 +146,16 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	{
 		// add table name
 		$this->from = $tableName;
+
+		// set relations
+		$this->getAllRelations($this);
+
+		// get relation table names
+		collection($this->relations)->filter(function ($item, $key) use ($tableName) {
+			return ($item)->getTable() === $tableName;
+		})->each(function ($relation) {
+			$relation->make($this);
+		});
 
 		// make select statement
 		// and return self

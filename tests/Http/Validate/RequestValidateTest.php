@@ -76,6 +76,14 @@ class RequestValidateTest extends TestCase
 		]);
 
 		$this->assertEquals(true, $validateOptional->failed());
+
+		$_GET['test'] = '';
+
+		$validateOptional = request()->validate([
+			'test' => 'int'
+		]);
+
+		$this->assertEquals(false, $validateOptional->failed());
 	}
 
 	public function testValidateStringType()

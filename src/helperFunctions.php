@@ -295,3 +295,27 @@ function isMultidimensional(mixed $value): bool
 {
 	return is_array($value) && is_array($value[array_key_first($value)]);
 }
+
+/**
+ * Format model name to database table name
+ *
+ * @param string $relation
+ * @return string
+ */
+function formatTableName(string $relation): string
+{
+	// Post -> post
+	// UserEmployee -> user_employee
+	$relation = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation));
+
+	// check if is already endings with an s
+	if (str_ends_with($relation, 's')) {
+		return $relation;
+	}
+
+	if (str_ends_with($relation, 'Y')) {
+		return substr($relation, 0, -1) . 'ies';
+	}
+
+	return $relation . 's';
+}

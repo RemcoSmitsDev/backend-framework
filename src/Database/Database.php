@@ -17,12 +17,12 @@ class Database extends QueryBuilder
     public function __construct(?Connection $connection = null)
     {
         // check if there is an connection
-        if(!$connection){
+        if (!$connection) {
             $connection = app('connection');
         }
 
         // throw exception when there is no connection
-        if(!$connection){
+        if (!$connection) {
             throw new Exception('You must first make connection to the database!');
         }
 
