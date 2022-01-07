@@ -98,11 +98,16 @@ class RequestValidator
 			elseif ($key === 'array' && is_array($rule)) {
 				// check if array is isMultidimensional
 				if (!isMultidimensional($value)) {
+					// 'array' => ['int','min:1']
+					foreach ($rule as $key => $r) {
+						$this->validateRule($r, $key, $value[$key] ?? '---COULD-NOT-BE-FOUND---');
+					}
+					
 					// add failed rule to array
-					$this->addToFailedRules($rule, $key, $value);
+					// $this->addToFailedRules($rule, $key, $value);
 
 					// append to messages array
-					$this->errorMessages[] = "`{$this->key}` zou een reeks of waardes moeten zijn.";
+					// $this->errorMessages[] = "`{$this->key}` zou een reeks of waardes moeten zijn.";
 
 					// force to got to the next in the array
 					continue;
