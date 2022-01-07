@@ -96,18 +96,13 @@ class RequestValidator
 			// 	]
 			// ]
 			elseif ($key === 'array' && is_array($rule)) {
-				// check if array is isMultidimensional
-				if (!isMultidimensional($value)) {
-					// 'array' => ['int','min:1']
-					foreach ($rule as $key => $r) {
-						$this->validateRule($r, $key, $value[$key] ?? '---COULD-NOT-BE-FOUND---');
-					}
-					
+				// when array must be multidimensional
+				if (is_string(array_key_first((array) $rule)) && !isMultidimensional($value) || !is_array($value)) {
 					// add failed rule to array
-					// $this->addToFailedRules($rule, $key, $value);
+					$this->addToFailedRules($rule, $key, $value);
 
 					// append to messages array
-					// $this->errorMessages[] = "`{$this->key}` zou een reeks of waardes moeten zijn.";
+					$this->errorMessages[] = "`{$this->key}` zou een reeks of waardes moeten zijn.";
 
 					// force to got to the next in the array
 					continue;
@@ -115,7 +110,7 @@ class RequestValidator
 
 				// loop trough multidimensional array an validate rules
 				foreach ($value as $val) {
-					$this->recursiveLoop($rule, $val);
+					$this->recursiveLoop((array) $rule, $val);
 				}
 
 				// force to go to the next in the array
@@ -278,7 +273,7 @@ class RequestValidator
 			'key' => $key,
 			'value' => $value
 		];
-		
+
 		// check if is optional and value is empty
 		if (!$this->required && empty($value)) {
 			return;
@@ -317,11 +312,11 @@ class RequestValidator
 		// keep track of errrors
 		return $this->failedRules;
 	}
-	
+
 	/**
 	 * Returns all error messages
 	 * @return array
-	*/
+	 */
 	public function getErrorMessages(): array
 	{
 		return $this->errorMessages;
