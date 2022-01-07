@@ -43,11 +43,16 @@ function randomString(int $length = 15): string
 }
 
 /**
- * @param string|array $value
- * @return string|array
+ * @param mixed $value
+ * @return mixed
  */
-function clearInjections(string|array $value): string|array
+function clearInjections(mixed $value): mixed
 {
+	// check if is not the right type
+	if (!is_array($value) && !is_string($value)) {
+		return $value;
+	}
+	
 	// kijk of input value een array is
 	if (is_array($value)) {
 		// ga door alle keys/values heen
