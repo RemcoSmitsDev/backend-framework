@@ -178,6 +178,42 @@ class RequestValidateTest extends TestCase
 		]);
 
 		$this->assertEquals(false, $validateArrayType->failed());
+
+		$_GET['test'] = [
+			'this is an test'
+		];
+
+		$validateArrayType = request()->validate([
+			'test' => ['array' => ['int']]
+		]);
+
+		$this->assertEquals(true, $validateArrayType->failed());
+
+		$_GET['test'] = [];
+
+		$validateArrayType = request()->validate([
+			'test' => ['array' => ['int']]
+		]);
+
+		$this->assertEquals(false, $validateArrayType->failed());
+
+		$_GET['test'] = '';
+
+		$validateArrayType = request()->validate([
+			'test' => ['required', 'array' => ['string']]
+		]);
+
+		$this->assertEquals(true, $validateArrayType->failed());
+
+		$_GET['test'] = [
+			'asjdaklsd'
+		];
+
+		$validateArrayType = request()->validate([
+			'test' => ['required', 'array' => ['string']]
+		]);
+
+		$this->assertEquals(false, $validateArrayType->failed());
 	}
 
 	public function testValidateArrayKeyValues()
