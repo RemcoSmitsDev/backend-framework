@@ -43,7 +43,7 @@ class App
             // check if there are internal server errors
             if (error_get_last()['type'] === E_ERROR) {
                 // check when to get buffer
-                if (!defined('IS_DEVELOPMENT_MODE') || !IS_DEVELOPMENT_MODE) {
+                if (!IS_DEVELOPMENT_MODE) {
                     // get all diplayed errors from buffer
                     ob_get_clean();
                 }
@@ -178,10 +178,6 @@ class App
      */
     public static function enableRay(bool $enableAutoShow = true)
     {
-        if (!defined('IS_DEVELOPMENT_MODE') || !IS_DEVELOPMENT_MODE) {
-            return;
-        }
-
         self::$raySettings = [
             'enabled' => true,
             'enableAutoShow' => $enableAutoShow
