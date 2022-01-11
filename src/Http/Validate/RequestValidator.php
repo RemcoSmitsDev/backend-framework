@@ -124,7 +124,7 @@ class RequestValidator
 					$this->addToFailedRules($rule, $key, $value);
 
 					// set key
-					$this->key .= '.' . $key;
+					// $this->key .= '.' . $key;
 
 					// append to messages array
 					$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
@@ -196,7 +196,7 @@ class RequestValidator
 				$this->addToFailedRules($rule, $key, null);
 
 				// set key
-				$this->key .= '.' . $key;
+				// $this->key .= '.' . $key;
 
 				// append to messages array
 				$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
