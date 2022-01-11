@@ -687,6 +687,20 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		return $this;
 	}
 
+	/**
+	 * This method will execute query options(update, delete, create table, truncate, drop table) the given query directly
+	 *
+	 * @param string $query
+	 * @param array $bindings
+	 * @return bool
+	 */
+	public function execute(): bool
+	{
+		[$query, $bindings] = $this->rawQuery;
+
+		return !$this->connection->handleExecution($this, $query, $bindings)->failed();
+	}
+
 	//
 	// helpers
 	//

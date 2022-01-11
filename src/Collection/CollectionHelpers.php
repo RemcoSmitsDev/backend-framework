@@ -59,6 +59,16 @@ trait CollectionHelpers
 	}
 
 	/**
+	 * This method will flatten a array to 1 depth
+	 *
+	 * @return Collection
+	 */
+	public function flatten(): Collection
+	{
+		return new static(flattenArray($this->toArray()));
+	}
+
+	/**
 	 * This method will get the first item from the collection
 	 *
 	 * @param callable|null $callback
