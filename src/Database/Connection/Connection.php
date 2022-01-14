@@ -173,7 +173,7 @@ class Connection
 	 */
 	public function failed(): bool
 	{
-		return $this->failed;
+		return $this->failed || $this->statement->rowCount() === 0;
 	}
 
 	/**
