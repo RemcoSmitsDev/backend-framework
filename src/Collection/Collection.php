@@ -5,10 +5,11 @@ namespace Framework\Collection;
 use IteratorAggregate;
 use JsonSerializable;
 use ArrayIterator;
-use Countable;
 use Traversable;
+use Stringable;
+use Countable;
 
-class Collection implements IteratorAggregate, Countable, JsonSerializable
+class Collection implements IteratorAggregate, Countable, JsonSerializable, Stringable
 {
 	use CollectionHelpers;
 
@@ -58,13 +59,33 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable
 	}
 
 	/**
-	 * This method will 
+	 * This method will return array of items from the collection
 	 *
 	 * @return array
 	 */
 	public function toArray(): array
 	{
 		return $this->items;
+	}
+
+	/**
+	 * This method will format collection to string
+	 *
+	 * @return string
+	 */
+	public function __toString(): string
+	{
+		return $this->toString();
+	}
+
+	/**
+	 * This method will get all items from the collection to a string with a separator
+	 * 
+	 * @return string
+	 */
+	public function toString(string $separator = ', '): string
+	{
+		return implode($separator, $this->toArray());
 	}
 
 	/**
