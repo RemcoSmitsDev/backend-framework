@@ -200,7 +200,7 @@ class SchemaBuilder
 			$primaryKey ? "PRIMARY KEY (`{$primaryKey->getColumn()}`)" : null,
 			$indexes,
 			$uniqueColumns,
-		])->filter()->flatten();
+		])->filter()->flatten()->toString(",\n\t\t\t\t");
 
 		// return create schema
 		return "
