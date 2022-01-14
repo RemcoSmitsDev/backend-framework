@@ -122,4 +122,33 @@ trait CollectionHelpers
 	{
 		return new static(array_slice($this->toArray(), $offset, $length, true));
 	}
+
+	/**
+	 * This method will get all keys from the collection
+	 *
+	 * @param mixed $keys
+	 * @return Collection
+	 */
+	public function keys(mixed $keys = null): Collection
+	{
+		return new static(
+			$keys ? array_keys($this->toArray(), $keys) : array_keys($this->toArray())
+		);
+	}
+
+	/**
+	 * This method will combine keys with values
+	 *
+	 * @param Collection|array $values
+	 * @return Collection
+	 */
+	public function combine(Collection|array $values): Collection
+	{
+		return new static(
+			array_combine(
+				$this->toArray(),
+				$values instanceof Collection ? $values->toArray() : $values,
+			)
+		);
+	}
 }
