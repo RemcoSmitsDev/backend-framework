@@ -6,6 +6,7 @@ use IteratorAggregate;
 use JsonSerializable;
 use ArrayIterator;
 use Countable;
+use Traversable;
 
 class Collection implements IteratorAggregate, Countable, JsonSerializable
 {
@@ -51,6 +52,8 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable
 			return $collection;
 		} elseif (is_object($collection)) {
 			return [$collection];
+		} elseif ($collection instanceof Traversable) {
+			return iterator_to_array($collection);
 		}
 	}
 
