@@ -33,6 +33,12 @@ class QueryBuilderTest extends TestCase
 		$this->assertInstanceOf(QueryBuilder::class, $this->db->select('id', 'username'));
 
 		$this->assertEquals(['`id`', '`username`'], $this->db->columns);
+
+		$this->setup();
+
+		$this->db->table('users', 'email')->select('id', 'username');
+
+		$this->assertEquals(['`email`', '`id`', '`username`'], $this->db->columns);
 	}
 
 	public function testSetSubSelectColumn()

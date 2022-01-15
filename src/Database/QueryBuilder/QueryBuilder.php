@@ -168,9 +168,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 */
 	public function select(string|array $select): self
 	{
-		// reset columns
-		$this->columns = [];
-
 		// check if column was already set
 		if ($key = $this->checkIfColumnWasAlreadySet('*')) {
 			unset($this->columns[$key]);
@@ -197,7 +194,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 			} // else is string
 			else {
 				// add column to columns array
-				$this->columns[] = preg_replace('/^([A-z0-9\_\-]+)$/', '`$1`', trim($column));
+				$this->columns[] = $this->formatColumnNames(trim($column));
 			}
 		}
 

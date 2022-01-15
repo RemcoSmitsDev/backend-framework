@@ -16,7 +16,7 @@ trait DatabaseHelpers
 		if (strpos($columnName, '.') !== false) {
 			return preg_replace('/^([A-z0-9_\-]+)\.([A-z0-9_\-]+)$/', ' `$1`.`$2`', $columnName);
 		} else {
-			return preg_replace('/^([A-z0-9_\-]+)$/', ' `$1`', $columnName);
+			return preg_replace('/^([A-z0-9_\-]+)$/', '`$1`', $columnName);
 		}
 	}
 
