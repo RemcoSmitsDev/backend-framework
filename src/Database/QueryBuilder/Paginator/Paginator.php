@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Database\Paginator;
+namespace Framework\Database\QueryBuilder\Paginator;
 
 use Framework\Database\QueryBuilder\QueryBuilder;
 use IteratorAggregate;
@@ -119,6 +119,9 @@ class Paginator implements IteratorAggregate, JsonSerializable
 		return $this->paginate;
 	}
 
+	/**
+	 * @return array
+	 */
 	public function jsonSerialize(): array
 	{
 		return $this->toArray();

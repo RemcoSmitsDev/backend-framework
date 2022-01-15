@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Database\JoinClause;
+namespace Framework\Database\QueryBuilder\JoinClause;
 
 use Framework\Database\QueryBuilder\QueryBuilder;
 

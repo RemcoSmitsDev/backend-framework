@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Framework\Tests;
+namespace Framework\Tests\Container;
 
 use Framework\Container\Container;
 use PHPUnit\Framework\TestCase;

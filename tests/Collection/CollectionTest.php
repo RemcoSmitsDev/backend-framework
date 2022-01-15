@@ -1,5 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
+namespace Framework\tests\Collection;
+
 use Framework\Collection\Collection;
 use PHPUnit\Framework\TestCase;
 

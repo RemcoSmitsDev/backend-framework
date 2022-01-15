@@ -15,9 +15,9 @@ class Connection
 	private ?PDO $pdo;
 
 	/**
-	 * @var false|PDOStatement
+	 * @var PDOStatement|false
 	 */
-	public false|PDOStatement $statement;
+	public PDOStatement|false $statement;
 
 	/**
 	 * @var int|float
@@ -91,16 +91,12 @@ class Connection
 		$this->failed = false;
 
 		// set start time for execution measure
-		$this->executionTime = microtime(true) * 100;
-
+		$this->executionTime = (float) round(microtime(true) * 10000, 0);
 
 		// try to execute query
 		try {
-			// prepare query
-			$this->prepare($query);
-
-			// execute query
-			$this->execute(
+			// prepare and execute query
+			$this->prepare($query)->execute(
 				array_values($bindings) ?: null
 			);
 		} catch (\Throwable $th) {
@@ -112,13 +108,13 @@ class Connection
 		}
 
 		// check if query failed
-		if ($this->failed) {
+		if ($this->failed()) {
 			// handle show error
 			$this->showError($query, $bindings, $th->getMessage());
 		}
 
 		// check if need to log query
-		if ($queryBuilder->logSql && !$this->failed) {
+		if ($queryBuilder->logSql && !$this->failed()) {
 			$queryBuilder->logSqlQuery($query, $bindings, $this->executionTime());
 		}
 
@@ -167,6 +163,16 @@ class Connection
 	}
 
 	/**
+	 * This method will check if there where rows effected by the last sql query
+	 *
+	 * @return boolean
+	 */
+	public function hasEffectedRows(): bool
+	{
+		return (int) $this->statement?->rowCount() > 0;
+	}
+
+	/**
 	 * This method will return the failed status
 	 *
 	 * @return boolean
@@ -184,10 +190,10 @@ class Connection
 	private function calcExecutionTime(): void
 	{
 		// get end time
-		$endTime = microtime(true) * 100;
+		$endTime = (float) round(microtime(true) * 10000, 0);
 
 		// calc execution time
-		$this->executionTime = round($endTime - $this->executionTime(), 1) / 100;
+		$this->executionTime = ($endTime - $this->executionTime()) / 10000;
 	}
 
 	/**
@@ -214,8 +220,18 @@ class Connection
 			return false;
 		}
 
+		// check if ray is enabled
 		if (app()->rayIsEnabled()) {
-			ray(SqlFormatter::format($query), $error, $bindings, 'Execution time: ' . $this->executionTime() . ' seconds')->type('query')->title('Database query error');
+			// send request to ray
+			ray(
+				SqlFormatter::format($query),
+				$error,
+				$bindings,
+				'Execution time: ' . $this->executionTime() . ' seconds'
+			)
+				->type('query')
+				->color('orange')
+				->title('Database query error');
 		} else {
 			echo $error;
 		}
