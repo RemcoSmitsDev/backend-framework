@@ -102,11 +102,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	private ?Connection $connection;
 
 	/**
-	 * @var Grammar
-	 */
-	public Grammar $grammar;
-
-	/**
 	 * @var boolean
 	 */
 	public bool $isRaw = false;
@@ -119,11 +114,8 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	/**
 	 * @param Connection $connection
 	 */
-	public function __construct(Connection $connection, ?Grammar $grammar = null)
+	public function __construct(Connection $connection)
 	{
-		// make new instance
-		$this->grammar = $grammar instanceof Grammar ? $grammar : new parent;
-
 		// set reset data
 		$this->resetData = get_object_vars($this);
 
@@ -231,7 +223,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	public function subQuery(Closure $query, string $before = '', string $after = '', bool $isWhereClause = false, string $boolean = 'AND'): SubQuery
 	{
 		// call callback
-		$query($query = new self($this->connection, $this->grammar));
+		$query($query = new QueryBuilder($this->connection));
 
 		// merge bindings
 		$this->mergeBindings($this, $query);
