@@ -2,15 +2,16 @@
 
 namespace Framework\Database\QueryBuilder;
 
+use Framework\Database\QueryBuilder\JoinClause\JoinClause;
+use Framework\Database\QueryBuilder\Paginator\Paginator;
+use Framework\Database\QueryBuilder\SubQuery\SubQuery;
 use Framework\Database\Connection\Connection;
-use Framework\Database\JoinClause\JoinClause;
 use Framework\Database\DatabaseHelpers;
 use Framework\Database\Grammar\Grammar;
 use IteratorAggregate;
 use ArrayIterator;
 use Exception;
 use Closure;
-use Framework\Database\Paginator\Paginator;
 
 class QueryBuilder extends Grammar implements IteratorAggregate
 {
@@ -46,49 +47,49 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * keeps track of select columns
 	 * @var array
 	 */
-	protected array $columns = [];
+	public array $columns = [];
 
 	/**
 	 * keep track of main table name
 	 * @var string
 	 */
-	protected string $from = '';
+	public string $from = '';
 
 	/**
 	 * keeps track of joins
 	 * @var array
 	 */
-	protected array $joins = [];
+	public array $joins = [];
 
 	/**
 	 * keeps track of where statements
 	 * @var array
 	 */
-	protected array $wheres = [];
+	public array $wheres = [];
 
 	/**
 	 * keeps track of limit amount
 	 * @var int|null
 	 */
-	protected ?int $limit = null;
+	public ?int $limit = null;
 
 	/**
 	 * keeps track of offset
 	 * @var int
 	 */
-	protected ?int $offset = null;
+	public ?int $offset = null;
 
 	/**
 	 * keeps track of all group statements
 	 * @var array
 	 */
-	protected array $groups = [];
+	public array $groups = [];
 
 	/**
 	 * keeps track of all order statements
 	 * @var array
 	 */
-	protected array $orders = [];
+	public array $orders = [];
 
 	/**
 	 * @var array|null
@@ -115,11 +116,11 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 */
 	public function __construct(Connection $connection)
 	{
-		// set reset data
-		$this->resetData = get_object_vars($this);
-
 		// set connection class instance
 		$this->connection = $connection;
+
+		// set reset data
+		$this->resetData = get_object_vars($this);
 	}
 
 	/**
@@ -157,25 +158,25 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * @return self
 	 * @throws Exception
 	 */
-	public function select(string|array $select = ['*']): self
+	public function select(string|array $select): self
 	{
-		// reset columns
-		$this->columns = [];
-
 		// check if column was already set
 		if ($key = $this->checkIfColumnWasAlreadySet('*')) {
 			unset($this->columns[$key]);
 		}
 
 		// make select
-		$columns = is_string($select) ? func_get_args() : $select;
+		$columns = is_string($select) ? (is_array($select) ? $select : func_get_args()) : $select;
 
 		// loop through all columns
 		foreach ($columns as $as => $column) {
 			// check if is subSelect with as name
 			if ($column instanceof Closure) {
 				// make subSelect
-				$this->columns[] = $this->subSelect($column, $as);
+				$this->columns[] = $this->subQuery(
+					$column,
+					after: (is_string($as) ? ' as ' . $as : '')
+				);
 			} // when column is an array
 			elseif (is_array($column)) {
 				$this->columns = array_merge(
@@ -185,7 +186,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 			} // else is string
 			else {
 				// add column to columns array
-				$this->columns[] = preg_replace('/^([A-z0-9\_\-]+)$/', '`$1`', trim($column));
+				$this->columns[] = $this->formatColumnNames(trim($column));
 			}
 		}
 
@@ -212,23 +213,23 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	}
 
 	/**
-	 * function subSelect
-	 * @param string|Closure $query
-	 * @param string|int $as
-	 * @return string
+	 * function subQuery
+	 * @param Closure $query
+	 * @param string $before
+	 * @param string $after
+	 * @return SubQuery
 	 * @throws Exception
 	 */
-	public function subSelect(string|Closure $query, string|int $as): string
+	public function subQuery(Closure $query, string $before = '', string $after = '', bool $isWhereClause = false, string $boolean = 'AND'): SubQuery
 	{
-		// get bindings from query
-		[$query, $bindings] = $this->createSubSelect($query);
+		// call callback
+		$query($query = new QueryBuilder($this->connection));
 
-		// format subSelect
-		if (is_string($as)) {
-			return "({$query}) as {$as}";
-		} else {
-			return "({$query})";
-		}
+		// merge bindings
+		$this->mergeBindings($this, $query);
+
+		// get bindings from query
+		return new SubQuery($this, $query, $before, $after, $isWhereClause, $boolean);
 	}
 
 	//
@@ -237,21 +238,23 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 
 	/**
 	 * function where
-	 * @param $column
+	 * @param mixed $column
 	 * @param array|string|null $operator
 	 * @param null $value
 	 * @param string $boolean
 	 * @return self
 	 */
-	public function where($column, array|string $operator = null, $value = null, string $boolean = 'AND'): self
+	public function where(mixed $column, array|string $operator = null, $value = null, string $boolean = 'AND'): self
 	{
 		// check is instanceof \Closure
 		if ($column instanceof Closure && is_null($value)) {
 			// return self and handle whereClosure
-			return $this->whereClosure($column, $boolean);
+			$this->wheres[] = $this->subQuery($column, isWhereClause: true, boolean: $boolean);
+
+			return $this;
 		}
 
-		// when value is null
+		// when operator is value
 		if (is_null($value) && !is_null($operator)) {
 			// make operator the value
 			$value = $operator;
@@ -260,13 +263,14 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		}
 
 		// make array of columns/values
-		$columns = (array)$column;
-		$values = (array)$value;
+		$columns = (array) $column;
+		$values = (array) $value;
 
 		// loop through all columns
 		foreach ($columns as $key => $column) {
 			// get value by column
 			$value = $values[$key] ?? null;
+
 			// check if operator is an array
 			if (is_array($operator)) {
 				$_operator = $operator[$key] ?? '=';
@@ -274,7 +278,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 
 			// force to be real int
 			if (is_int($value)) {
-				$value = (int)$value;
+				$value = (int) $value;
 			}
 
 			// add to where statement
@@ -282,7 +286,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 				'type' => 'normal',
 				'column' => $column,
 				'operator' => $_operator ?? $operator,
-				'value' => $value,
 				'boolean' => $boolean,
 			];
 
@@ -303,36 +306,19 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 */
 	public function whereRaw(string|Closure $query, array $bindData = [], string $boolean = 'AND'): static
 	{
-		// keep track of query type
-		$type = 'raw';
-
-		// check if query is string
+		// check query type
 		if (is_string($query)) {
-			// add to where statement
-			$this->wheres[] = compact(
-				'type',
-				'query',
-				'boolean'
-			);
+			// keep track of query type
+			$type = 'raw';
 
-			// add bind data to builder parts
-			$this->bindings['where'] = array_merge($this->bindings['where'], flattenArray((array) $bindData));
+			// add bindings
+			$this->bindings['where'][] = $bindData;
+		} else {
+			$type = 'whereRaw';
 
-			// return self
-			return $this;
+			// make sub query
+			$this->wheres[] = $this->subQuery($query, isWhereClause: true, boolean: $boolean);
 		}
-
-		// update query type to
-		$type = 'nested';
-
-		// get query
-		$query($query = new self($this->connection));
-
-		// add bind data to builder parts
-		$this->mergeBindings($this, $query);
-
-		// get formatted where statement with bindData
-		$query = $query->formatWhere($this, $query->wheres);
 
 		// add to where statement
 		$this->wheres[] = compact(
@@ -360,46 +346,33 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 
 	/**
 	 * function whereIn
-	 * @param string|Closure $column
-	 * @param array|null $values
+	 * @param string $column
+	 * @param array|Closure $values
 	 * @param string $boolean
 	 * @return self
 	 * @throws Exception
 	 */
-	public function whereIn(string|Closure $column, ?array $values = null, string $boolean = 'AND'): self
+	public function whereIn(string $column, array|Closure $value, string $boolean = 'AND'): self
 	{
+		// formate columns name
+		$column = $this->formatColumnNames($column);
+
 		// check if $column is instance of closure that means that whereIn will be an subWhere
 		// the where statement will have ( ) wrapped around it
-		if ($column instanceof Closure) {
-			// call closure
-			$column($query = new self($this->connection));
-			// get bindings from query
-			[$query,] = $this->createSubSelect($query);
-
+		if ($value instanceof Closure) {
+			// add to where statement
+			$this->wheres[] = $this->subQuery($value, before: "{$column} IN", isWhereClause: false, boolean: $boolean);
+		} else {
 			// add to where statement
 			$this->wheres[] = [
 				'type' => 'raw',
-				'column' => 'id',
-				'operator' => 'IN',
-				'value' => '(' . $query . ')',
+				'query' => "{$column} IN (?)",
 				'boolean' => $boolean,
 			];
 
-			// return self
-			return $this;
+			// add values to where bindings
+			$this->bindings['where'][] = implode(',', $value);
 		}
-
-		// add to where statement
-		$this->wheres[] = [
-			'type' => 'raw',
-			'column' => $column,
-			'operator' => 'IN',
-			'value' => '(?)',
-			'boolean' => $boolean,
-		];
-
-		// add values to where bindings
-		$this->bindings['where'][] = implode(',', $values);
 
 		// return self
 		return $this;
@@ -415,24 +388,11 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 */
 	public function whereExists(Closure $callback, string $boolean = 'AND', bool $not = false): self
 	{
-		// call closure
-		$callback($query = new self($this->connection));
-
-		// merge bindings
-		$this->mergeBindings($this, $query);
-
-		// get bindings from query
-		[$query,] = $this->createSubSelect($query);
-
 		// get type based on not value
-		$type = $not ? 'notExists' : 'exists';
+		$type = $not ? 'notExists' : 'EXISTS';
 
-		// add to where statement
-		$this->wheres[] = compact(
-			'type',
-			'query',
-			'boolean'
-		);
+		// call closure
+		$this->wheres[] = $this->subQuery($callback, before: $type);
 
 		// return self
 		return $this;
@@ -495,6 +455,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		if ($first instanceof Closure) {
 			// make closure and make instance of JoinClause
 			$first($join);
+
 			// add join query
 			$this->joins[] = $join;
 		} else {
@@ -619,7 +580,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		);
 
 		// return insert id(s) or false when execution was failed
-		return $connection->failed() ? false : $connection->insertId();
+		return $connection->failed() || !$connection->hasEffectedRows() ? false : $connection->insertId();
 	}
 
 	/**
@@ -642,7 +603,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		);
 
 		// return true or false (based on status of execution)
-		return !$connection->failed();
+		return !$connection->failed() && $connection->hasEffectedRows();
 	}
 
 	/**
@@ -664,7 +625,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		);
 
 		// return true or false (based on status of execution)
-		return !$connection->failed();
+		return !$connection->failed() && $connection->hasEffectedRows();
 	}
 
 

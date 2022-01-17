@@ -2,8 +2,8 @@
 
 namespace Framework\Database\Grammar;
 
+use Framework\Database\QueryBuilder\SubQuery\SubQuery;
 use Framework\Database\QueryBuilder\QueryBuilder;
-use Framework\Database\Database;
 
 class Grammar
 {
@@ -30,7 +30,7 @@ class Grammar
      * @param array $insertData
      * @return array
      */
-    protected function insertToSql(QueryBuilder $builder, array $insertData): array
+    public function insertToSql(QueryBuilder $builder, array $insertData): array
     {
         // check if array is multidimensional
         $isMultidimensional = count($insertData) != count($insertData, COUNT_RECURSIVE);
@@ -82,7 +82,7 @@ class Grammar
      * @param array $updateData
      * @return array
      */
-    protected function updateToSql(QueryBuilder $builder, array $updateData): array
+    public function updateToSql(QueryBuilder $builder, array $updateData): array
     {
         // keep track of bind data
         $bindData = array_values($updateData);
@@ -117,7 +117,7 @@ class Grammar
      * @param QueryBuilder $builder
      * @return array
      */
-    protected function deleteToSql(QueryBuilder $builder): array
+    public function deleteToSql(QueryBuilder $builder): array
     {
         // return query and bindings
         return [
@@ -243,7 +243,7 @@ class Grammar
      * @param array $where
      * @return string
      */
-    protected function formatWhere(QueryBuilder $builder, array $where): string
+    public function formatWhere(QueryBuilder $builder, array $wherestatements): string
     {
         // keep track of where clause
         $whereClause = [];
@@ -251,38 +251,36 @@ class Grammar
         // types that have an valid column value
         $typesWithColumnValue = [
             'column',
-            'normal'
+            'normal',
+            'notExists',
+            'exists',
         ];
 
         // loop through all where statements
-        foreach ($where as $value) {
-            // check if key is string (column name)
-            if (isset($value[0])) {
-                // merge sub select with where clause
-                $whereClause = array_merge($whereClause, $this->formatSubSelect($builder, $whereClause, $value));
+        foreach ($wherestatements as $wherestatement) {
+            // check if is instance of sub query
+            if ($wherestatement instanceof SubQuery) {
+                // append to where clause
+                $whereClause[] = $wherestatement->boolean . ' ' . (string) $wherestatement;
 
-                // go to the next on in the array
+                // continue to next where statement
                 continue;
             }
 
             // get type from where value
-            $type = $value['type'] ?? 'normal';
+            $type = $wherestatement['type'] ?? 'normal';
 
             // default placeholder
             $placeholder = '?';
 
             // keep track of column name
-            $column = $value['column'] ?? '';
+            $column = $wherestatement['column'] ?? '';
 
             // check if type is raw
             if ($type === 'raw') {
-                $whereClause[] = ($value['boolean'] ?? '') . ' ' . $value['query'];
-            } elseif ($type === 'exists' || $type === 'notExists') {
-                $whereClause[] = ($type === 'exists' ? 'exists' : 'not exists') . " ({$value['query']})";
-            } elseif ($type === 'nested') {
-                $whereClause[] = '(' . trim($value['query']) . ')';
+                $whereClause[] = ($wherestatement['boolean'] ?? '') . ' ' . $wherestatement['query'];
             } elseif ($type === 'column') {
-                $placeholder = $builder->formatColumnNames($value['value']);
+                $placeholder = $builder->formatColumnNames($wherestatement['value']);
             }
 
             // check if can continue
@@ -292,14 +290,14 @@ class Grammar
 
             // make column format
             if (!empty($column) && !strpos($column, '.')) {
-                $column = '  ' . $builder->from . '.' . $column;
+                $column = $builder->formatColumnNames($builder->from . '.' . $column);
+            } else {
+                // format columns
+                $column = $builder->formatColumnNames($column);
             }
 
-            // format columns
-            $column = $builder->formatColumnNames($column);
-
             // add to where clause
-            $whereClause[] = strtoupper($value['boolean'] ?? '') . $column . ' ' . ($value['operator'] ?? '') . ' ' . $placeholder;
+            $whereClause[] = strtoupper($wherestatement['boolean'] ?? '') . $column . ' ' . ($wherestatement['operator'] ?? '') . ' ' . $placeholder;
         }
 
         // return where clause

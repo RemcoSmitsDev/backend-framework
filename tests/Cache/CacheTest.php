@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Framework\Tests;
+namespace Framework\Tests\Cache;
 
 use Framework\Cache\Cache;
 use PHPUnit\Framework\TestCase;
