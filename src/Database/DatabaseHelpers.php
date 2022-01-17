@@ -14,7 +14,7 @@ trait DatabaseHelpers
 	public function formatColumnNames(string $columnName): string
 	{
 		if (strpos($columnName, '.') !== false) {
-			return preg_replace('/^([A-z0-9_\-]+)\.([A-z0-9_\-]+)$/', ' `$1`.`$2`', $columnName);
+			return preg_replace('/^([A-z0-9_\-]+)\.([A-z0-9_\-]+)$/', '`$1`.`$2`', $columnName);
 		} else {
 			return preg_replace('/^([A-z0-9_\-]+)$/', '`$1`', $columnName);
 		}
@@ -50,7 +50,6 @@ trait DatabaseHelpers
 	 * @param string $query
 	 * @param array $bindings
 	 * @param int|float $executionTime
-	 * @return false|void
 	 */
 	public function logSqlQuery(string $query, array $bindings, int|float $executionTime)
 	{

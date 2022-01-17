@@ -8,6 +8,14 @@ use Stringable;
 
 class SubQuery implements Stringable
 {
+	/**
+	 * @param QueryBuilder $builder
+	 * @param QueryBuilder|RawQuery $query
+	 * @param string $before
+	 * @param string $after
+	 * @param boolean $isWhereClause
+	 * @param string $boolean
+	 */
 	public function __construct(
 		private QueryBuilder $builder,
 		private QueryBuilder|RawQuery $query,
@@ -16,21 +24,24 @@ class SubQuery implements Stringable
 		private bool $isWhereClause = false,
 		public string $boolean = 'AND'
 	) {
+		// if not empty add space
+		!empty($this->before) ? $this->before . ' ' : $this->before;
+		!empty($this->after) ? ' ' . $this->after : $this->after;
 	}
 
-	public function query(): QueryBuilder|RawQuery
-	{
-		return $this->query;
-	}
-
+	/**
+	 * This method will format the sub query inside the right format
+	 *
+	 * @return string
+	 */
 	public function __toString(): string
 	{
 		if ($this->isWhereClause) {
-			$query = $this->builder->formatWhere($this->builder, $this->query()->wheres);
+			$query = $this->builder->formatWhere($this->builder, $this->query->wheres);
 		} else {
 			$query = $this->builder->selectToSql($this->query)[0];
 		}
 
-		return ltrim(preg_replace('/\s+/', ' ', "{$this->before} ($query) {$this->after}"));
+		return trim("{$this->before}($query){$this->after}");
 	}
 }

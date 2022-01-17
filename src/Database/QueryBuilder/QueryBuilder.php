@@ -2,10 +2,10 @@
 
 namespace Framework\Database\QueryBuilder;
 
+use Framework\Database\QueryBuilder\JoinClause\JoinClause;
+use Framework\Database\QueryBuilder\Paginator\Paginator;
 use Framework\Database\QueryBuilder\SubQuery\SubQuery;
 use Framework\Database\Connection\Connection;
-use Framework\Database\JoinClause\JoinClause;
-use Framework\Database\Paginator\Paginator;
 use Framework\Database\DatabaseHelpers;
 use Framework\Database\Grammar\Grammar;
 use IteratorAggregate;
@@ -254,7 +254,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 			return $this;
 		}
 
-		// when value is null
+		// when operator is value
 		if (is_null($value) && !is_null($operator)) {
 			// make operator the value
 			$value = $operator;
@@ -270,6 +270,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 		foreach ($columns as $key => $column) {
 			// get value by column
 			$value = $values[$key] ?? null;
+
 			// check if operator is an array
 			if (is_array($operator)) {
 				$_operator = $operator[$key] ?? '=';
@@ -277,7 +278,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 
 			// force to be real int
 			if (is_int($value)) {
-				$value = (int)$value;
+				$value = (int) $value;
 			}
 
 			// add to where statement
@@ -285,7 +286,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 				'type' => 'normal',
 				'column' => $column,
 				'operator' => $_operator ?? $operator,
-				'value' => $value,
 				'boolean' => $boolean,
 			];
 

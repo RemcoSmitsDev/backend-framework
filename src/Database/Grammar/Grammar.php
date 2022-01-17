@@ -290,7 +290,7 @@ class Grammar
 
             // make column format
             if (!empty($column) && !strpos($column, '.')) {
-                $column = '  ' . $builder->formatColumnNames($builder->from . '.' . $column);
+                $column = $builder->formatColumnNames($builder->from . '.' . $column);
             } else {
                 // format columns
                 $column = $builder->formatColumnNames($column);
