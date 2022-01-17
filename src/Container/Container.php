@@ -71,8 +71,8 @@ class Container implements ContainerInterface
             // check if type exists
             if (!$type instanceof ReflectionNamedType || $type->isBuiltin() || !$parameter->hasType()) {
                 // check if parameter already exists
-                if (isset($parameters[$name = $parameter->getName()])) {
-                    $dependencies[] = $parameters[$name];
+                if (array_key_exists($parameter->getName(), $parameters)) {
+                    $dependencies[] = $parameters[$parameter->getName()];
                 }
                 // go to the next in the array
                 continue;
