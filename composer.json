@@ -1,6 +1,6 @@
 {
     "name": "remcosmits/backend-framework",
-    "description": "Framework for file structure that i work with",
+    "description": "Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Advanced Routing with dynamic routes(middleware, grouping, prefix)",
     "autoload": {
         "psr-4": {
             "Framework\\": "src/",
