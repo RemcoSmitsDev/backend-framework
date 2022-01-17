@@ -116,11 +116,11 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 */
 	public function __construct(Connection $connection)
 	{
-		// set reset data
-		$this->resetData = get_object_vars($this);
-
 		// set connection class instance
 		$this->connection = $connection;
+
+		// set reset data
+		$this->resetData = get_object_vars($this);
 	}
 
 	/**

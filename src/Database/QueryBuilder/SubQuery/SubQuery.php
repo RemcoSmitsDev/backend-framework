@@ -25,8 +25,8 @@ class SubQuery implements Stringable
 		public string $boolean = 'AND'
 	) {
 		// if not empty add space
-		!empty($this->before) ? $this->before . ' ' : $this->before;
-		!empty($this->after) ? ' ' . $this->after : $this->after;
+		$this->before = !empty($this->before) ? $this->before . ' ' : $this->before;
+		$this->after = !empty($this->after) ? ' ' . $this->after : $this->after;
 	}
 
 	/**
