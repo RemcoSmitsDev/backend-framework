@@ -30,7 +30,7 @@ abstract class BaseModel extends Database
         }
 
         // set table name
-        $this->table($this->table ?? $table . 's');
+        $this->from = $this->table ?? $table . 's';
 
         // call database constructor
         parent::__construct();
