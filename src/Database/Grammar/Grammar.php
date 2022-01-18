@@ -15,7 +15,7 @@ class Grammar
     public function selectToSql(QueryBuilder $query): array
     {
         // format select columns into string
-        $select = implode(', ', $query->columns);
+        $select = implode(', ', $query->columns ?: ['*']);
 
         // return select query
         return [
