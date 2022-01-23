@@ -2,11 +2,21 @@
 
 namespace Framework;
 
-use Framework\Http\Api;
+use ErrorException;
+use Framework\Debug\Debug;
+use Framework\Event\DefaultEvents\QueryEvent;
+use Framework\Event\DefaultEvents\ErrorEvent;
+use Framework\Event\Event;
 use ReflectionException;
+use Framework\Http\Api;
 
 class App
 {
+    /**
+     * @var boolean
+     */
+    private static bool $isStarted = false;
+
     /**
      * @static
      * @var array $raySettings
@@ -17,48 +27,51 @@ class App
     ];
 
     /**
+     * @var array
+     */
+    private static $properties = [];
+
+    /**
      * This function will start all needed functions
      * @return void
      */
-    public static function start()
+    public static function start(): void
     {
-        // start output buffer
+        // check if app is already started
+        if (self::$isStarted) {
+            return;
+        }
+
+        // cache output
         ob_start();
+
+        // register shutdown
+        register_shutdown_function(function () {
+            // check if is not development mode
+            if (!IS_DEVELOPMENT_MODE) return;
+
+            // render debug screen
+            Debug::render();
+        });
+
+        // set app started
+        self::$isStarted = true;
 
         // check if app is in development mode
         self::checkAppState();
 
-        // register shutdown function
-        register_shutdown_function(function () {
-            // when HEAD request clear response
-            if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
-                ob_get_clean();
-            }
+        // register default events
+        Event::listen([
+            'database-query' => QueryEvent::class,
+            'error' => ErrorEvent::class
+        ]);
 
-            // no error
-            if (!error_get_last()) {
-                return false;
-            }
-
-            // check if there are internal server errors
-            if (error_get_last()['type'] === E_ERROR) {
-                // check when to get buffer
-                if (!IS_DEVELOPMENT_MODE) {
-                    // get all diplayed errors from buffer
-                    ob_get_clean();
-                }
-
-                // return error page
-                response()->code(500)->view('responseView')->exit();
-            }
-        });
+        // get error based on config option debug mode
+        self::catchErrors();
 
         // set timezone
         date_default_timezone_set('Europe/Amsterdam');
         setlocale(LC_ALL, 'nl_NL');
-
-        // get error based on config option debug mode
-        self::catchErrors();
 
         // set Security headers
         self::setSecurityHeaders();
@@ -114,22 +127,29 @@ class App
      */
     private static function catchErrors(): void
     {
+        // set show errors base on development mode
+        ini_set('display_errors', IS_DEVELOPMENT_MODE ? 1 : -1);
+        ini_set('display_startup_errors', IS_DEVELOPMENT_MODE ? 1 : -1);
+
         // shows errors when debug mode is on
-        if (IS_DEVELOPMENT_MODE) {
-            ini_set('display_errors', 1);
-            ini_set('display_startup_errors', 1);
-            error_reporting(E_ALL);
-        } else {
-            // vang alle errors en echo alleen een empty string
-            set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-                ray([$errno, $errstr, $errfile, $errline])->title('Error')->color('orange');
-                echo '';
-            });
-            set_exception_handler(function ($exception) {
-                ray($exception)->title('Exception error')->color('orange');
-                echo '';
-            });
+        if (!IS_DEVELOPMENT_MODE) {
+            return;
         }
+
+        // report all errors
+        error_reporting(E_ALL);
+
+        // catch all errors/exceptions and send event
+        set_error_handler(function (
+            int $level,
+            string $message,
+            string $file = '',
+            int $line = 0
+        ) {
+            // make Error exception
+            throw new ErrorException($message, 0, $level, $file, $line);
+        });
+        set_exception_handler(fn ($exception) => Event::notify('error', ['data' => $exception, 'type' => 'Exception']));
     }
 
     /**
@@ -160,23 +180,34 @@ class App
      * @return self
      * @throws ReflectionException
      */
-    public function instance(object ...$classes): self
+    public static function instance(object ...$classes): self
     {
         // loop trough all classes
         foreach ($classes as $class) {
             // set class
-            $this->{lcfirst(getClassName($class))} = $class;
+            self::$properties[lcfirst(getClassName($class))] = $class;
         }
 
         // return self
-        return $this;
+        return new self;
+    }
+
+    /**
+     * This method will get the container property instnace
+     *
+     * @param  object|string $class
+     * @return object|null
+     */
+    public static function getInstance(object|string $class): object|null
+    {
+        return self::$properties[is_object($class) ? lcfirst(getClassName($class)) : $class] ?? null;
     }
 
     /**
      * This function will enable ray
      * @return void
      */
-    public static function enableRay(bool $enableAutoShow = true)
+    public static function enableRay(bool $enableAutoShow = true): void
     {
         self::$raySettings = [
             'enabled' => true,

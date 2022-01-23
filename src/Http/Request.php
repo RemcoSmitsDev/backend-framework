@@ -7,10 +7,12 @@ use ReflectionException;
 
 class Request extends RequestValidator
 {
+	use RequestParser;
+
 	/**
-	 * @var string
+	 * @var array
 	 */
-	private string $method;
+	private array $server = [];
 
 	/**
 	 * @var object|null
@@ -33,10 +35,24 @@ class Request extends RequestValidator
 	public object $requestData;
 
 
+	private string $method;
+	private string $schema = '';
+
+	/**
+	 * HTTP/1.1|HTTP/1.0|HTTPS/1.1
+	 *
+	 * @var string
+	 */
+	private string $protocol = '';
+	private string $host = '';
+
+	private string $requestUri = '';
+	private string $queryString = '';
+
 	public function __construct()
 	{
-		// set request method
-		$this->method = $this->method();
+		// set server information
+		$this->server = $_SERVER;
 
 		// set all request(get) data
 		$this->getData = (object) clearInjections($_GET);
@@ -163,13 +179,10 @@ class Request extends RequestValidator
 	 * This function will return current uri like: /route/to
 	 * @return string
 	 */
-	public function uri(): string
+	public function uri(bool $withTrailingSlash = false): string
 	{
 		// krijg de huidige url zonden get waardes
-		return rtrim(
-			parse_url(rawurldecode($this->url()), PHP_URL_PATH),
-			'/'
-		) ?: '/';
+		return rtrim($this->parseUri(), $withTrailingSlash ? '' : '/') ?: '/';
 	}
 
 	/**
@@ -178,17 +191,27 @@ class Request extends RequestValidator
 	 */
 	public function query(): string
 	{
-		return parse_url(rawurldecode($this->url()), PHP_URL_QUERY) ?? '';
+		return $this->parseQuery();
+	}
+
+	/**
+	 * This method will get the path form the current url
+	 *
+	 * @return string
+	 */
+	public function host(): string
+	{
+		return $this->parseHost();
 	}
 
 	/**
 	 * This function will return current URL with params
 	 * @return string
 	 */
-	public function url(): string
+	public function url(bool $withTrailingSlash = false): string
 	{
 		// krijg de huidige url zonden get waardes
-		return rtrim($_SERVER['REQUEST_URI'], '/') ?: '/';
+		return rtrim($this->server['REQUEST_URI'], $withTrailingSlash ? '/' : '') ?: '/';
 	}
 
 	/**

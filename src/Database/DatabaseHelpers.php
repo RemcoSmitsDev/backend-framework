@@ -46,40 +46,6 @@ trait DatabaseHelpers
 	}
 
 	/**
-	 * function logSqlQuery
-	 * @param string $query
-	 * @param array $bindings
-	 * @param int|float $executionTime
-	 */
-	public function logSqlQuery(string $query, array $bindings, int|float $executionTime)
-	{
-		// check if query log was on
-		if (!$this->logSql || !defined('IS_DEVELOPMENT_MODE') || !IS_DEVELOPMENT_MODE) {
-			return false;
-		}
-
-		// map trough formatted
-		$formattedBindData = collection($bindings)->map(function ($item) {
-			// check if data is bool
-			if (is_bool($item)) {
-				return $item ? 'true' : 'false';
-			}
-
-			// return item
-			return $item;
-		})->toArray();
-
-		// check if ray is enabled
-		if (app()->rayIsEnabled()) {
-			// log inside ray
-			ray(SqlFormatter::format($query), $formattedBindData, 'Execution time: ' . $executionTime . ' seconds')->type('query')->title('Database query');
-		} else {
-			// echo query
-			echo $query . ' --- bindings: (' . implode(',', $formattedBindData) . ')<br>';
-		}
-	}
-
-	/**
 	 * @param QueryBuilder $mainQuery
 	 * @param QueryBuilder $mergeQuery
 	 */

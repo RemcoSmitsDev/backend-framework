@@ -7,14 +7,14 @@
             "Framework\\tests\\": "tests/"
         },
         "files": [
-            "src/helperFunctions.php",
-            "src/Debug/startScript.php"
+            "src/helperFunctions.php"
         ]
     },
     "authors": [
         {
             "name": "Remco Smits",
-            "email": "djsmits12@gmail.com"
+            "email": "djsmits12@gmail.com",
+            "role": "Developer"
         }
     ],
     "scripts": {

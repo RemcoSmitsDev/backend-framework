@@ -69,7 +69,7 @@ class Container implements ContainerInterface
             $type = $parameter->getType();
 
             // check if type exists
-            if (!$type instanceof ReflectionNamedType || $type->isBuiltin() || !$parameter->hasType()) {
+            if (!$type instanceof ReflectionNamedType || $type->isBuiltin() || !$parameter->hasType() || interface_exists((string) $type)) {
                 // check if parameter already exists
                 if (array_key_exists($parameter->getName(), $parameters)) {
                     $dependencies[] = $parameters[$parameter->getName()];
@@ -83,6 +83,15 @@ class Container implements ContainerInterface
 
             // make reflection of class
             $reflect = new \ReflectionClass($type);
+
+            // check if is interface
+            if ($reflect->isInterface()) {
+                // append to dependencies
+                $dependencies[] = $parameters[$parameter->getName()];
+
+                // go to the next in the array
+                continue;
+            }
 
             // check if there already exists an instance of the class in the app class
             if (isset(app()->{$objectName = lcfirst($reflect->getShortName())})) {

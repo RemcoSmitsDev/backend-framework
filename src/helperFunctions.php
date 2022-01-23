@@ -1,5 +1,6 @@
 <?php
 
+use Curl\Curl;
 use Framework\Http\Redirect\Redirect;
 use Framework\Collection\Collection;
 use Framework\Http\Route\Route;
@@ -8,9 +9,9 @@ use Framework\Http\Response;
 use Framework\Http\Request;
 use Framework\Cache\Cache;
 use Framework\Content\Seo;
-use Framework\Http\Http;
 use Framework\Debug\Ray;
 use Framework\App;
+use Framework\Http\Http;
 
 /**
  * @param string $input
@@ -52,7 +53,7 @@ function clearInjections(mixed $value): mixed
 	if (!is_array($value) && !is_string($value)) {
 		return $value;
 	}
-	
+
 	// kijk of input value een array is
 	if (is_array($value)) {
 		// ga door alle keys/values heen
@@ -76,9 +77,16 @@ function dd(mixed ...$values): bool
 	}
 
 	echo "<pre style='width:auto;overflow:auto;'>";
+
+	// start output buffer
+	ob_start();
+
 	foreach ($values as $value) {
 		print_r($value);
 	}
+	// clear xxs
+	echo htmlspecialchars(ob_get_clean());
+
 	echo "</pre>";
 
 	return true;
@@ -98,10 +106,10 @@ function getClassName(object|string $class): string
 
 /**
  * @param string|int|null $find
- * @return mixed
+ * @return Request|mixed
  * @throws ReflectionException
  */
-function request(string|int|null $find = null): mixed
+function request(string|int|null $find = null)
 {
 	global $request;
 
@@ -114,11 +122,13 @@ function request(string|int|null $find = null): mixed
 }
 
 /**
- * @return Http;
+ * @param  string|null $baseUrl
+ * @return Curl
  */
-function http(): Http
+function http(?string $baseUrl = null): Curl
 {
-	return new Http();
+	/** @var Curl */
+	return new Http($baseUrl);
 }
 
 /**
@@ -141,15 +151,16 @@ function redirect(?string $path = null, int $responseCode = 302, bool|null $secu
 }
 
 /**
+ * @param  string|null  $viewPath
+ * @param  boolean      $defaultLayout
  * @return Content|null
- * @throws ReflectionException
  */
-function content(): ?Content
+function content(?string $viewPath = null, string|false $defaultLayout = false): ?Content
 {
 	global $content;
 
 	return app('content') ?: app(
-		$content instanceof Content ? $content : new Content()
+		$content instanceof Content ? $content : new Content($viewPath, $defaultLayout)
 	);
 }
 
@@ -194,11 +205,11 @@ function cache(): Cache
 }
 
 /**
- * @param Object|string|null $class
- * @return object|null
+ * @param Object|string|null
+ * @return Framework\App|object|null
  * @throws ReflectionException
  */
-function app(object|string|null $class = null): object|null
+function app(object|string|null $class = null)
 {
 	global $app;
 
@@ -209,10 +220,11 @@ function app(object|string|null $class = null): object|null
 
 	// check if is object
 	if (is_object($class)) {
-		return $app->instance($class)->{lcfirst(getClassName($class))};
+		// set/get instance
+		return $app->instance($class)->getInstance(lcfirst(getClassName($class)));
 	} // when you want to access an stored class
 	elseif (is_string($class)) {
-		return $app->{$class} ?? null;
+		return $app->getInstance($class);
 	}
 
 	return $app;

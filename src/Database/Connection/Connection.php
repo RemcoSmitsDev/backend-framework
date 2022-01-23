@@ -2,8 +2,12 @@
 
 namespace Framework\Database\Connection;
 
+use ErrorException;
+use Exception;
 use Framework\Database\QueryBuilder\QueryBuilder;
 use Framework\Database\SqlFormatter;
+use Framework\Debug\Debug;
+use Framework\Event\Event;
 use PDOStatement;
 use PDO;
 
@@ -20,9 +24,9 @@ class Connection
 	public PDOStatement|false $statement;
 
 	/**
-	 * @var int|float
+	 * @var int|float|string
 	 */
-	protected int|float $executionTime = 0;
+	protected int|float|string $executionTime = 0;
 
 	/**
 	 * @var boolean
@@ -91,7 +95,7 @@ class Connection
 		$this->failed = false;
 
 		// set start time for execution measure
-		$this->executionTime = (float) round(microtime(true) * 10000, 0);
+		$this->executionTime = microtime(true);
 
 		// try to execute query
 		try {
@@ -100,6 +104,9 @@ class Connection
 				array_values($bindings) ?: null
 			);
 		} catch (\Throwable $th) {
+			// throw error this will get catch with the debug page
+			throw $th;
+
 			// set failed to true
 			$this->failed = true;
 		} finally {
@@ -107,16 +114,20 @@ class Connection
 			$this->calcExecutionTime();
 		}
 
-		// check if query failed
-		if ($this->failed()) {
-			// handle show error
-			$this->showError($query, $bindings, $th->getMessage());
-		}
-
-		// check if need to log query
-		if ($queryBuilder->logSql && !$this->failed()) {
-			$queryBuilder->logSqlQuery($query, $bindings, $this->executionTime());
-		}
+		// notify database event
+		Event::notify('database-query', [
+			'show' => $queryBuilder->logSql,
+			'pdo' => $this->pdo,
+			'builder' => $queryBuilder,
+			'statement' => $this->statement,
+			'query' => $query,
+			'bindings' => $bindings,
+			'executionTime' => $this->executionTime(),
+			'failed' => $this->failed(),
+			'effectedRows' => (int) $this->statement?->rowCount() ?? 0,
+			'hasEffectedRows' => $this->hasEffectedRows(),
+			'error' => $this->failed() ? $th->getMessage() : false,
+		]);
 
 		// reset all props
 		$queryBuilder->reset();
@@ -190,10 +201,10 @@ class Connection
 	private function calcExecutionTime(): void
 	{
 		// get end time
-		$endTime = (float) round(microtime(true) * 10000, 0);
+		$endTime = microtime(true);
 
 		// calc execution time
-		$this->executionTime = ($endTime - $this->executionTime()) / 10000;
+		$this->executionTime = number_format(($endTime - $this->executionTime()) * 10000, 2, '.', '');
 	}
 
 	/**
@@ -204,37 +215,6 @@ class Connection
 	public function executionTime(): int|float
 	{
 		return $this->executionTime;
-	}
-
-	/**
-	 * This method will handle if to show error and how
-	 *
-	 * @param string $query
-	 * @param array $bindings
-	 * @param string $error
-	 */
-	private function showError(string $query, array $bindings, string $error)
-	{
-		// check if can show error message
-		if (!defined('IS_DEVELOPMENT_MODE') || !IS_DEVELOPMENT_MODE) {
-			return false;
-		}
-
-		// check if ray is enabled
-		if (app()->rayIsEnabled()) {
-			// send request to ray
-			ray(
-				SqlFormatter::format($query),
-				$error,
-				$bindings,
-				'Execution time: ' . $this->executionTime() . ' seconds'
-			)
-				->type('query')
-				->color('orange')
-				->title('Database query error');
-		} else {
-			echo $error;
-		}
 	}
 
 	/**

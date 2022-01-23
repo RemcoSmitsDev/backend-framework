@@ -295,6 +295,9 @@ class Router
             // stop other actions
             response()->exit();
         } else {
+            // get output cache
+            ob_get_clean();
+
             // send forbidden response code
             response()->code(403)->view('responseView')->exit();
         }
@@ -368,6 +371,9 @@ class Router
 
         // where there is no route
         if (!$this->currentRoute) {
+            // get output cache
+            ob_get_clean();
+
             response()->code(404)->view('responseView')->exit();
         }
     }
