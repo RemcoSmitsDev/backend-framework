@@ -95,7 +95,7 @@ class Grammar
             }
 
             // update value to correct statement
-            if (preg_match('/[A-Za-z]+\(\)|\-\=|\+\=/i', $value)) {
+            if (is_string($value) && preg_match('/[A-Za-z]+\(\)|\-\=|\+\=/i', $value)) {
                 $value = " `{$key}` = {$value}";
             } else {
                 $value = " `{$key}` = ?";
