@@ -7,10 +7,11 @@ use ReflectionException;
 class Api
 {
     /**
+     * @param string ...$whitelistedURIs
      * @return bool
      * @throws ReflectionException
      */
-    public static function listen(): bool
+    public static function listen(string ...$whitelistedURIs): bool
     {
         // allow only request from same origin
         header("Access-Control-Allow-Origin: {$_SERVER['HTTP_HOST']}");
@@ -42,9 +43,9 @@ class Api
         }
 
         // validate of de token die mee wordt gestuurt goed is
-        if (!self::validateToken()) {
+        if (!self::validateToken() && !in_array(request()->uri(), $whitelistedURIs)) {
             response()->code(401);
-            return false;
+            exit(0);
         }
 
         // verwijder `.php` van de string als die er is
