@@ -42,6 +42,6 @@ class QueryEvent extends BaseEvent
 		// send to ray
 		ray(
 			...$collection
-		)->color($data['error'] ? 'red' : '');
+		)->type('query')->color($data['error'] ? 'red' : '');
 	}
 }

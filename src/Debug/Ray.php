@@ -141,8 +141,8 @@ class Ray implements RayInterface
                 $this->measure['startMemory'] / pow(
                     1024,
                     ($x = floor(
-                            log($this->measure['startMemory'], 1024)
-                        ))
+                        log($this->measure['startMemory'], 1024)
+                    ))
                 ),
                 2
             ) . ' ' . $memoryUnit[$x];
@@ -223,22 +223,17 @@ class Ray implements RayInterface
             ],
             'measure' => $this->measure,
             'enableAutoShow' => app()->getRaySettings()['enableAutoShow'],
-            'host' => $_SERVER['HTTP_HOST']
+            'host' => request()->server('HTTP_HOST')
         ];
-
-        // reset values
-        $this->reset($this->measure['done'] === true);
 
         // loop trough data and format as dump
         foreach ($debugData['data']['original'] as $value) {
             ob_start();
             dd($value);
-            $debugData['data']['dd'][] = ob_get_clean();
-        }
+            $debugData['data']['dd'][] = $this->type === 'query' ? htmlspecialchars_decode(ob_get_clean()) : ob_get_clean();
 
-        // check if xdebug var_dump function exists
-        if (function_exists('xdebug_var_dump') && $this->type !== 'query') {
-            foreach ($debugData['data']['original'] as $value) {
+            // check if xdebug var_dump function exists
+            if (function_exists('xdebug_var_dump') && $this->type !== 'query') {
                 ob_start();
                 xdebug_var_dump($value);
                 $debugData['data']['xdebug'][] = ob_get_clean();
@@ -259,6 +254,9 @@ class Ray implements RayInterface
             // add previews to data
             $debugData['data']['codePreviews'] = $codePreviews;
         }
+
+        // reset values
+        $this->reset($this->measure['done'] === true);
 
         // return debug array
         return $debugData;
@@ -286,44 +284,10 @@ class Ray implements RayInterface
      */
     private function getErrorFileLines(array $error)
     {
-        // calc start line
-        $errorLine = intval($error['line']);
-        $start = $errorLine - 10;
-        $end = $errorLine + 10;
+        // get code preview
+        [$snippet, $lineNumbers, $line, $path] = Debug::getCodePreview($error['file'] ?? '', intval($error['line']));
 
-        // check if start line need to get changed
-        if ($errorLine <= 10) {
-            $start = 1;
-        }
-
-        // keep track of all information
-        $str = '';
-        $strLineNumbers = '';
-
-        // make linenumbers string(sidebar)
-        for ($i = $start + 1; $i <= $end; $i++) {
-            $strLineNumbers .= "<div>{$i}</div>";
-        }
-
-        // slice lines
-        $lines = array_slice(file($error['file']), $start, $end);
-
-        // loop trough all lines
-        foreach ($lines as $key => $line) {
-            // check if is current error line(place where the error was througn)
-            if (($start + $key + 1) === $errorLine) {
-                $str .= '<div class="line error"><span>' . htmlspecialchars(preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line)) . '</span></div>';
-            } else {
-                $str .= '<div class="line"><span>' . htmlspecialchars(preg_replace("/\t/", '&nbsp&nbsp&nbsp&nbsp&nbsp', $line)) . '</span></div>';
-            }
-
-            // check if end was reached
-            if ($start + $key === $end - 1) {
-                break;
-            }
-        }
-
-        return '<div class="line-numbers">' . $strLineNumbers . '</div><div class="code">' . $str . '</div>';
+        return '<div class="line-numbers">' . implode('<br>', $lineNumbers) . '</div><div class="code">' . $snippet . '</div>';
     }
 
     /**
