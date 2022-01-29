@@ -1,6 +1,6 @@
 # PHP Backend Framework
 
-[![PHP Composer](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml)
+[![PHP tests](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml)
 
 Lightweight PHP Backend Framework. Includes fast and secure Database QueryBuilder,
 Advanced Routing with dynamic routes(middlewares,grouping,prefix)
