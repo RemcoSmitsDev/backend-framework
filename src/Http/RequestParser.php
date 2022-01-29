@@ -6,12 +6,12 @@ trait RequestParser
 {
 	protected function parseProtocol(): string
 	{
-		return $this->server['SERVER_PROTOCOL'];
+		return $this->server->get('SERVER_PROTOCOL');
 	}
 
 	protected function parseHost(): string
 	{
-		return $this->server['HTTP_HOST'];
+		return $this->server->get('HTTP_HOST');
 	}
 
 	protected function parseUri(): string

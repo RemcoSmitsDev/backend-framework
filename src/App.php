@@ -2,15 +2,15 @@
 
 namespace Framework;
 
-use ErrorException;
-use Framework\Debug\Debug;
 use Framework\Event\DefaultEvents\QueryEvent;
 use Framework\Event\DefaultEvents\ErrorEvent;
+use Framework\Debug\Debug;
 use Framework\Event\Event;
 use ReflectionException;
 use Framework\Http\Api;
+use ErrorException;
 
-class App
+final class App
 {
     /**
      * @var boolean
@@ -48,7 +48,10 @@ class App
         // register shutdown
         register_shutdown_function(function () {
             // check if is not development mode
-            if (!IS_DEVELOPMENT_MODE) return;
+            if (!IS_DEVELOPMENT_MODE || !Api::fromOwnServer()) return;
+
+            // when comes from api | or wants json back
+            if (str_contains(request()->headers('Content-Type') ?: '', 'application/json') || Api::fromAjax()) return;
 
             // render debug screen
             Debug::render();
@@ -178,9 +181,8 @@ class App
      * This function will store an instance of all classes
      * @param ...object $classes
      * @return self
-     * @throws ReflectionException
      */
-    public static function instance(object ...$classes): self
+    public static function setInstance(object ...$classes): self
     {
         // loop trough all classes
         foreach ($classes as $class) {

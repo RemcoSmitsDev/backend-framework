@@ -3,6 +3,8 @@
 namespace Framework\Http;
 
 use Framework\Http\Validate\RequestValidator;
+use Framework\Http\Request\RequestHeader;
+use Framework\Http\Request\ServerHeader;
 use ReflectionException;
 
 class Request extends RequestValidator
@@ -10,78 +12,69 @@ class Request extends RequestValidator
 	use RequestParser;
 
 	/**
+	 * @var ServerHeader|null
+	 */
+	private ?ServerHeader $server;
+
+	/**
+	 * @var RequestHeader|null
+	 */
+	private ?RequestHeader $headers;
+
+	/**
+	 * @var array|null
+	 */
+	private ?array $getData;
+
+	/**
+	 * @var array|null
+	 */
+	private ?array $postData;
+
+	/**
+	 * @var array|null
+	 */
+	private ?array $fileData;
+
+	/**
 	 * @var array
 	 */
-	private array $server = [];
-
-	/**
-	 * @var object|null
-	 */
-	private ?object $getData;
-
-	/**
-	 * @var object|null
-	 */
-	private ?object $postData;
-
-	/**
-	 * @var object|null
-	 */
-	private ?object $fileData;
-
-	/**
-	 * @var object
-	 */
-	public object $requestData;
-
-
-	private string $method;
-	private string $schema = '';
-
-	/**
-	 * HTTP/1.1|HTTP/1.0|HTTPS/1.1
-	 *
-	 * @var string
-	 */
-	private string $protocol = '';
-	private string $host = '';
-
-	private string $requestUri = '';
-	private string $queryString = '';
+	public array $requestData;
 
 	public function __construct()
 	{
 		// set server information
-		$this->server = $_SERVER;
+		$this->server = new ServerHeader;
+		$this->headers = new RequestHeader($this->server);
 
 		// set all request(get) data
-		$this->getData = (object) clearInjections($_GET);
+		$this->getData = clearInjections($_GET);
 
 		// set all request(post) data
-		$this->postData = (object) clearInjections(array_merge(
+		$this->postData = clearInjections(array_merge(
 			json_decode(file_get_contents('php://input'), true) ?? [],
 			$_POST
 		));
 
 		// add all request files(upload)
-		$this->fileData = (object) $_FILES;
+		$this->fileData = $_FILES;
 
 		// merge all request data
-		$this->requestData = (object) array_merge(
-			(array) $this->getData,
-			(array) $this->postData,
-			(array) $this->fileData
+		$this->requestData = array_merge(
+			$this->getData,
+			$this->postData,
+			$this->fileData
 		);
 	}
 
 	/**
 	 * This function will return value of class property is exists
-	 * @param string $name
+	 * @param string $offset
 	 * @return mixed
 	 */
-	public function __get(string $name): mixed
+	public function __get(string $offset): mixed
 	{
-		return property_exists($this->requestData, $name) ? $this->requestData->{$name} : null;
+		return array_key_exists($offset, $this->requestData) ? $this->requestData[$offset] : null;
 	}
 
 	/**
@@ -98,7 +91,7 @@ class Request extends RequestValidator
 		}
 
 		// return get data
-		return property_exists($this->getData, $find) ? $this->getData->{$find} : null;
+		return array_key_exists($find, $this->getData) ? $this->getData[$find] : null;
 	}
 
 	/**
@@ -114,7 +107,7 @@ class Request extends RequestValidator
 		}
 
 		// return get data based on find value
-		return property_exists($this->postData, $find) ? $this->postData->{$find} : null;
+		return array_key_exists($find, $this->postData) ? $this->postData[$find] : null;
 	}
 
 	/**
@@ -129,14 +122,14 @@ class Request extends RequestValidator
 		}
 
 		// return get data based on find value
-		return property_exists($this->fileData, $find) ? $this->fileData->{$find} : null;
+		return array_key_exists($find, $this->fileData) ? $this->fileData[$find] : null;
 	}
 
 	/**
 	 * This function will return all request information
-	 * @return ?object
+	 * @return array|null
 	 */
-	public function all(): ?object
+	public function all(): ?array
 	{
 		return $this->requestData;
 	}
@@ -151,7 +144,7 @@ class Request extends RequestValidator
 		// loop trough all func args
 		foreach ($requestKey as $key) {
 			// check if key exists
-			if (!property_exists($this->requestData, $key)) {
+			if (!array_key_exists($key, $this->requestData)) {
 				return false;
 			}
 		}
@@ -159,20 +152,13 @@ class Request extends RequestValidator
 	}
 
 	/**
+	 * This function will return current URL with params
 	 * @return string
 	 */
-	public function csrf(): string
+	public function url(bool $withTrailingSlash = false): string
 	{
-		return $_SESSION['_csrf_token'] ?? $_SESSION['_csrf_token'] = randomString(40);
-	}
-
-	/**
-	 * @return bool
-	 * @throws ReflectionException
-	 */
-	public function validateCsrf(): bool
-	{
-		return \request('_token') === $this->csrf();
+		// krijg de huidige url zonden get waardes
+		return rtrim($this->server->get('REQUEST_URI') ?? '', $withTrailingSlash ? '/' : '') ?: '/';
 	}
 
 	/**
@@ -205,49 +191,24 @@ class Request extends RequestValidator
 	}
 
 	/**
-	 * This function will return current URL with params
-	 * @return string
-	 */
-	public function url(bool $withTrailingSlash = false): string
-	{
-		// krijg de huidige url zonden get waardes
-		return rtrim($this->server['REQUEST_URI'], $withTrailingSlash ? '/' : '') ?: '/';
-	}
-
-	/**
 	 * This function will return all headers of one header based on the findHeader param
 	 * @param string|null $findHeader
 	 * @return array|string|null
 	 */
 	public function headers(?string $findHeader = null): array|string|null
 	{
-		// keep track of all headers
-		$headers = [];
+		return $findHeader ? $this->headers->get($findHeader) : $this->headers->all();
+	}
 
-		// If getallheaders() is available, use that
-		if (function_exists('getallheaders')) {
-			// get all headers
-			$headers = getallheaders();
-
-			// getallheaders() can return false if something went wrong
-			if ($headers !== false) {
-				return $findHeader ? $headers[$findHeader] ?? null : $headers;
-			}
-		}
-
-		// Method getallheaders() not available or went wrong: manually extract 'm
-		foreach ($_SERVER as $name => $value) {
-			if ((str_starts_with($name, 'HTTP_')) || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH')) {
-				$headers[str_replace(
-					[' ', 'Http'],
-					['-', 'HTTP'],
-					ucwords(strtolower(str_replace('_', ' ', substr($name, 5))))
-				)] = $value;
-			}
-		}
-
-		// return header(s) based on find header key
-		return $findHeader ? (array_key_exists($findHeader, $headers) ? $headers[$findHeader] : null) : $headers;
+	/**
+	 * This method will find a server header or returns all server headers
+	 *
+	 * @param  string|null       $findHeader
+	 * @return array|string|null
+	 */
+	public function server(?string $findHeader = null): array|string|null
+	{
+		return $findHeader ? $this->server->get($findHeader) : $this->server->all();
 	}
 
 	/**
@@ -257,11 +218,11 @@ class Request extends RequestValidator
 	public function method(): string
 	{
 		// Take the method as found in $_SERVER
-		$method = strtoupper($_SERVER['REQUEST_METHOD']);
+		$method = strtoupper($this->server->get('REQUEST_METHOD'));
 
 		// If it's a HEAD request override it to being GET and prevent any output, as per HTTP Specification
 		// @url http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.4
-		if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
+		if ($method === 'HEAD') {
 			// start output buffer
 			ob_start();
 			// set method to get
@@ -269,12 +230,29 @@ class Request extends RequestValidator
 		}
 
 		// If it's a POST request, check for a method override header
-		elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(strtoupper($this->headers('X-HTTP-Method-Override') ?? ''), ['PUT', 'DELETE', 'PATCH'])) {
+		elseif ($method === 'POST' && in_array(strtoupper($this->headers('X-HTTP-Method-Override') ?? ''), ['PUT', 'DELETE', 'PATCH'])) {
 			// check if headers exists
 			$method = $this->headers('X-HTTP-Method-Override');
 		}
 
 		// return method in strtoupper
 		return strtoupper($method);
+	}
+
+	/**
+	 * @return string
+	 */
+	public function csrf(): string
+	{
+		return $_SESSION['_csrf_token'] ?? $_SESSION['_csrf_token'] = randomString(40);
+	}
+
+	/**
+	 * @return bool
+	 * @throws ReflectionException
+	 */
+	public function validateCsrf(): bool
+	{
+		return \request('_token') === $this->csrf();
 	}
 }

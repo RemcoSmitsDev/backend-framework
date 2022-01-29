@@ -57,12 +57,12 @@ function clearInjections(mixed $value): mixed
 	// kijk of input value een array is
 	if (is_array($value)) {
 		// ga door alle keys/values heen
-		return collection($value)->map(function ($item, $key) {
+		return collection($value)->map(function ($item) {
 			return clearInjections($item);
 		})->toArray();
 	}
 
-	return htmlentities(trim($value));
+	return htmlspecialchars($value);
 }
 
 /**
@@ -78,14 +78,10 @@ function dd(mixed ...$values): bool
 
 	echo "<pre style='width:auto;overflow:auto;'>";
 
-	// start output buffer
-	ob_start();
-
 	foreach ($values as $value) {
-		print_r($value);
+		// clear xxs
+		echo clearInjections(print_r($value, true));
 	}
-	// clear xxs
-	echo htmlspecialchars(ob_get_clean());
 
 	echo "</pre>";
 
@@ -117,7 +113,7 @@ function request(string|int|null $find = null)
 	$request = new Request();
 
 	return !is_null($find) ?
-		(property_exists($request->requestData, $find) ? $request->requestData->{$find} : null) :
+		(array_key_exists($find, $request->requestData) ? $request->requestData[$find] : null) :
 		$request;
 }
 
@@ -221,7 +217,7 @@ function app(object|string|null $class = null)
 	// check if is object
 	if (is_object($class)) {
 		// set/get instance
-		return $app->instance($class)->getInstance(lcfirst(getClassName($class)));
+		return $app->setInstance($class)->getInstance(lcfirst(getClassName($class)));
 	} // when you want to access an stored class
 	elseif (is_string($class)) {
 		return $app->getInstance($class);
