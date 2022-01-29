@@ -5,7 +5,24 @@ declare(strict_types=1);
 namespace Framework\Tests\Container;
 
 use Framework\Container\Container;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+
+class ConstructorTest
+{
+	public function __construct(
+		private ClosureTest $closureTest
+	) {
+	}
+
+	public function testWithConstructor(ClosureTest $closureTest)
+	{
+	}
+
+	private function testPrivateMethodException(ClosureTest $closureTest)
+	{
+	}
+}
 
 class ClosureTest
 {
@@ -31,5 +48,30 @@ class ContainerTest extends TestCase
 		$params = Container::handleClassMethod(ClosureTest::class, 'test', ['name' => 'askdfjlksadjflksdj']);
 
 		$this->assertEquals([new ClosureTest, 'askdfjlksadjflksdj'], $params);
+	}
+
+	public function testHandleClassMethodParamsException()
+	{
+		$this->expectException(InvalidArgumentException::class);
+
+		$params = Container::handleClassMethod(ClosureTest::class, 'test', ['name' => 'askdfjlksadjflksdj', 'test' => '1', 'b' => '2']);
+
+		$this->assertEquals([new ClosureTest, 'askdfjlksadjflksdj'], $params);
+	}
+
+	public function testClassMethodWithConstructor()
+	{
+		$params = Container::handleClassMethod(ConstructorTest::class, 'testWithConstructor');
+
+		$this->assertArrayHasKey(0, $params);
+
+		$this->assertEquals([new ClosureTest], $params);
+	}
+
+	public function testPrivateMethod()
+	{
+		$this->expectException(\ReflectionException::class);
+
+		Container::handleClassMethod(ConstructorTest::class, 'testPrivateMethodException');
 	}
 }
