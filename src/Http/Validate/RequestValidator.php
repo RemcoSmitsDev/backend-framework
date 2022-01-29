@@ -108,10 +108,20 @@ class RequestValidator
 					continue;
 				}
 
+				// keep track of old key
+				$_key = $this->key;
+
 				// loop trough multidimensional array an validate rules
-				foreach ($value as $val) {
+				foreach ($value as $key => $val) {
+					// update key
+					$this->key = "{$_key}.{$key}";
+
+					// loop recursive
 					$this->recursiveLoop((array) $rule, $val);
 				}
+
+				// reset key
+				$this->key = $_key;
 
 				// force to go to the next in the array
 				continue;
@@ -122,9 +132,6 @@ class RequestValidator
 				if (!array_key_exists($key, (array) $value)) {
 					// add to failed rules
 					$this->addToFailedRules($rule, $key, $value);
-
-					// set key
-					// $this->key .= '.' . $key;
 
 					// append to messages array
 					$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
@@ -141,6 +148,12 @@ class RequestValidator
 				if (!array_key_exists($key, (array) $value)) {
 					// added to failed rules
 					$this->addToFailedRules($rule, $key, $value);
+
+					// check if key is an string
+					if (is_string($key)) {
+						// set key
+						$this->key .= '.' . $key;
+					}
 
 					// append to messages array
 					$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
@@ -195,9 +208,6 @@ class RequestValidator
 				// add to failed rules
 				$this->addToFailedRules($rule, $key, null);
 
-				// set key
-				// $this->key .= '.' . $key;
-
 				// append to messages array
 				$this->errorMessages[] = "`{$this->key}` kon niet gevonden worden.";
 
@@ -246,7 +256,7 @@ class RequestValidator
 			$this->errorMessages[] = $validateRule->getMessage();
 
 			// added to failed rules
-			$this->addToFailedRules($rule, $key, $value);
+			$this->addToFailedRules($rule, $this->key, $value);
 		} else {
 			// add to passed rules
 			$this->passedRules[] = [
@@ -307,7 +317,7 @@ class RequestValidator
 	 * Return all errors/failed
 	 * @return array
 	 */
-	public function getErrors(): array
+	public function getFailedRules(): array
 	{
 		// keep track of errrors
 		return $this->failedRules;
@@ -350,7 +360,7 @@ class RequestValidator
 
 		// stop when is optional
 		// stop when is alreay failed
-		if (!$this->required || $this->failed) {
+		if (!$this->required || $this->failed()) {
 			return false;
 		}
 
