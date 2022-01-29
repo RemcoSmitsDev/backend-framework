@@ -2,9 +2,9 @@
 
 namespace Framework\Http\Route;
 
-use Closure;
-use Exception;
 use Framework\Interfaces\Http\RoutesInterface;
+use Exception;
+use Closure;
 
 class Route extends Router implements RoutesInterface
 {
@@ -28,11 +28,11 @@ class Route extends Router implements RoutesInterface
      */
     public function __call(string $name, array $arguments)
     {
-        if(!in_array($name,$this->allowedMethods)){
-           throw new Exception('The method: "'.$name.'" is not an valid method!');
+        if (!in_array($name, $this->allowedMethods)) {
+            throw new Exception('The method: "' . $name . '" is not an valid method!');
         }
 
-        return $this->match(strtoupper($name),...$arguments);
+        return $this->match(strtoupper($name), ...$arguments);
     }
 
     /**
@@ -51,15 +51,16 @@ class Route extends Router implements RoutesInterface
 
     /**
      * Middleware function
-     * @param bool|array $validateRules
-     * @return self
+     * @param bool|string|array $validateRules
+     * @return Route
      */
-    public function middleware(bool|array $validateRules): self
+    public function middleware(...$validateRules): Route
     {
+        // dd($validateRules);
         // update route middlewares
         $this->middlewares = array_unique([
             ...$this->middlewares,
-            ...(array)$validateRules
+            ...$validateRules
         ]);
 
         // return self

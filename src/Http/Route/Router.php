@@ -2,10 +2,10 @@
 
 namespace Framework\Http\Route;
 
-use Closure;
-use Exception;
 use Framework\Container\Container;
 use Framework\Http\Request;
+use Exception;
+use Closure;
 
 class Router
 {
@@ -333,7 +333,7 @@ class Router
                 }
 
                 // check if middleware is valid
-                if (!Middleware::validate($route['middlewares'])) {
+                if (!Middleware::validate($route, $route['middlewares'])) {
                     // handle response when the middleware was not success
                     $this->handleOnMiddlewareFail($route);
                 }
@@ -353,7 +353,7 @@ class Router
                 }
 
                 // check if middleware is valid
-                if (!Middleware::validate($route['middlewares'])) {
+                if (!Middleware::validate($route, $route['middlewares'])) {
                     // handle response when the middleware was not success
                     $this->handleOnMiddlewareFail($route);
                 }
