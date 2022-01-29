@@ -16,7 +16,7 @@ class Api
         // allow only request from same origin
         header("Access-Control-Allow-Origin: {$_SERVER['HTTP_HOST']}");
         // allow only get and post requests
-        header('Access-Control-Allow-Methods: GET, POST');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
         // allow responsTypes
         header('Content-Type: text/html; application/json; charset=utf-8');
 
@@ -31,12 +31,6 @@ class Api
             return false;
         }
 
-        // als de server geen request mag krijgen dat stop die gelijk
-        if (function_exists('config') && !config()::API_ALLOW_REQUESTS) {
-            response()->code(403);
-            return false;
-        }
-
         // kijkt of de url begint met ../api/
         if (!str_starts_with(request()->uri(), '/api/')) {
             return false;
@@ -44,8 +38,7 @@ class Api
 
         // validate of de token die mee wordt gestuurt goed is
         if (!self::validateToken() && !in_array(request()->uri(), $whitelistedURIs)) {
-            response()->code(401);
-            exit(0);
+            response()->code(401)->exit();
         }
 
         // verwijder `.php` van de string als die er is
@@ -74,15 +67,7 @@ class Api
      */
     public static function fromOwnServer(): bool
     {
-        if (!isset($_SERVER['HTTP_REFERER'])) {
-            return false;
-        }
-
-        if (!str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", "", $_SERVER['HTTP_REFERER']), explode("/", $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"])[0])) {
-            return false;
-        }
-
-        return true;
+        return str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", "", request()->headers('HTTP_REFERER') ?? ''), explode("/", request()->headers('HTTP_HOST') . request()->uri())[0]);
     }
 
     /**
@@ -90,36 +75,44 @@ class Api
      */
     public static function fromAjax(): bool
     {
-        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            return true;
-        }
-        return false;
+        return strtolower(request()->headers('X-REQUESTED-WITH') ?? '') == 'xmlhttprequest';
     }
 
     /**
      * @return bool
      */
-    private static function validateToken(): bool
+    public static function validateToken(): bool
     {
         // kijk of authToken bestaat in de request headers
-        if (!isset(getallheaders()['Requesttoken'])) {
+        if (!request()->headers('Requesttoken')) {
             return false;
         }
 
-        // krijg authToken van request
-        $tokenFromRequest = getallheaders()['Requesttoken'] ?? '';
+        // get privious session
+        $previousSessionRequestToken = $_SESSION['_requestToken'] ?? randomString(20);
 
+        // get session request token
+        $sessionRequestToken = $_SESSION['requestToken'] ?? randomString(20);
+
+        // krijg authToken van request
         // verwijder `bearer_` van token string
-        $tokenFromRequest = str_replace('bearer_', '', $tokenFromRequest);
+        $tokenFromRequest = str_replace(
+            'bearer_',
+            '',
+            request()->headers('Requesttoken') ?? randomString(20)
+        );
+
+        // unset previous request token
+        unset($_SESSION['_requestToken']);
 
         // return of token gelijk is aan request header token
-        return $tokenFromRequest === $_SESSION['requestToken'] || (isset($_SESSION['_requestToken']) && $_SESSION['_requestToken'] === $tokenFromRequest);
+        return $tokenFromRequest === $sessionRequestToken || $previousSessionRequestToken === $tokenFromRequest;
     }
 
     /**
-     * @return static
+     * @return string
      */
-    public static function generateRequestToken(): self
+    public static function generateRequestToken(): string
     {
         // kijk of er al een request token bestaat voeg die dan toe als old `_` request token
         // voor als een request langzaam door de eerste check gaat
@@ -139,7 +132,10 @@ class Api
             setcookie('requestToken', $newToken, time() + 3600, '/');
         }
 
-        // return self
-        return new self();
+        // set cookie
+        $_COOKIE['requestToken'] = $newToken;
+
+        // new request token
+        return $newToken;
     }
 }
