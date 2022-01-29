@@ -281,6 +281,8 @@ class Grammar
                 $whereClause[] = ($wherestatement['boolean'] ?? '') . ' ' . $wherestatement['query'];
             } elseif ($type === 'column') {
                 $placeholder = $builder->formatColumnNames($wherestatement['value']);
+            } elseif ($type === 'normal') {
+                $wherestatement['boolean'] .= ' ';
             }
 
             // check if can continue
