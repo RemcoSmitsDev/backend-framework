@@ -1,14 +1,19 @@
 # PHP Backend Framework
+
+[![PHP Composer](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml)
 Lightweight PHP Backend Framework. Includes fast and secure Database QueryBuilder,
 Advanced Routing with dynamic routes(middlewares,grouping,prefix)
 
 To setup this PHP Backend Framework you need to install this package with composer:
+
 #### Install
+
 ```terminal
 composer require remcosmits/backend-framework
 ```
 
 #### Setup
+
 ```php
 // namespace for App/Route class
 use Framework\App;
@@ -30,7 +35,9 @@ $route->init();
 ```
 
 #### Basic routing
+
 Supported request methods: `GET`, `POST`, `PUT`, `DELETE`
+
 ```php
 // route using callback function
 $route->get('/account', function () {
@@ -47,7 +54,9 @@ $route->delete();
 ```
 
 #### Multi request method routing
+
 You can give these routes an name but you can't give them separate names.
+
 ```php
 // route using multi request types
 $route->match('GET|POST','/user/{userID}', function ($userID) {
@@ -56,6 +65,7 @@ $route->match('GET|POST','/user/{userID}', function ($userID) {
 ```
 
 #### Dynamic routing
+
 ```php
 // route using dynamic routing(params)
 // all params can be accessed with the given name
@@ -93,6 +103,7 @@ $route->prefix('account')->group(function (Route $route) {
 ```
 
 #### Prefix
+
 ```php
 // Route will end up like: /account/profile
 $route->prefix('account')->get('/profile', function () {
@@ -124,6 +135,7 @@ $route->prefix('account')->group(function (Route $route) {
 ```
 
 #### Middlewares
+
 ```php
 // Route with single middleware check
 $route->middleware(false)->get('/profile', function () {
@@ -137,6 +149,7 @@ $route->middleware([true, false])->get('/profile', function () {
 ```
 
 #### Group routing
+
 ```php
 // Grouped routes with prefix
 $route->prefix('account')->group(function (Route $route) {
