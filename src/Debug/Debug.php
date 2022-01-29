@@ -3,7 +3,6 @@
 namespace Framework\Debug;
 
 use Curl\CaseInsensitiveArray;
-use Curl\Curl;
 use Framework\Content\Content;
 
 class Debug
@@ -117,7 +116,7 @@ class Debug
 			// when is in range of line(where the error was from)
 			if ($lineNumber >= ($line - self::MAX_DISTANCE) && $lineNumber <= ($line + self::MAX_DISTANCE)) {
 				// decode line
-				$l = htmlspecialchars($l);
+				$l = clearInjections($l);
 
 				// get class name if is error line
 				$errorClass = $line === $lineNumber ? 'bg-red-500/40 text-opacity-75' : '';
@@ -139,6 +138,9 @@ class Debug
 			++$lineNumber;
 		}
 
+		// close file
+		fclose($file);
+
 		// return lines information
 		return $lines;
 	}
@@ -153,14 +155,14 @@ class Debug
 	public static function formatCurlRequest(string $url, array|CaseInsensitiveArray $headers): string
 	{
 		// htmlspecialchars
-		$url = htmlspecialchars($url);
+		$url = clearInjections($url);
 
 		// start curl format
 		$curlFormat = "curl '{$url}' \<br>";
 
 		// loop through all the headers
 		foreach ($headers as $key => $value) {
-			$curlFormat .= htmlspecialchars("-H '{$key}: {$value}'") . ' \<br>';
+			$curlFormat .= clearInjections("-H '{$key}: {$value}'") . ' \<br>';
 		}
 
 		// return formatted curl request
