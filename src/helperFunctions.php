@@ -32,15 +32,23 @@ function stripAccents(string $input): string
  */
 function randomString(int $length = 15): string
 {
-	$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-	$charactersLength = strlen($characters);
-	$randomString = '';
+	$string = '';
 
-	for ($i = 0; $i < $length; $i++) {
-		$randomString .= $characters[rand(0, $charactersLength - 1)];
+	while (($len = strlen($string)) < $length) {
+		$size = $length - $len;
+
+		$string .= substr(
+			str_replace(
+				['/', '+', '='],
+				'',
+				base64_encode(random_bytes($size))
+			),
+			0,
+			$size
+		);
 	}
 
-	return $randomString;
+	return $string;
 }
 
 /**
