@@ -75,7 +75,7 @@ class Api
      */
     public static function fromAjax(): bool
     {
-        return strtolower(request()->headers('X-REQUESTED-WITH') ?? '') == 'xmlhttprequest';
+        return strtolower(request()->headers('X-REQUESTED-WITH') ?: '') === 'xmlhttprequest';
     }
 
     /**

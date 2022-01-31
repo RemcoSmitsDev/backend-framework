@@ -2,37 +2,36 @@
 
 namespace Framework\Http\Request;
 
-final class ServerHeader
+final class ServerHeader extends GetAble
 {
-	use GetAble;
-
 	/**
 	 * @var array
 	 */
-	private array $headers = [];
+	protected array $headers = [];
 
 	public function __construct()
 	{
-		// set name where to find from
-		$this->setName('headers');
+		// init getable
+		parent::__construct('headers');
 
 		// merge all headers
 		$this->headers = $_SERVER;
 	}
 
 	/**
-	 * This method will format the headers to a string
-	 *
 	 * @return string
 	 */
-	public function __toString()
+	public function __toString(): string
 	{
+		// get all headers
 		$headers = $this->all();
 
+		// format the header into a valid string
 		array_walk($headers, function (&$value, $key) {
 			$value = "{$key}: {$value}";
 		});
 
+		// make string with ` ` separator
 		return implode(' ', $headers);
 	}
 }

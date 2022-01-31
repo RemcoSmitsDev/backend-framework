@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Framework\Tests;
 
+use Framework\Http\Request;
 use Framework\Http\Validate\CustomRule;
 use PHPUnit\Framework\TestCase;
 
@@ -23,11 +24,18 @@ class UniqueEmail extends CustomRule
 
 class RequestValidateTest extends TestCase
 {
+	protected function setUp(): void
+	{
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+
+		app()->setInstance(new Request);
+	}
+
 	public function testValidateReturnType()
 	{
 		$_GET['test'] = '1';
 
-		$_SERVER['REQUEST_METHOD'] = 'GET';
+		app()->setInstance(new Request);
 
 		$validateReturnType = request()->validate([
 			'test' => 'required'
@@ -40,7 +48,7 @@ class RequestValidateTest extends TestCase
 	{
 		unset($_GET['test']);
 
-		$_SERVER['REQUEST_METHOD'] = 'GET';
+		app()->setInstance(new Request);
 
 		$validateRequired = request()->validate([
 			'test' => 'required'
@@ -49,6 +57,8 @@ class RequestValidateTest extends TestCase
 		$this->assertEquals(true, $validateRequired->failed());
 
 		$_GET['test'] = 'test';
+
+		app()->setInstance(new Request);
 
 		$validateRequired = request()->validate([
 			'test' => 'required'
@@ -61,7 +71,7 @@ class RequestValidateTest extends TestCase
 	{
 		unset($_GET['test']);
 
-		$_SERVER['REQUEST_METHOD'] = 'GET';
+		app()->setInstance(new Request);
 
 		$validateOptional = request()->validate([
 			'test' => 'int'
@@ -70,6 +80,8 @@ class RequestValidateTest extends TestCase
 		$this->assertEquals(false, $validateOptional->failed());
 
 		$_GET['test'] = 'asdfjasldkjf';
+
+		app()->setInstance(new Request);
 
 		$validateOptional = request()->validate([
 			'test' => 'int'
@@ -80,11 +92,9 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateStringType()
 	{
-		unset($_GET['test']);
-
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['test'] = 'this is an test';
+
+		app()->setInstance(new Request);
 
 		$validateStringType = request()->validate([
 			'test' => ['required', 'string']
@@ -93,6 +103,8 @@ class RequestValidateTest extends TestCase
 		$this->assertEquals(false, $validateStringType->failed());
 
 		$_GET['test'] = ['this is an test'];
+
+		app()->setInstance(new Request);
 
 		$validateStringType = request()->validate([
 			'test' => ['required', 'string']
@@ -103,11 +115,9 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateIntType()
 	{
-		unset($_GET['test']);
-
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['test'] = 'this is an test';
+
+		app()->setInstance(new Request);
 
 		$validateIntType = request()->validate([
 			'test' => 'int'
@@ -116,6 +126,8 @@ class RequestValidateTest extends TestCase
 		$this->assertEquals(true, $validateIntType->failed());
 
 		$_GET['test'] = 10;
+
+		app()->setInstance(new Request);
 
 		$validateIntType = request()->validate([
 			'test' => 'int'
@@ -126,11 +138,9 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateFloatType()
 	{
-		unset($_GET['test']);
-
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['test'] = '1.0.10';
+
+		app()->setInstance(new Request);
 
 		$validateFloatType = request()->validate([
 			'test' => 'float'
@@ -140,6 +150,8 @@ class RequestValidateTest extends TestCase
 
 		$_GET['test'] = 10;
 
+		app()->setInstance(new Request);
+
 		$validateFloatType = request()->validate([
 			'test' => 'float'
 		]);
@@ -147,6 +159,8 @@ class RequestValidateTest extends TestCase
 		$this->assertEquals(false, $validateFloatType->failed());
 
 		$_GET['test'] = 10.1;
+
+		app()->setInstance(new Request);
 
 		$validateFloatType = request()->validate([
 			'test' => 'float'
@@ -157,11 +171,9 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateArrayType()
 	{
-		unset($_GET['test']);
-
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['test'] = 'this is an test';
+
+		app()->setInstance(new Request);
 
 		$validateArrayType = request()->validate([
 			'test' => 'array'
@@ -173,6 +185,8 @@ class RequestValidateTest extends TestCase
 			'this is an test'
 		];
 
+		app()->setInstance(new Request);
+
 		$validateArrayType = request()->validate([
 			'test' => 'array'
 		]);
@@ -182,6 +196,8 @@ class RequestValidateTest extends TestCase
 		$_GET['test'] = [
 			'this is an test'
 		];
+
+		app()->setInstance(new Request);
 
 		$validateArrayType = request()->validate([
 			'test' => ['array' => ['int']]
@@ -191,6 +207,8 @@ class RequestValidateTest extends TestCase
 
 		$_GET['test'] = [];
 
+		app()->setInstance(new Request);
+
 		$validateArrayType = request()->validate([
 			'test' => ['array' => ['int']]
 		]);
@@ -198,6 +216,8 @@ class RequestValidateTest extends TestCase
 		$this->assertEquals(false, $validateArrayType->failed());
 
 		$_GET['test'] = '';
+
+		app()->setInstance(new Request);
 
 		$validateArrayType = request()->validate([
 			'test' => ['required', 'array' => ['string']]
@@ -209,6 +229,8 @@ class RequestValidateTest extends TestCase
 			'asjdaklsd'
 		];
 
+		app()->setInstance(new Request);
+
 		$validateArrayType = request()->validate([
 			'test' => ['required', 'array' => ['string']]
 		]);
@@ -218,8 +240,6 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateArrayKeyValues()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$validateArrayKeyValues = request()->validate([
 			'user' => [
 				'name' => ['string', 'min:1'],
@@ -234,6 +254,8 @@ class RequestValidateTest extends TestCase
 			'age' => 10
 		];
 
+		app()->setInstance(new Request);
+
 		$validateArrayKeyValues = request()->validate([
 			'user' => [
 				'name' => ['string', 'min:1'],
@@ -246,12 +268,12 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateMultiDymentionalArray()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['users'] = [
 			'name' => 'This is an test',
 			'age' => 10
 		];
+
+		app()->setInstance(new Request);
 
 		$validateArrayType = request()->validate([
 			'users' => [
@@ -271,6 +293,8 @@ class RequestValidateTest extends TestCase
 			]
 		];
 
+		app()->setInstance(new Request);
+
 		$validateArrayType = request()->validate([
 			'users' => [
 				'array' => [
@@ -285,12 +309,12 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateMin()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['user'] = [
 			'name' => 'This is a test',
 			'age' => 10
 		];
+
+		app()->setInstance(new Request);
 
 		$validate = request()->validate([
 			'user' => [
@@ -315,13 +339,13 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateRegex()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['user'] = [
 			'name' => 'This is a test',
 			'age' => 10,
 			'password' => 'ThisIsAnTest'
 		];
+
+		app()->setInstance(new Request);
 
 		$validate = request()->validate([
 			'user' => [
@@ -337,6 +361,8 @@ class RequestValidateTest extends TestCase
 			'password' => 'ThisIsAnTest0-9'
 		];
 
+		app()->setInstance(new Request);
+
 		$validate = request()->validate([
 			'user' => [
 				'password' => 'regex:^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$'
@@ -348,14 +374,14 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateEmail()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['user'] = [
 			'name' => 'This is a test',
 			'age' => 10,
 			'password' => 'ThisIsAnTest',
 			'email' => 'test@example.com'
 		];
+
+		app()->setInstance(new Request);
 
 		$validate = request()->validate([
 			'user' => [
@@ -372,6 +398,8 @@ class RequestValidateTest extends TestCase
 			'email' => 'test@example'
 		];
 
+		app()->setInstance(new Request);
+
 		$validate = request()->validate([
 			'user' => [
 				'email' => 'email'
@@ -383,8 +411,6 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateUrl()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['user'] = [
 			'name' => 'This is a test',
 			'age' => 10,
@@ -392,6 +418,8 @@ class RequestValidateTest extends TestCase
 			'email' => 'test@example.com',
 			'site' => 'https://www.google.com'
 		];
+
+		app()->setInstance(new Request);
 
 		$validate = request()->validate([
 			'user' => [
@@ -409,6 +437,8 @@ class RequestValidateTest extends TestCase
 			'site' => 'www.google.com'
 		];
 
+		app()->setInstance(new Request);
+
 		$validate = request()->validate([
 			'user' => [
 				'site' => 'url'
@@ -420,8 +450,6 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateIp()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['user'] = [
 			'name' => 'This is a test',
 			'age' => 10,
@@ -430,6 +458,8 @@ class RequestValidateTest extends TestCase
 			'site' => 'https://www.google.com',
 			'ip' => '192.178.0.1'
 		];
+
+		app()->setInstance(new Request);
 
 		$validate = request()->validate([
 			'user' => [
@@ -448,6 +478,8 @@ class RequestValidateTest extends TestCase
 			'ip' => '192.178.0.1:8080'
 		];
 
+		app()->setInstance(new Request);
+
 		$validate = request()->validate([
 			'user' => [
 				'ip' => 'ip'
@@ -459,8 +491,6 @@ class RequestValidateTest extends TestCase
 
 	public function testValidateCustomRule()
 	{
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-
 		$_GET['user'] = [
 			'name' => 'This is a test',
 			'age' => 10,
@@ -469,6 +499,8 @@ class RequestValidateTest extends TestCase
 			'site' => 'https://www.google.com',
 			'userId' => 2
 		];
+
+		app()->setInstance(new Request);
 
 		$validate = request()->validate([
 			'user' => [

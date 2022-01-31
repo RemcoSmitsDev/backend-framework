@@ -2,14 +2,15 @@
 
 namespace Framework\Http;
 
+use Framework\Http\Request\ValidateCsrfToken;
 use Framework\Http\Validate\RequestValidator;
+use Framework\Http\Request\RequestCookie;
 use Framework\Http\Request\RequestHeader;
 use Framework\Http\Request\ServerHeader;
-use ReflectionException;
 
-class Request extends RequestValidator
+final class Request extends RequestValidator
 {
-	use RequestParser;
+	use RequestParser, ValidateCsrfToken;
 
 	/**
 	 * @var ServerHeader|null
@@ -20,6 +21,11 @@ class Request extends RequestValidator
 	 * @var RequestHeader|null
 	 */
 	private ?RequestHeader $headers;
+
+	/**
+	 * @var RequestCookie|null
+	 */
+	private ?RequestCookie $cookies;
 
 	/**
 	 * @var array|null
@@ -46,6 +52,7 @@ class Request extends RequestValidator
 		// set server information
 		$this->server = new ServerHeader;
 		$this->headers = new RequestHeader($this->server);
+		$this->cookies = new RequestCookie($this->headers);
 
 		// set all request(get) data
 		$this->getData = clearInjections($_GET);
@@ -193,22 +200,33 @@ class Request extends RequestValidator
 	/**
 	 * This function will return all headers of one header based on the findHeader param
 	 * @param string|null $findHeader
-	 * @return array|string|null
+	 * @return RequestHeader|string|null
 	 */
-	public function headers(?string $findHeader = null): array|string|null
+	public function headers(?string $findHeader = null, ?string $default = null): RequestHeader|string|null
 	{
-		return $findHeader ? $this->headers->get($findHeader) : $this->headers->all();
+		return $findHeader ? $this->headers->get($findHeader, $default) : $this->headers;
 	}
 
 	/**
 	 * This method will find a server header or returns all server headers
 	 *
 	 * @param  string|null       $findHeader
-	 * @return array|string|null
+	 * @return ServerHeader|string|null
 	 */
-	public function server(?string $findHeader = null): array|string|null
+	public function server(?string $findHeader = null, ?string $default = null): ServerHeader|string|null
 	{
-		return $findHeader ? $this->server->get($findHeader) : $this->server->all();
+		return $findHeader ? $this->server->get($findHeader, $default) : $this->server;
+	}
+
+	/**
+	 * This method will get all cookies from a request or finds a cookie
+	 *
+	 * @param  string|null       $findCookie
+	 * @return RequestCookie|string|null
+	 */
+	public function cookies(?string $findCookie = null, ?string $default = null): RequestCookie|string|null
+	{
+		return $findCookie ? $this->cookies->get($findCookie, $default) : $this->cookies;
 	}
 
 	/**
@@ -218,19 +236,19 @@ class Request extends RequestValidator
 	public function method(): string
 	{
 		// Take the method as found in $_SERVER
-		$method = strtoupper($this->server->get('REQUEST_METHOD'));
+		$method = strtoupper($this->server('REQUEST_METHOD') ?: 'HEAD');
 
 		// If it's a HEAD request override it to being GET and prevent any output, as per HTTP Specification
-		// @url http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.4
 		if ($method === 'HEAD') {
 			// start output buffer
 			ob_start();
+
 			// set method to get
 			$method = 'GET';
 		}
 
 		// If it's a POST request, check for a method override header
-		elseif ($method === 'POST' && in_array(strtoupper($this->headers('X-HTTP-Method-Override') ?? ''), ['PUT', 'DELETE', 'PATCH'])) {
+		elseif ($method === 'POST' && in_array(strtoupper($this->headers('X-HTTP-Method-Override') ?: ''), ['PUT', 'DELETE', 'PATCH'])) {
 			// check if headers exists
 			$method = $this->headers('X-HTTP-Method-Override');
 		}
@@ -240,19 +258,13 @@ class Request extends RequestValidator
 	}
 
 	/**
+	 * This method will generate a new csrf token an stores it inside the session
+	 *
 	 * @return string
 	 */
 	public function csrf(): string
 	{
-		return $_SESSION['_csrf_token'] ?? $_SESSION['_csrf_token'] = randomString(40);
-	}
-
-	/**
-	 * @return bool
-	 * @throws ReflectionException
-	 */
-	public function validateCsrf(): bool
-	{
-		return \request('_token') === $this->csrf();
+		// get/make token
+		return $_SESSION['_csrf_token'] = randomString(40);
 	}
 }

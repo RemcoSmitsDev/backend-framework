@@ -175,6 +175,9 @@ class RequestValidator
 	 */
 	public function validate(array $rules): self
 	{
+		// reset values
+		$this->reset();
+
 		// loop trough all rules
 		foreach ((array) $rules as $key => $rule) {
 			// force rule to be array
@@ -366,5 +369,22 @@ class RequestValidator
 
 		// set status
 		$this->failed = $failed;
+	}
+
+	/**
+	 * This method will reset all property values
+	 *
+	 * @return void
+	 */
+	private function reset(): void
+	{
+		$this->failedRules = [];
+		$this->passedRules = [];
+		$this->required = false;
+		$this->failed = false;
+		$this->returnData = [];
+		$this->foundData = false;
+		$this->key = null;
+		$this->errorMessages = [];
 	}
 }

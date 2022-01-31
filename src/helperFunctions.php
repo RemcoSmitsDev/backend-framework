@@ -111,14 +111,14 @@ function getClassName(object|string $class): string
 /**
  * @param string|int|null $find
  * @return Request|mixed
- * @throws ReflectionException
  */
 function request(string|int|null $find = null)
 {
 	global $request;
 
-	// TODO: kijken of ik hier want aan kan doen zodat alle data niet in de app state blijven hangen
-	$request = new Request();
+	$request = app('request') ?: app(
+		$request instanceof Request ? $request : new Request
+	);
 
 	return !is_null($find) ?
 		(array_key_exists($find, $request->requestData) ? $request->requestData[$find] : null) :

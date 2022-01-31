@@ -106,7 +106,7 @@ trait CollectionHelpers
 	 */
 	public function last(?callable $callback = null): mixed
 	{
-		return Collection::make(
+		return static::make(
 			array_reverse($this->toArray(), true)
 		)->first($callback);
 	}

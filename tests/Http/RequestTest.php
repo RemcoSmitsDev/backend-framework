@@ -2,17 +2,18 @@
 
 namespace tests\Http;
 
+use Framework\Http\Request;
 use PHPUnit\Framework\TestCase;
 
 class RequestTest extends TestCase
 {
-	protected function setup(): void
+	protected function setUp(): void
 	{
-		parent::setup();
-
 		$_SERVER['HTTP_HOST'] = 'test.local';
 		$_SERVER['REQUEST_URI'] = '/api/test/?test=true';
 		$_SERVER['REQUEST_METHOD'] = 'GET';
+
+		app()->setInstance(new Request);
 	}
 
 	public function testGetHost()
@@ -20,9 +21,15 @@ class RequestTest extends TestCase
 		$this->assertEquals('test.local', request()->server('HTTP_HOST'));
 	}
 
-	public function testGetMethod()
+	public function testMethod()
 	{
 		$this->assertEquals('GET', request()->method());
+
+		$_SERVER['REQUEST_METHOD'] = 'POST';
+
+		app()->setInstance(new Request);
+
+		$this->assertEquals('POST', request()->method());
 	}
 
 	public function testUri()
@@ -47,6 +54,8 @@ class RequestTest extends TestCase
 		$this->assertEquals(null, request('test'));
 
 		$_GET['test'] = 'true';
+
+		app()->setInstance(new Request);
 
 		$this->assertEquals('true', request()->get('test'));
 		$this->assertEquals('true', request('test'));
