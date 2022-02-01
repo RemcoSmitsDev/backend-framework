@@ -178,7 +178,8 @@ class Debug
 	 */
 	public static function getCodeEditorUrl(string $path, string $line): string
 	{
-		return "vscode://file{$path}:{$line}";
+		$path = preg_quote($path);
+		return "vscode://file/{$path}:{$line}";
 	}
 
 	/**
