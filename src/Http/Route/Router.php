@@ -95,29 +95,34 @@ class Router
         if (is_array($action)) {
             // check if information is correct
             if (!isset($action[0], $action[1]) || !is_string($action[0]) || !is_string($action[1])) {
-                throw new Exception("Your array must have as first item an class and as seconde item function name", 1);
+                throw new Exception("Your array must have as first item an class and as seconde item function name.", 1);
             }
             // is no class was found throw error
             if (!class_exists($action[0])) {
-                throw new Exception("Class couldn't be found", 1);
+                throw new Exception("Class `{$action[0]}` couldn't be found.", 1);
             }
+
             // make instance of class
             $class = new $action[0]();
 
+            // method
+            $method = $action[1];
+
             // check if function exists
-            if (!method_exists($class, $action[1])) {
-                throw new Exception("Method couldn't be found", 1);
+            if (!method_exists($class, $method)) {
+                throw new Exception("Method `{$method}` couldn't be found inside the `" . $class::class . "` class.", 1);
             }
 
             // call method with dependencies
-            $class->{$action[1]}(...Container::handleClassMethod($action[0], $action[1], $data));
+            $class->{$method}(...Container::handleClassMethod($class::class, $method, $data));
+
             // stop function
             return;
         }
 
         // check if action is and closure
         if (!$action instanceof Closure) {
-            throw new Exception("Action must be an instanceof and \Closure or and [Test::class,'index']", 1);
+            throw new Exception("Action must be a instnaceof \Closure or a callable([Test::class,'index'])", 1);
         }
 
         // call function
