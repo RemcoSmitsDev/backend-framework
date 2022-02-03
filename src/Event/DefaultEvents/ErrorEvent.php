@@ -22,7 +22,7 @@ class ErrorEvent extends BaseEvent
 		}
 
 		// add to debug state
-		Debug::add('error', $data);
+		Debug::add('errors', $data);
 
 		// when ray is enabled send error
 		if (app()->rayIsEnabled()) {

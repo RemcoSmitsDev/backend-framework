@@ -24,7 +24,7 @@ class QueryEvent extends BaseEvent
 		}
 
 		// append query to debug state
-		Debug::add('query', $data);
+		Debug::add('queries', $data);
 
 		// check if need to show query
 		if (!$data['show'] ?? false || !app()->rayIsEnabled()) {

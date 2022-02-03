@@ -9,6 +9,6 @@ class Http extends Curl
 {
 	public function __destruct()
 	{
-		Debug::add('request', $this);
+		Debug::add('requests', $this);
 	}
 }

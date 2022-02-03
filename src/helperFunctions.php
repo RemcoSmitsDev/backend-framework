@@ -1,6 +1,5 @@
 <?php
 
-use Curl\Curl;
 use Framework\Http\Redirect\Redirect;
 use Framework\Collection\Collection;
 use Framework\Http\Route\Route;
@@ -9,12 +8,16 @@ use Framework\Http\Response;
 use Framework\Http\Request;
 use Framework\Cache\Cache;
 use Framework\Content\Seo;
+use Framework\Debug\Debug;
+use Framework\Http\Http;
 use Framework\Debug\Ray;
 use Framework\App;
-use Framework\Http\Http;
+use Curl\Curl;
 
 /**
- * @param string $input
+ * This function will clear accents
+ *
+ * @param  string $input
  * @return string
  */
 function stripAccents(string $input): string
@@ -23,11 +26,13 @@ function stripAccents(string $input): string
 	$unwantedArray = ['Š' => 'S', 'š' => 's', 'Ž' => 'Z', 'ž' => 'z', 'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A', 'Æ' => 'A', 'Ç' => 'C', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E', 'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I', 'Ñ' => 'N', 'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O', 'Ø' => 'O', 'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U', 'Ý' => 'Y', 'Þ' => 'B', 'ß' => 'Ss', 'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a', 'æ' => 'a', 'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i', 'ð' => 'o', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ø' => 'o', 'ù' => 'u', 'ú' => 'u', 'ü' => 'u', 'û' => 'u', 'ý' => 'y', 'þ' => 'b', 'ÿ' => 'y'];
 
 	//Return the input
-	return strtr($input, $unwantedArray);
+	return strtr((string) $input, $unwantedArray);
 }
 
 /**
- * @param int $length
+ * This functon will generate a unique/random string
+ *
+ * @param  integer $length
  * @return string
  */
 function randomString(int $length = 15): string
@@ -52,7 +57,9 @@ function randomString(int $length = 15): string
 }
 
 /**
- * @param mixed $value
+ * This function clears injections (xss)
+ *
+ * @param  mixed $value
  * @return mixed
  */
 function clearInjections(mixed $value): mixed
@@ -74,45 +81,44 @@ function clearInjections(mixed $value): mixed
 }
 
 /**
+ * This function will show the data in a nice formatted dump
+ *
  * @param mixed ...$values
- * @return bool
+ * @return void
  */
-function dd(mixed ...$values): bool
+function dd(mixed ...$values)
 {
 	// check if is not development
-	if (defined('IS_DEVELOPMENT_MODE') && !IS_DEVELOPMENT_MODE) {
-		return false;
+	if (!defined('IS_DEVELOPMENT_MODE') || !IS_DEVELOPMENT_MODE) {
+		return;
 	}
 
-	echo "<pre style='width:auto;overflow:auto;'>";
+	// append to dd
+	Debug::add('dumps', $values);
 
-	foreach ($values as $value) {
-		// clear xxs
-		echo clearInjections(print_r($value, true));
-	}
-
-	echo "</pre>";
-
-	return true;
+	// echo dump
+	echo "<pre style='width:auto;overflow:auto;'>" . collection($values)->map(fn ($value) => clearInjections(print_r($value, true))) . "</pre>";
 }
 
 /**
- * @param string|object $class
+ * This function will get the short name of a class(without namespace)
+ *
+ * @param  object|string $class
  * @return string
- * @throws ReflectionException
  */
 function getClassName(object|string $class): string
 {
-	$class = new \ReflectionClass($class);
-
-	return $class->getShortName();
+	return (new \ReflectionClass($class))->getShortName();
 }
 
 /**
- * @param string|int|null $find
- * @return Request|mixed
+ * This function will get the request singleton
+ * When passing a paramters it will find it inside the request
+ *
+ * @param  string|integer|null $find
+ * @return mixed
  */
-function request(string|int|null $find = null)
+function request(string|int|null $find = null): mixed
 {
 	global $request;
 
@@ -126,6 +132,8 @@ function request(string|int|null $find = null)
 }
 
 /**
+ * This function will return a new instance of Curl class
+ *
  * @param  string|null $baseUrl
  * @return Curl
  */
@@ -136,6 +144,8 @@ function http(?string $baseUrl = null): Curl
 }
 
 /**
+ * This function will return new instance of Response
+ *
  * @return Response
  */
 function response(): Response
@@ -144,9 +154,11 @@ function response(): Response
 }
 
 /**
- * @param string $path
- * @param int $responseCode
- * @param bool|null $secure
+ * This function will redirect you to an url or route
+ *
+ * @param  string|null       $path
+ * @param  integer           $responseCode
+ * @param  boolean|null $secure
  * @return Redirect
  */
 function redirect(?string $path = null, int $responseCode = 302, bool|null $secure = null): Redirect
@@ -155,6 +167,8 @@ function redirect(?string $path = null, int $responseCode = 302, bool|null $secu
 }
 
 /**
+ * This function will get the singleton of Content
+ *
  * @param  string|null  $viewPath
  * @param  boolean      $defaultLayout
  * @return Content|null
@@ -169,8 +183,9 @@ function content(?string $viewPath = null, string|false $defaultLayout = false):
 }
 
 /**
+ * This function will get the singleton of Seo
+ *
  * @return Seo|null
- * @throws ReflectionException
  */
 function seo(): ?Seo
 {
@@ -182,8 +197,9 @@ function seo(): ?Seo
 }
 
 /**
+ * This function will get the singleton of Route
+ *
  * @return Route|null
- * @throws ReflectionException
  */
 function route(): ?Route
 {
@@ -195,9 +211,9 @@ function route(): ?Route
 }
 
 /**
+ * This function will get the singleton of Cache
+ *
  * @return Cache
- * 
- * @throws ReflectionException
  */
 function cache(): Cache
 {
@@ -209,11 +225,13 @@ function cache(): Cache
 }
 
 /**
- * @param Object|string|null
- * @return Framework\App|object|null
- * @throws ReflectionException
+ * This function will return the app instance
+ * If you pass in a parameter it will try to find singleton of the the class name
+ *
+ * @param object|string|null $class
+ * @return App|object|null
  */
-function app(object|string|null $class = null)
+function app(object|string|null $class = null): ?object
 {
 	global $app;
 
@@ -235,6 +253,8 @@ function app(object|string|null $class = null)
 }
 
 /**
+ * This function
+ *
  * @param mixed ...$data
  * @return Ray
  */
@@ -282,7 +302,7 @@ function ray(mixed ...$data)
 }
 
 /**
- * This method will create a new collection
+ * This function will create a new collection
  *
  * @param array|object $collection
  * @return Collection
@@ -307,7 +327,7 @@ function flattenArray(array $array): array
 }
 
 /**
- * This method will detect if an value is an multidimensional array
+ * This function will detect if an value is an multidimensional array
  *
  * @param mixed $value
  * @return boolean
@@ -315,4 +335,24 @@ function flattenArray(array $array): array
 function isMultidimensional(mixed $value): bool
 {
 	return is_array($value) && is_array($value[array_key_first($value)]);
+}
+
+/**
+ * This method will get an array without value that has key
+ *
+ * @param  array  $data
+ * @param  string ...$without
+ * @return void
+ */
+function arrayWithout(array $data, string ...$without)
+{
+	$without = flattenArray($without);
+
+	foreach ($data as $key => $value) {
+		if (in_array($key, $without)) {
+			unset($data[$key]);
+		}
+	}
+
+	return $data;
 }

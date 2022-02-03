@@ -19,6 +19,7 @@ class Debug
 		'errors' => [],
 		'queries' => [],
 		'requests' => [],
+		'dumps' => []
 	];
 
 	/**
@@ -30,24 +31,16 @@ class Debug
 	 */
 	public static function add(string $type, mixed $data): void
 	{
-		// appen data base on the type
-		switch ($type) {
-			case 'error':
-				if (!is_array($data)) {
-					$_data = $data;
-					$data = [];
-					$data['type'] = 'Exception';
-					$data['data'] = $_data;
-				}
-				self::$data['errors'][] = $data;
-				break;
-			case 'query':
-				self::$data['queries'][] = $data;
-				break;
-			case 'request':
-				self::$data['requests'][] = $data;
-				break;
+		// check if error is not formatted correctly
+		if (!is_array($data) && $type === 'errors') {
+			$_data = $data;
+			$data = [];
+			$data['type'] = 'Exception';
+			$data['data'] = $_data;
 		}
+
+		// appen data base on the type
+		self::$data[$type][] = $data;
 	}
 
 	/**
@@ -55,7 +48,7 @@ class Debug
 	 *
 	 * @return void
 	 */
-	public static function render(): void
+	public static function render()
 	{
 		// stop when there where no errors found
 		if (empty(self::$data['errors'])) return;
@@ -64,19 +57,30 @@ class Debug
 		ob_get_clean();
 
 		// get code preview
-		$codePreview = self::getCodePreview(
+		$codepreview = self::getCodePreview(
 			self::$data['errors'][0]['data']->getFile(),
 			self::$data['errors'][0]['data']->getLine()
 		);
 
+		// get data without(default fields)
+		$data = arrayWithout(self::$data, 'errors', 'queries', 'requests');
+
 		// show debug page
 		app(new Content(realpath(__DIR__) . '/views/', 'debugViewLayout'))
-			->template('debugViewTemplate', [
-				'errors' => self::$data['errors'],
-				'codepreview' => $codePreview,
-				'queries' => self::$data['queries'],
-				'requests' => self::$data['requests']
-			])
+			->template(
+				'debugViewTemplate',
+				array_merge(
+					[
+						'data' => $data
+					],
+					[
+						'codepreview' => $codepreview,
+						'errors' => self::$data['errors'],
+						'queries' => self::$data['queries'],
+						'requests' => self::$data['requests']
+					]
+				)
+			)
 			->listen();
 
 		exit;
@@ -178,12 +182,15 @@ class Debug
 	 */
 	public static function getCodeEditorUrl(string $path, string $line): string
 	{
+		// fix forward slashes
 		$path = preg_quote($path);
+
 		return "vscode://file/{$path}:{$line}";
 	}
 
 	/**
-	 * This method will 
+	 * This method will choose a name to show in the debug trace
+	 * Based on the class/file name
 	 *
 	 * @param  string $class
 	 * @param  string $file

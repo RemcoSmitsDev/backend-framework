@@ -131,8 +131,8 @@ final class App
     private static function catchErrors(): void
     {
         // set show errors base on development mode
-        ini_set('display_errors', IS_DEVELOPMENT_MODE ? 1 : 0);
-        ini_set('display_startup_errors', IS_DEVELOPMENT_MODE ? 1 : 0);
+        ini_set('display_errors', IS_DEVELOPMENT_MODE);
+        ini_set('display_startup_errors', IS_DEVELOPMENT_MODE);
 
         // shows errors when debug mode is on
         if (!IS_DEVELOPMENT_MODE) {
