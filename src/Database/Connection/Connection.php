@@ -2,11 +2,7 @@
 
 namespace Framework\Database\Connection;
 
-use ErrorException;
-use Exception;
 use Framework\Database\QueryBuilder\QueryBuilder;
-use Framework\Database\SqlFormatter;
-use Framework\Debug\Debug;
 use Framework\Event\Event;
 use PDOStatement;
 use PDO;
@@ -77,6 +73,8 @@ class Connection
 		// try making connection to database
 		try {
 			$this->pdo = new PDO($connectionSettings, $this->username, $this->password, $options);
+		} catch (\Throwable $th) {
+			throw $th;
 		} finally {
 			return $this;
 		}

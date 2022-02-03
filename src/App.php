@@ -131,8 +131,8 @@ final class App
     private static function catchErrors(): void
     {
         // set show errors base on development mode
-        ini_set('display_errors', IS_DEVELOPMENT_MODE ? 1 : -1);
-        ini_set('display_startup_errors', IS_DEVELOPMENT_MODE ? 1 : -1);
+        ini_set('display_errors', IS_DEVELOPMENT_MODE ? 1 : 0);
+        ini_set('display_startup_errors', IS_DEVELOPMENT_MODE ? 1 : 0);
 
         // shows errors when debug mode is on
         if (!IS_DEVELOPMENT_MODE) {
@@ -168,7 +168,7 @@ final class App
         ];
 
         // kijk of de server local is zet dan development aan
-        define('IS_DEVELOPMENT_MODE', in_array(getHostByName(getHostName()), $whitelistLocalIps));
+        define('IS_DEVELOPMENT_MODE', in_array(gethostbyname($_SERVER['REMOTE_ADDR']), $whitelistLocalIps) || in_array(getHostByName(getHostName()), $whitelistLocalIps));
 
         // define host om in de config class te kunnen gebruiken
         define('HTTP_HOST', $_SERVER['HTTP_HOST']);
