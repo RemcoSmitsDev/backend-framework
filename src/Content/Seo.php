@@ -2,7 +2,7 @@
 
 namespace Framework\Content;
 
-class Seo
+final class Seo
 {
     /**
      * @var string $description Keeps track of description

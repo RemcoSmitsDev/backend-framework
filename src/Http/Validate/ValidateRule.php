@@ -132,12 +132,12 @@ class ValidateRule
 
 		// check if class has validate method
 		if (!$reflection->hasMethod('validate')) {
-			throw new InvalidMethodNameException("The method `validate` was not found inside the `{$this->rule}` class");
+			throw new InvalidMethodNameException("The method `validate` was not found inside the `{$this->rule}` class!");
 		}
 
 		//  check if class extends CustomRule
 		if (!$reflection->isSubclassOf(CustomRule::class)) {
-			throw new Exception("The class `{$this->rule}` must extends `CustomRule` class.");
+			throw new Exception("The class `{$this->rule}` must extends `CustomRule` class!");
 		}
 
 		// call method with dependency injection container

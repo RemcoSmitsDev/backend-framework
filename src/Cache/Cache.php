@@ -12,7 +12,7 @@ class Cache
     /**
      * This will create the cache dir
      *
-     * @param [type] $cacheFolderPath
+     * @param string $cacheFolderPath
      */
     public function __construct(
         private string $cacheFolderPath = SERVER_ROOT . '/../cache/'

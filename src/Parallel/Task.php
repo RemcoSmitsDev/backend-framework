@@ -2,8 +2,6 @@
 
 namespace Framework\Parallel;
 
-use function Opis\Closure\{serialize as s, unserialize as u};
-
 class Task
 {
     /**
@@ -73,7 +71,7 @@ class Task
     }
 
     /**
-     * @return false|mixed|string
+     * @return mixed
      */
     public function output()
     {
@@ -120,11 +118,8 @@ class Task
         // close socket connection
         $socketToParent->close();
 
-        // set connection
-        $this->setConnection($socketToChild);
-
-        // set process id
-        return $this->setProcessId($processId);
+        // set connection and set process id
+        return $this->setConnection($socketToChild)->setProcessId($processId);
     }
 
     /**

@@ -134,12 +134,12 @@ class Event
 
 		// check if not implements Event
 		if (!$reflection->implementsInterface(BaseEventInterface::class)) {
-			throw new Exception("The class `{$class}` must implements `Event` interface");
+			throw new Exception("The class `{$class}` must implements `Event` interface!");
 		}
 
 		// check if class has handle method and is not private/protected
 		if (!$reflection->hasMethod('handle')) {
-			throw new Exception("The method `handle` inside the class `{$class}` must exists");
+			throw new Exception("The method `handle` inside the class `{$class}` must exists!");
 		}
 	}
 }

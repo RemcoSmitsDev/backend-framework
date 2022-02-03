@@ -38,7 +38,7 @@ class Container implements ContainerInterface
     {
         // checking if the class exists
         if (!class_exists($className)) {
-            throw new Exception("Class not found {$className}");
+            throw new Exception("Class not found {$className}!");
         }
 
         // make reflection
@@ -118,7 +118,7 @@ class Container implements ContainerInterface
             $names = implode('`,`', array_keys($parameters));
 
             // throw exception not used all parameters
-            throw new InvalidArgumentException("You must have all required parameters! variable names: `{$names}`");
+            throw new InvalidArgumentException("You must have all required parameters! variable names: `{$names}`!");
         }
 
         return $dependencies;

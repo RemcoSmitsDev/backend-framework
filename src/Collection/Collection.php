@@ -8,6 +8,7 @@ use ArrayIterator;
 use Traversable;
 use Stringable;
 use Countable;
+use Exception;
 
 class Collection implements IteratorAggregate, Countable, JsonSerializable, Stringable
 {
@@ -16,12 +17,12 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	/**
 	 * This will keep track of all items of the collection
 	 *
-	 * @var array
+	 * @var array<int|string,mixed>
 	 */
 	protected array $items = [];
 
 	/**
-	 * @param array|object $collection
+	 * @param array<int|string,mixed>|object $collection
 	 */
 	public function __construct(array|object $collection)
 	{
@@ -31,19 +32,19 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	/**
 	 * This method wil create an instance of a new collection
 	 *
-	 * @param array|object $collection
-	 * @return static
+	 * @param array<int|string,mixed>|object $collection
+	 * @return Collection
 	 */
-	public static function make(array|object $collection): static
+	public static function make(array|object $collection): Collection
 	{
-		return new static($collection);
+		return new Collection($collection);
 	}
 
 	/**
 	 * This method will return the right format for the collection to apply to
 	 *
-	 * @param [type] $collection
-	 * @return array
+	 * @param array<int|string,mixed>|object $collection
+	 * @return array<int|string,mixed>
 	 */
 	private function getCollection(array|object $collection): array
 	{
@@ -51,17 +52,17 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 			return $collection->toArray();
 		} elseif (is_array($collection)) {
 			return $collection;
-		} elseif (is_object($collection)) {
-			return [$collection];
 		} elseif ($collection instanceof Traversable) {
 			return iterator_to_array($collection);
 		}
+
+		throw new Exception('You must pass in a valid collection type! (array|Traversable|Collection)');
 	}
 
 	/**
 	 * This method will return array of items from the collection
 	 *
-	 * @return array
+	 * @return array<int|string,mixed>
 	 */
 	public function toArray(): array
 	{
@@ -91,7 +92,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	/**
 	 * this will allow collection to be formatted to json
 	 *
-	 * @return array
+	 * @return array<int|string,mixed>
 	 */
 	public function jsonSerialize(): array
 	{

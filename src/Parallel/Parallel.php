@@ -2,6 +2,7 @@
 
 namespace Framework\Parallel;
 
+use Closure;
 use Opis\Closure\SerializableClosure;
 use Exception;
 
@@ -17,7 +18,7 @@ class Parallel
     public function __construct()
     {
         if (!function_exists('pcntl_fork')) {
-            throw new Exception("Cannot create process forks: PCNTL is not supported on this system.");
+            throw new Exception("Cannot create process forks: PCNTL is not supported on this system!");
         }
     }
 
@@ -33,7 +34,7 @@ class Parallel
         // loop through all callbacks
         foreach ($callbacks as $callback) {
             // serialize callback
-            $serializedCallbacks[] = serialize(new SerializableClosure($callback));
+            $serializedCallbacks[] = serialize(new SerializableClosure(Closure::fromCallable($callback)));
         }
 
         // make arg ready

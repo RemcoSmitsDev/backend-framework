@@ -78,7 +78,7 @@ class Route extends Router implements RoutesInterface
     {
         // check if prefix is empty
         if (empty($prefix)) {
-            throw new Exception('You must enter a prefix for a route/group of routes!', 1);
+            throw new Exception('You must enter a prefix for a route/group of routes!');
         }
 
         // make prefix
@@ -111,7 +111,7 @@ class Route extends Router implements RoutesInterface
 
         // check of er wel group middleware / prefix is
         if (empty($this->groupMiddlewares) && empty($this->groupPrefix)) {
-            throw new Exception("Je moet een middleware of route prefix gebruiken om de group functie te kunnen gebruiken", 1);
+            throw new Exception("You must use a prefix or middleware to use `group` method!");
         }
 
         // call callback function
@@ -143,12 +143,12 @@ class Route extends Router implements RoutesInterface
     {
         // check if pattern is empty
         if (empty($patterns)) {
-            throw new Exception('You must enter an pattern!', 1);
+            throw new Exception('You must enter an pattern!');
         }
 
         // check if there exist routes
         if (!$this->routes) {
-            throw new Exception('There are no routes to apply the name to!', 1);
+            throw new Exception('There are no routes to apply the name to!');
         }
 
         // add patterns to route
@@ -169,11 +169,11 @@ class Route extends Router implements RoutesInterface
     {
         // check if routena is empty
         if (empty($routeName)) {
-            throw new Exception('You must enter an routeName!', 1);
+            throw new Exception('You must enter an routeName!');
         }
         // check if there exist routes
         if (is_null($this->routes)) {
-            throw new Exception('There are no routes to apply the name to!', 1);
+            throw new Exception('There are no routes to apply the name to!');
         }
 
         // get last route key that is inserted

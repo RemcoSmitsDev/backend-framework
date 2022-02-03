@@ -95,11 +95,11 @@ class Router
         if (is_array($action)) {
             // check if information is correct
             if (!isset($action[0], $action[1]) || !is_string($action[0]) || !is_string($action[1])) {
-                throw new Exception("Your array must have as first item an class and as seconde item function name.", 1);
+                throw new Exception("Your array must have as first item an class and as seconde item function name!");
             }
             // is no class was found throw error
             if (!class_exists($action[0])) {
-                throw new Exception("Class `{$action[0]}` couldn't be found.", 1);
+                throw new Exception("Class `{$action[0]}` couldn't be found!");
             }
 
             // make instance of class
@@ -110,7 +110,7 @@ class Router
 
             // check if function exists
             if (!method_exists($class, $method)) {
-                throw new Exception("Method `{$method}` couldn't be found inside the `" . $class::class . "` class.", 1);
+                throw new Exception("Method `{$method}` couldn't be found inside the `" . $class::class . "` class!");
             }
 
             // call method with dependencies
@@ -122,7 +122,7 @@ class Router
 
         // check if action is and closure
         if (!$action instanceof Closure) {
-            throw new Exception("Action must be a instnaceof \Closure or a callable([Test::class,'index'])", 1);
+            throw new Exception("Action must be a instnaceof \Closure or a callable([Test::class,'index'])!");
         }
 
         // call function
@@ -249,7 +249,7 @@ class Router
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams), 1);
+            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams) . '!');
         }
 
         // loop trough all params and replace params
