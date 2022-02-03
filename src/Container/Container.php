@@ -9,35 +9,31 @@ use ReflectionNamedType;
 use ReflectionFunction;
 use ReflectionMethod;
 use Exception;
+use Closure;
 
 class Container implements ContainerInterface
 {
     /**
-     * handleClosure function
-     * get all parameters from class method reflection
-     * @param callable $callback
-     * @param array $arguments = []
-     * @return array parameters
-     * @throws ReflectionException
+     * Get all parameters from class method reflection
+     *
+     * @param  callable $callback
+     * @param  array<string,mixed>    $arguments
+     * @return array<int,mixed>
      */
-
     public static function handleClosure(callable $callback, array $arguments = []): array
     {
         // return parameters bij reflection of closure function
-        return self::getParameters(new ReflectionFunction($callback), $arguments);
+        return self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)), $arguments);
     }
 
     /**
-     * handleClassMethod function
-     * get all parameters from class method reflection
-     * @param string $className
-     * @param string $method
-     * @param array $arguments
-     * @return array parameters
-     * @throws ReflectionException
-     * @throws Exception
+     * Get all parameters from class method reflection
+     *
+     * @param  string $className
+     * @param  string $method
+     * @param  array<string,mixed>  $arguments
+     * @return array<int,mixed>
      */
-
     public static function handleClassMethod(string $className, string $method, array $arguments = []): array
     {
         // checking if the class exists
@@ -58,14 +54,12 @@ class Container implements ContainerInterface
     }
 
     /**
-     * getParameters function
-     * get all parameters from function/method reflection
-     * @param ReflectionMethod|ReflectionFunction $reflection
-     * @param array $parameters
-     * @return array $dependencies
-     * @throws ReflectionException
+     * Get all parameters from function/method reflection
+     *
+     * @param  ReflectionMethod|ReflectionFunction $reflection
+     * @param  array<string,mixed>                 $parameters
+     * @return array<int,mixed>
      */
-
     private static function getParameters(ReflectionMethod|ReflectionFunction $reflection, array $parameters = []): array
     {
         // dependencies
