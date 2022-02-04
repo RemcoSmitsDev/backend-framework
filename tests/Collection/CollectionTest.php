@@ -64,4 +64,17 @@ class CollectionTest extends TestCase
 
 		$this->assertEquals(['test'], $collection->slice(0, 1)->toArray());
 	}
+
+	public function testCombine()
+	{
+		$collection = Collection::make(['a', 'b', 'c', 'd', 'e'])->combine([5, 4, 3, 2, 1]);
+
+		$this->assertEquals([
+			5 => 'a',
+			4 => 'b',
+			3 => 'c',
+			2 => 'd',
+			1 => 'e',
+		], $collection->toArray());
+	}
 }

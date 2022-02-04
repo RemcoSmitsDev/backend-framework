@@ -22,9 +22,9 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	protected array $items = [];
 
 	/**
-	 * @param array<int|string,mixed>|object $collection
+	 * @param array<int|string,mixed>|Traversable|Collection $collection
 	 */
-	public function __construct(array|object $collection)
+	public function __construct(array|Traversable|Collection $collection)
 	{
 		$this->items = $this->getCollection($collection);
 	}
@@ -32,10 +32,10 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	/**
 	 * This method wil create an instance of a new collection
 	 *
-	 * @param array<int|string,mixed>|object $collection
+	 * @param array<int|string,mixed>|Traversable|Collection $collection
 	 * @return Collection
 	 */
-	public static function make(array|object $collection): Collection
+	public static function make(array|Traversable|Collection $collection): Collection
 	{
 		return new Collection($collection);
 	}
@@ -43,10 +43,10 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	/**
 	 * This method will return the right format for the collection to apply to
 	 *
-	 * @param array<int|string,mixed>|object $collection
+	 * @param array<int|string,mixed>|Traversable|Collection $collection
 	 * @return array<int|string,mixed>
 	 */
-	private function getCollection(array|object $collection): array
+	private function getCollection(array|Traversable|Collection $collection): array
 	{
 		if ($collection instanceof Collection) {
 			return $collection->toArray();

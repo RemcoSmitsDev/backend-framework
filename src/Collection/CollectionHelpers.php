@@ -38,7 +38,7 @@ trait CollectionHelpers
 		$items = array_map($callback, $this->toArray(), $keys);
 
 		// combine new array with old keys
-		return new static(array_combine($keys, $items));
+		return new Collection(array_combine($keys, $items));
 	}
 
 	/**
@@ -51,11 +51,11 @@ trait CollectionHelpers
 	{
 		// check if there was a callable set
 		if (is_null($callback)) {
-			return new static(array_filter($this->toArray()));
+			return new Collection(array_filter($this->toArray()));
 		}
 
 		// execute callable
-		return new static(array_filter($this->toArray(), $callback, ARRAY_FILTER_USE_BOTH));
+		return new Collection(array_filter($this->toArray(), $callback, ARRAY_FILTER_USE_BOTH));
 	}
 
 	/**
@@ -65,7 +65,7 @@ trait CollectionHelpers
 	 */
 	public function flatten(): Collection
 	{
-		return new static(flattenArray($this->toArray()));
+		return new Collection(flattenArray($this->toArray()));
 	}
 
 	/**
@@ -106,7 +106,7 @@ trait CollectionHelpers
 	 */
 	public function last(?callable $callback = null): mixed
 	{
-		return static::make(
+		return Collection::make(
 			array_reverse($this->toArray(), true)
 		)->first($callback);
 	}
@@ -116,11 +116,11 @@ trait CollectionHelpers
 	 *
 	 * @param integer $offset
 	 * @param integer $length
-	 * @return static
+	 * @return Collection
 	 */
-	public function slice(int $offset, int $length): static
+	public function slice(int $offset, int $length): Collection
 	{
-		return new static(array_slice($this->toArray(), $offset, $length, true));
+		return new Collection(array_slice($this->toArray(), $offset, $length, true));
 	}
 
 	/**
@@ -131,7 +131,7 @@ trait CollectionHelpers
 	 */
 	public function keys(mixed $keys = null): Collection
 	{
-		return new static(
+		return Collection::make(
 			$keys ? array_keys($this->toArray(), $keys) : array_keys($this->toArray())
 		);
 	}
@@ -139,15 +139,15 @@ trait CollectionHelpers
 	/**
 	 * This method will combine keys with values
 	 *
-	 * @param Collection|array $values
+	 * @param  array|Collection $keys
 	 * @return Collection
 	 */
-	public function combine(Collection|array $values): Collection
+	public function combine(array|Collection $keys): Collection
 	{
-		return new static(
+		return Collection::make(
 			array_combine(
+				$keys instanceof Collection ? array_values($keys->toArray()) : $keys,
 				$this->toArray(),
-				$values instanceof Collection ? $values->toArray() : $values,
 			)
 		);
 	}
