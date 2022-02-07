@@ -187,6 +187,7 @@ $route->middleware(true, false)->get('/profile', function () {
 $route->middleware(true, CustomMiddlewareClass::class)->get('/profile', function () {
     echo "Account profile page";
 });
+
 // The class shout like this:
 class CustomMiddlewareClass
 {
@@ -228,7 +229,7 @@ $route->middleware(true)->group(function (Route $route) {
 
 ## Request
 ### Request methods
-`request()->all()` Will get all request information from `GET`, `POST`, `FILES`
+`request()->all()` Will get all request information from `GET`, `POST` (php://input), `FILES`
 ```php
 request()->all();
 ```
@@ -270,10 +271,65 @@ request()->headers('Content-Type'); // application/json
 ```
 
 ### Request validate methods
+To validate request inputs you want to use `request()->validate()`
 ```php
-request()->validate();
-request()->csrf();
-request()->validateCsrf();
+$_GET['test'] = '';
+
+// Rules:
+// - string
+// - int
+// - float
+// - array
+// - min:_NUMBER_
+// - max:_NUMBER_
+// - regex:_REGEX_ //without / before and after
+// - email
+// - url
+// - ip
+// - YourCustomRuleClass::class // that needs to extend `CustomRule` and must have the `validate` method
+
+// this will fail (min:1)
+$validated = request()->validate([
+    'test' => ['required', 'string', 'min:1', 'max:255']
+]);
+
+if($validated->failed()){
+    // do action
+    $messages = $validated->getErrorMessages(); // get error messages
+    $failedRules = $validated->getFailedRules();
+}
+
+// get validated data
+$validatedData = $validated->getData();
+```
+#### Custom validate rule
+```php
+class YourCustomRuleClass extends CustomRule {
+    public function validate(mixed $value): bool {
+        // check if is valid
+        if($value === 'test'){
+            return true;
+        }
+        
+        // This message will be combined with the customrule
+        $this->message('Your value must be test');
+        
+        return false;
+    }
+}
+```
+
+`request()->csrf()` Generates a csrf token that you can validate with `request()->validateCsrf()`. You want to use this with every request to your backend that is not an `GET` request.
+```php
+<input type="hidden" name="_token" value="<?= request()->csrf(); ?>">
+```
+
+`request()->validateCsrf()` Will validate if your `csrf token` is valid.
+
+```php
+if(!request()->validateCsrf()){
+    throw new \Exception('Your token is not valid!');
+}
 ```
 
 ## Response
