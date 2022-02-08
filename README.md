@@ -273,8 +273,6 @@ request()->headers('Content-Type'); // application/json
 ### Request validate methods
 To validate request inputs you want to use `request()->validate()`
 ```php
-$_GET['test'] = '';
-
 // Rules:
 // - string
 // - int
@@ -288,6 +286,7 @@ $_GET['test'] = '';
 // - ip
 // - YourCustomRuleClass::class // that needs to extend `CustomRule` and must have the `validate` method
 
+$_GET['test'] = '';
 // this will fail (min:1)
 $validated = request()->validate([
     'test' => ['required', 'string', 'min:1', 'max:255']
@@ -380,4 +379,104 @@ response()->view('index',['userIds' => [1,2,3,4]]);
 // headers
 Content-Type: text/html; charset=UTF-8;
 HTTP/1.1 200 OK
+```
+
+## Querybuilder
+
+### Methods
+`logSql()` Logs the query + bindings on the page or inside ray
+```php
+$db->table('users')->logSql()->where('id', '=', 1);
+```
+
+`table(table: string, columns: ...string|array)` Logs the query + bindings on the page or inside ray
+```php
+// SELECT * FROM `users`
+$db->table('users')->all();
+// SELECT * FROM `users` LIMIT 1 OFFSET 0
+$db->table('users')->one();
+// DELETE FROM `users`
+$db->table('users')->delete();
+// UPDATE `users` SET ...
+$db->table('users')->update(['name' => 'test name']);
+```
+
+`select(...string|array)` Will set the select columns, `subQueries`
+```php
+$db->table('users', 'id')->where('id', '=', 1);
+$db->table('users', 'id', 'email')->where('id', '=', 1);
+$db->table('users', ['id', 'email'])->where('id', '=', 1);
+// OR
+$db->table('users')->select('id')->where('id', '=', 1);
+$db->table('users')->select('id', 'email')->where('id', '=', 1);
+$db->table('users')->select(['id', 'email'])->where('id', '=', 1);
+
+// OR sub select
+// SELECT (SELECT count(posts.id) FROM posts WHERE users.id = posts.user_id) as post_count FROM `users`
+$db->table('users')->select([
+    'post_count' => function(QueryBuilder $query){
+        $query->table('posts', 'count(posts.id)')->whereColumn('users.id', '=', 'posts.user_id');
+    }
+]);
+```
+
+`where(column: Closure|string, operator: array|string, value: mixed = null, boolean: string(OR|AND))` Append where statement
+```php
+// SELECT * FROM `users` WHERE `email` = ? // bindings: ['test@example.com']
+$db->table('users')->where('email', '=', 'test@example.com');
+$db->table('users')->where('email', 'test@example.com');
+
+// SELECT * FROM `users` WHERE `email` = ? OR `email` = ? // bindings: ['test@example.com', 'test@example.com']
+$db->table('users')->where('email', '=', 'test@example.com')->where('email', 'test@example.com', 'OR');
+
+// SELECT * FROM `users` WHERE `email` = ? AND `email` = ? // bindings: ['test@example.com', 'test@example.com']
+$db->table('users')->where('email', '=', 'test@example.com')->where('email', 'test@example.com', 'AND');
+```
+
+`whereRaw(query: string|closure, bindData: array = [], boolean: string(OR|AND))`
+```php
+// SELECT * FROM `users` WHERE `users`.`email` LIKE '%test@example.com%'
+$db->table('users')->whereRaw('`users`.`email` LIKE %test@example.com%');
+
+// SELECT * FROM `users` WHERE `users`.`email` LIKE ? // bindings: ['test@example.com']
+$db->table('users')->whereRaw('`users`.`email` LIKE ?', ['test@example.com']);
+
+// SELECT * FROM `users` WHERE `users`.`email` LIKE ?
+$db->table('users')->whereRaw('`users`.`email` LIKE ?', ['test@example.com'])->whereRaw('`users`.`email` LIKE ?', ['test@example.com'], 'AND');
+```
+
+`orWhere(column: Closure|string, operator: string|null, value: mixed)` Eloquent version of `where('column', 'operator', 'value', 'OR')`
+```php
+$db->table('users')->where('users.id', '=', 1)->orWhere('users.email', '=', 'test@example.com');
+```
+
+`whereIn(column: string, value: Closure|array, boolean: string(OR|AND))`
+```php
+// SELECT * FROM `users` WHERE `id` IN (?) // bindings: ['1,2,3,4']
+$db->table('users')->whereIn('id', [1,2,3,4]);
+
+// SELECT * FROM `users` WHERE `id` IN (SELECT `user_id` FROM posts)
+$db->table('users')->whereIn('id', function(QueryBuilder $query){
+    $query->table('posts', 'user_id');
+});
+```
+
+`whereExists(callback: Closure, boolean: string(OR|AND), not: boolean = false)`
+```php
+// SELECT * FROM `users` WHERE EXISTS (SELECT `created_at` FROM `posts` WHERE `created_at` > ? AND `users`.`id` = `posts`.`user_id` LIMIT 1 OFFSET 0)
+$db->table('users')->whereExists(function(QueryBuilder $query){
+    $query->table('posts', 'created_at')->whereColumn('created_at', '>', '2022-01-01')
+                                        ->whereColumn('posts.id', '=', 'users.id', 'AND')
+                                        ->limit(1);
+});
+```
+
+`whereNotExists(callback: closure, boolean: string(OR|AND))` Eloquent of `whereExists(callback, 'AND', true)`
+```php
+// SELECT * FROM `users` WHERE NOT EXISTS (SELECT `created_at` FROM `posts` WHERE `created_at` > ? AND `users`.`id` = `posts`.`user_id` LIMIT 1 OFFSET 0)
+$db->table('users')->whereNotExists(function(QueryBuilder $query){
+    $query->table('posts', 'created_at')->whereColumn('created_at', '>', '2022-01-01')
+                                        ->whereColumn('posts.id', '=', 'users.id', 'AND')
+                                        ->limit(1);
+});
 ```
