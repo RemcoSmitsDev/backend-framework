@@ -389,6 +389,15 @@ HTTP/1.1 200 OK
 $db->table('users')->logSql()->where('id', '=', 1);
 ```
 
+`raw(query: string, bindings: array)`
+**When your want to use user input values, you may want to use the bindings parameter**
+```php
+// without bindings
+$db->raw('SELECT * FROM `users` WHERE `users`.`id` = 1');
+// with bindings
+$db->raw('SELECT * FROM `users` WHERE `users`.`id` = ?', [1]);
+```
+
 `table(table: string, columns: ...string|array)` Logs the query + bindings on the page or inside ray
 ```php
 // SELECT * FROM `users`
@@ -420,7 +429,7 @@ $db->table('users')->select([
 ]);
 ```
 
-`where(column: Closure|string, operator: array|string, value: mixed = null, boolean: string(OR|AND))` Append where statement
+`where(column: Closure|string, operator: array|string, value: mixed = null, boolean: string(OR|AND) = 'AND')` Append where statement
 ```php
 // SELECT * FROM `users` WHERE `email` = ? // bindings: ['test@example.com']
 $db->table('users')->where('email', '=', 'test@example.com');
@@ -433,7 +442,7 @@ $db->table('users')->where('email', '=', 'test@example.com')->where('email', 'te
 $db->table('users')->where('email', '=', 'test@example.com')->where('email', 'test@example.com', 'AND');
 ```
 
-`whereRaw(query: string|closure, bindData: array = [], boolean: string(OR|AND))`
+`whereRaw(query: string|closure, bindData: array = [], boolean: string(OR|AND) = 'AND')`
 ```php
 // SELECT * FROM `users` WHERE `users`.`email` LIKE '%test@example.com%'
 $db->table('users')->whereRaw('`users`.`email` LIKE %test@example.com%');
@@ -450,7 +459,7 @@ $db->table('users')->whereRaw('`users`.`email` LIKE ?', ['test@example.com'])->w
 $db->table('users')->where('users.id', '=', 1)->orWhere('users.email', '=', 'test@example.com');
 ```
 
-`whereIn(column: string, value: Closure|array, boolean: string(OR|AND))`
+`whereIn(column: string, value: Closure|array, boolean: string(OR|AND) = 'AND')`
 ```php
 // SELECT * FROM `users` WHERE `id` IN (?) // bindings: ['1,2,3,4']
 $db->table('users')->whereIn('id', [1,2,3,4]);
@@ -461,7 +470,7 @@ $db->table('users')->whereIn('id', function(QueryBuilder $query){
 });
 ```
 
-`whereExists(callback: Closure, boolean: string(OR|AND), not: boolean = false)`
+`whereExists(callback: Closure, boolean: string(OR|AND) = 'AND', not: boolean = false)`
 ```php
 // SELECT * FROM `users` WHERE EXISTS (SELECT `created_at` FROM `posts` WHERE `created_at` > ? AND `users`.`id` = `posts`.`user_id` LIMIT 1 OFFSET 0)
 $db->table('users')->whereExists(function(QueryBuilder $query){
@@ -471,7 +480,7 @@ $db->table('users')->whereExists(function(QueryBuilder $query){
 });
 ```
 
-`whereNotExists(callback: closure, boolean: string(OR|AND))` Eloquent of `whereExists(callback, 'AND', true)`
+`whereNotExists(callback: closure, boolean: string(OR|AND) = 'AND')` Eloquent of `whereExists(callback, 'AND', true)`
 ```php
 // SELECT * FROM `users` WHERE NOT EXISTS (SELECT `created_at` FROM `posts` WHERE `created_at` > ? AND `users`.`id` = `posts`.`user_id` LIMIT 1 OFFSET 0)
 $db->table('users')->whereNotExists(function(QueryBuilder $query){
@@ -479,4 +488,163 @@ $db->table('users')->whereNotExists(function(QueryBuilder $query){
                                         ->whereColumn('posts.id', '=', 'users.id', 'AND')
                                         ->limit(1);
 });
+```
+
+`whereColumn(column: string, operator: string|null, value: string|null, boolean: string(OR|AND) = 'AND')` 
+**Make sure that you don't use raw input from a user because the columns will not be escaped!**
+```php
+// SELECT (SELECT count(id) FROM `posts` WHERE `users`.`id` = `posts`.`user_id`) as post_count FROM `users`
+$db->table()->select([
+    'post_count' => function(QueryBuilder $query){
+        $query->table('posts', 'count(id)')->whereColumn('users.id', '=', 'posts.user_id');
+    }
+]);
+```
+
+`join(table: string, first: Closure|string, first: string|null, operator: string|null, value: string|null, type: string(INNER|LEFT|RIGHT|CROSS) = 'INNER')`
+**Make sure that you don't use raw input from a user because the columns will not be escaped! If you want to use values from user input make sure you use `where()` inside the closure(join)**
+```php
+// SELECT * FROM `users` INNER JOIN `posts` ON `users`.`id` = `posts`.`user_id`
+$db->table('users')->join('posts', 'users.id', '=', 'posts.user_id');
+
+// SELECT * FROM `users` INNER JOIN (`posts` ON `users`.`id` = `posts`.`user_id` OR `posts` ON `users`.`id` = `posts`.`user_id`)
+$db->table('users')->join('posts', function(JoinClause $join){
+    $join->on('users.id', '=', 'posts.user_id')->orOn('users.id', '=', 'posts.user_id');
+});
+
+// join with user input
+// SELECT * FROM `users` INNER JOIN `posts` ON `users`.`id` = ? // bindings [1]
+$db->table('users')->join('posts', function(JoinClause $join){
+    $join->where('users.id', '=', 1);
+});
+```
+
+`leftJoin()` Eloquent of `join('table', 'firstColumn', 'operator', 'secondColumn', 'LEFT')`
+```php
+// SELECT * FROM `users` LEFT JOIN `posts` ON `users`.`id` = `posts`.`user_id`
+$db->table('users')->leftJoin('posts', 'users.id', '=', 'posts.user_id');
+```
+
+`rightJoin()` Eloquent of `join('table', 'firstColumn', 'operator', 'secondColumn', 'RIGHT')`
+```php
+// SELECT * FROM `users` RIGHT JOIN `posts` ON `users`.`id` = `posts`.`user_id`
+$db->table('users')->rightJoin('posts', 'users.id', '=', 'posts.user_id');
+```
+
+`limit(limit: int)`
+```php
+// SELECT * FROM `users` LIMIT 50 OFFSET 0
+$db->table('users')->limit(50)->all([]);
+```
+
+`offset(limit: int)`
+```php
+// SELECT * FROM `users` LIMIT 50 OFFSET 10
+$db->table('users')->limit(50)->limit(10)->all([]);
+```
+
+`orderBy(column: string, direction: string(ASC|DESC) = 'ASC')`
+```php
+$db->table('users')->orderBy('create_at')->all([]);
+$db->table('users')->orderBy('create_at', 'ASC')->all([]);
+// OR 
+$db->table('users')->orderBy('create_at', 'DESC')->all([]);
+```
+
+`groupBy(...string)`
+```php
+// SELECT * FROM `users` GROUP BY `title`
+$db->table('posts')->groupBy('title');
+// OR
+// SELECT * FROM `users` GROUP BY `title`, `user_id`
+$db->table('posts')->groupBy('title', 'user_id');
+```
+
+`when(when: boolean, callback: Closure)`
+```php
+$isAdmin = false;
+$db->table('posts')->when(!$isAdmin, function(QueryBuilder $query){
+    $query->where('user_id', '=', 2);
+})->all([]);
+```
+
+`paginate(currentPage: int, perPage: int = 15)`
+```php
+// SELECT * FROM `users` LIMIT 50 OFFSET 0
+$pagination = $db->table('users')->paginate(1, 50);
+
+// `$pagination` is structures like this:
+[
+    'current_page' => 1,
+    'first_page' => 1,
+    'last_page' => ..,
+    'per_page' => 50,
+    'total_pages' => .., // number of total pages,
+    'total_results' => .., // number of results found
+    'next_page' => [
+        'exists' => true, // false when there is no next page
+        'page' => 2 // the next page number
+    ],
+    'prev_page' => [
+        'exists' => false, // false when there is no previous page
+        'page' => 1 // the previous page number
+    ],
+    'results' => [] // array of results
+]
+```
+
+`all(fallbackReturnValue: mixed = false, fetchMode: int|null = null)`
+```php
+// You can use this inside a foreach without using the `all()` method
+$db->table('users');
+// OR 
+$db->table('users')->all();
+// OR when query fails return value will be `[]`
+$db->table('users')->all([]);
+
+// Fetch mode(default fetch mode: \POD::FETCH_ASSOC)
+$db->table('users')->all([], \POD::FETCH_ASSOC | \POD::FETCH_COLUMN);
+```
+
+`one(fallbackReturnValue: mixed = false, fetchMode: int|null = null)`
+```php
+// SELECT * FROM `users` LIMIT 1 OFFSET 0
+$db->table('users')->one();
+// when query fails return value will be `[]`
+$db->table('users')->one([]);
+
+// Fetch mode(default fetch mode: \POD::FETCH_ASSOC)
+$db->table('users')->one([], \POD::FETCH_ASSOC | \POD::FETCH_COLUMN);
+```
+
+`column(fallbackReturnValue: mixed = false, column: int = 0)`
+```php
+$userInfo = $db->table('users', 'username', 'email')->limit(1);
+// to retrieve `username` use
+$username = $userInfo->column(0);
+
+// to retrieve `email` use
+$email = $userInfo->column(1);
+```
+
+`insert(insertData: array<string,mixed>)` 
+When the query `Failed` then the insert method will return `false` else the method will return `insertId`
+```php
+$insertId = $db->table('posts')->insert([
+    'title' => 'test title',
+    'slug' => 'test-title',
+    'body' => 'This is an test body'
+]);
+```
+
+`update(updateData: array<string,mixed>)`
+```php
+$passed = $db->table('users')->where('id', '=', 1)->update([
+    'titel' => 'Update title'
+]);
+```
+
+`delete()`
+```php
+$passed = $db->table('users')->where('id', '=', 1)->delete();
 ```
