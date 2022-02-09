@@ -51,7 +51,7 @@ final class App
             if (!IS_DEVELOPMENT_MODE || !Api::fromOwnServer()) return;
 
             // when comes from api | or wants json back
-            if (str_contains(request()->headers('Content-Type') ?: '', 'application/json') || Api::fromAjax()) return;
+            if (str_contains(request()->headers('Content-Type', ''), 'application/json') || Api::fromAjax()) return;
 
             // render debug screen
             Debug::render();
@@ -168,13 +168,13 @@ final class App
         ];
 
         // kijk of de server local is zet dan development aan
-        define('IS_DEVELOPMENT_MODE', in_array(gethostbyname($_SERVER['REMOTE_ADDR']), $whitelistLocalIps) || in_array(getHostByName(getHostName()), $whitelistLocalIps));
+        define('IS_DEVELOPMENT_MODE', in_array(gethostbyname(request()->server('REMOTE_ADDR', '')), $whitelistLocalIps) || in_array(getHostByName(getHostName()), $whitelistLocalIps));
 
         // define host om in de config class te kunnen gebruiken
-        define('HTTP_HOST', $_SERVER['HTTP_HOST']);
+        define('HTTP_HOST', request()->server('HTTP_HOST', ''));
 
         // server root for constant vars
-        define('SERVER_ROOT', $_SERVER['DOCUMENT_ROOT']);
+        define('SERVER_ROOT', request()->server('DOCUMENT_ROOT', ''));
     }
 
     /**

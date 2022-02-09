@@ -67,7 +67,7 @@ class Api
      */
     public static function fromOwnServer(): bool
     {
-        return str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", "", request()->headers('HTTP_REFERER') ?? ''), explode("/", request()->headers('HTTP_HOST') . request()->uri())[0]);
+        return str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", "", request()->headers('HTTP_REFERER', '')), explode("/", request()->headers('HTTP_HOST', '') . request()->uri())[0]);
     }
 
     /**
@@ -75,7 +75,7 @@ class Api
      */
     public static function fromAjax(): bool
     {
-        return strtolower(request()->headers('X-REQUESTED-WITH') ?: '') === 'xmlhttprequest';
+        return strtolower(request()->headers('X-REQUESTED-WITH', '')) === 'xmlhttprequest';
     }
 
     /**
@@ -99,7 +99,7 @@ class Api
         $tokenFromRequest = str_replace(
             'bearer_',
             '',
-            request()->headers('Requesttoken') ?? randomString(20)
+            request()->headers('Requesttoken', randomString(20))
         );
 
         // unset previous request token
