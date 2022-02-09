@@ -446,7 +446,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * @param string $type
 	 * @return $this
 	 */
-	public function join(string $table, string|Closure $first, string $operator = null, string $value = null, string $type = 'INNER'): self
+	public function join(string $table, string|Closure $first, ?string $operator = null, ?string $value = null, string $type = 'INNER'): self
 	{
 		// make instance of
 		$join = new JoinClause($this, $table, $type);
@@ -477,7 +477,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * @param string|null $value
 	 * @return QueryBuilder
 	 */
-	public function leftJoin(string $table, string|Closure $first, string $operator = null, string $value = null): self
+	public function leftJoin(string $table, string|Closure $first, ?string $operator = null, ?string $value = null): self
 	{
 		return $this->join($table, $first, $operator, $value, 'left');
 	}
@@ -490,7 +490,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * @param string|null $value
 	 * @return QueryBuilder
 	 */
-	public function rightJoin(string $table, string|Closure $first, string $operator = null, string $value = null): self
+	public function rightJoin(string $table, string|Closure $first, ?string $operator = null, ?string $value = null): self
 	{
 		return $this->join($table, $first, $operator, $value, 'right');
 	}
