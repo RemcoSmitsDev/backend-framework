@@ -41,7 +41,7 @@ class Cache
 
         // check if request method is GET
         // check if there is an file found where the method was called from
-        if (request()->method !== 'GET' || !isset($debugTrace[0]['file'])) {
+        if (request()->method() !== 'GET' || !isset($debugTrace[0]['file'])) {
             return $this;
         }
 
