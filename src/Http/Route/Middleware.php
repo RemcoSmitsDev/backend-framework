@@ -61,14 +61,9 @@ class Middleware implements MiddlewareInterface
                 return $rule;
             };
 
-            // call handle function
-            $response = call_user_func(
-                [new $rule, 'handle'],
-                ...Container::handleClassMethod($rule, 'handle', ['route' => self::$route, 'next' => $next])
-            );
-
-            // validate response
-            return $response === $rule;
+            // call method with dependencies injection
+            // validate rule with response
+            return Container::handleClassMethod($rule, 'handle', ['route' => self::$route, 'next' => $next]) === $rule;
         }
 
         return false;

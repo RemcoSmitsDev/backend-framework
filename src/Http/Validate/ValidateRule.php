@@ -130,28 +130,17 @@ class ValidateRule
 		// make reflection of class
 		$reflection = new ReflectionClass($this->rule);
 
-		// check if class has validate method
-		if (!$reflection->hasMethod('validate')) {
-			throw new InvalidMethodNameException("The method `validate` was not found inside the `{$this->rule}` class!");
-		}
-
 		//  check if class extends CustomRule
 		if (!$reflection->isSubclassOf(CustomRule::class)) {
 			throw new Exception("The class `{$this->rule}` must extends `CustomRule` class!");
 		}
 
-		// call method with dependency injection container
-		$parameters = Container::handleClassMethod($this->rule, 'validate', ['value' => $this->value]);
-
-		// make instance of class
-		$customRuleClass = new ($this->rule)();
-
-		// call validate method and get passed boolean back
-		$passed = $customRuleClass->validate(...$parameters);
+		// call method with dependencies injection
+		$passed = Container::handleClassMethod($this->rule, 'validate', ['value' => $this->value], $classInstance);
 
 		// set message when there was an message set
-		if (!$passed && !empty($customRuleClass->getMessage())) {
-			$this->message = $customRuleClass->getMessage();
+		if (!$passed && !empty($classInstance->getMessage())) {
+			$this->message = $classInstance->getMessage();
 		}
 
 		// return boolean based on the rule passed status

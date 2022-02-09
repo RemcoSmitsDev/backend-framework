@@ -2,125 +2,177 @@
 
 namespace Framework\Container;
 
-use Framework\Interfaces\ContainerInterface;
 use InvalidArgumentException;
 use ReflectionException;
+use ReflectionParameter;
 use ReflectionNamedType;
 use ReflectionFunction;
 use ReflectionMethod;
+use ReflectionClass;
 use Exception;
 use Closure;
 
-class Container implements ContainerInterface
+class Container
 {
+    /**
+     * @var array
+     */
+    private static array $arguments = [];
+
     /**
      * Get all parameters from class method reflection
      *
      * @param  callable $callback
      * @param  array<string,mixed>    $arguments
-     * @return array<int,mixed>
+     * @return mixed
      */
-    public static function handleClosure(callable $callback, array $arguments = []): array
+    public static function handleClosure(callable $callback, array $arguments = []): mixed
     {
+        // make arguments global
+        self::$arguments = $arguments;
+
+        $dependencies = self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)));
+
         // return parameters bij reflection of closure function
-        return self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)), $arguments);
+        return call_user_func(
+            $callback,
+            ...$dependencies
+        );
     }
 
     /**
      * Get all parameters from class method reflection
      *
-     * @param  string $className
-     * @param  string $method
-     * @param  array<string,mixed>  $arguments
-     * @return array<int,mixed>
+     * @param  object|class-string<object> $class
+     * @param  string                      $method
+     * @param  array<string,mixed>         $arguments
+     * @param  object|null                 $classInstance
+     * @return mixed
+     * 
+     * @throws Exception
+     * @throws InvalidArgumentException
      */
-    public static function handleClassMethod(string $className, string $method, array $arguments = []): array
+    public static function handleClassMethod(object|string $class, string $method, array $arguments = [], ?object &$classInstance = null): mixed
     {
+        // make arguments global
+        self::$arguments = $arguments;
+
         // checking if the class exists
-        if (!class_exists($className)) {
-            throw new Exception("Class not found {$className}!");
+        if (!class_exists(is_object($class) ? $class::class : $class)) {
+            throw new Exception("Class not found {$class}!");
         }
 
+        // make reflection of class
+        $reflectionClass = new ReflectionClass($class);
+
+        // check if class has method
+        if (!$reflectionClass->hasMethod($method)) {
+            throw new Exception("The method `{$method}` does not exists on the `{$class}` class!");
+        }
+
+        // make instance of class
+        $classInstance = $reflectionClass->newInstance(
+            ...($reflectionClass->getConstructor() && $reflectionClass->getMethod('__construct')->isPublic() ? Container::getParameters($reflectionClass->getConstructor()) : [])
+        );
+
         // make reflection
-        $reflectMethod = new ReflectionMethod($className, $method);
+        $reflectMethod = new ReflectionMethod($classInstance, $method);
 
         // check if method is public
         if (!$reflectMethod->isPublic()) {
-            throw new ReflectionException("The method `{$method}` on `{$className}` must be public!");
+            throw new ReflectionException("The method `{$method}` on `{$class}` must be public!");
         }
 
-        // initialized the ReflectionMethod and return parameters
-        return self::getParameters($reflectMethod, $arguments);
+        // call method with parameters and return response
+        return call_user_func(
+            [$classInstance, $method],
+            ...self::getParameters($reflectMethod)
+        );
     }
 
     /**
      * Get all parameters from function/method reflection
      *
      * @param  ReflectionMethod|ReflectionFunction $reflection
-     * @param  array<string,mixed>                 $parameters
      * @return array<int,mixed>
+     * 
+     * @throws Exception
+     * @throws InvalidArgumentException
      */
-    private static function getParameters(ReflectionMethod|ReflectionFunction $reflection, array $parameters = []): array
+    public static function getParameters(ReflectionMethod|ReflectionFunction $reflection): array
     {
-        // dependencies
+        // keep track of dependencies
         $dependencies = [];
 
         // loop trough parameters
         foreach ($reflection->getParameters() as $parameter) {
+            // check if has type
+            if (!$parameter->hasType()) {
+                // handle non typed parameters
+                self::handleAddDepenciesFromArguments($parameter, $dependencies);
+
+                continue;
+            }
 
             // define type of variabel to string
             $type = $parameter->getType();
 
-            // check if type exists
-            if (!$type instanceof ReflectionNamedType || $type->isBuiltin() || !$parameter->hasType() || interface_exists((string) $type)) {
-                // check if parameter already exists
-                if (array_key_exists($parameter->getName(), $parameters)) {
-                    // add dependency
-                    $dependencies[] = $parameters[$parameter->getName()];
+            // check if is buildin type(array, string, int, float, null)
+            if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {
+                // handle buldint typed parameters
+                self::handleAddDepenciesFromArguments($parameter, $dependencies);
 
-                    // unset param to keep track of used params
-                    unset($parameters[$parameter->getName()]);
-
-                    continue;
-                }
-                // go to the next in the array
                 continue;
             }
 
-            // get param type
-            $type = (string) $type;
+            // check if type exists
+            if (!$type instanceof ReflectionNamedType && !interface_exists((string) $type)) {
+                throw new Exception("Used unsupported parameter type: `{$type}`");
+            }
 
             // make reflection of class
-            $reflect = new \ReflectionClass($type);
+            $reflect = new ReflectionClass($type = (string) $type);
 
             // check if is interface
-            if ($reflect->isInterface()) {
+            if ($reflect->isInterface() || !$reflect->IsInstantiable()) {
                 // append to dependencies
-                $dependencies[] = $parameters[$parameter->getName()];
+                self::handleAddDepenciesFromArguments($parameter, $dependencies);
 
                 // go to the next in the array
                 continue;
             }
 
-            // check if there already exists an instance of the class in the app class
-            if (app($objectName = lcfirst($reflect->getShortName()))) {
-                // set class
-                $dependencies[] = app($objectName);
-            } else {
-                // make instance of class
-                $dependencies[] = $reflect->newInstance(...($reflect->getConstructor() ? self::handleClassMethod($type, '__construct') : []));
-            }
-        }
-
-        // check if there are required parameters left
-        if (!empty($parameters)) {
-            // get required param variable names
-            $names = implode('`,`', array_keys($parameters));
-
-            // throw exception not used all parameters
-            throw new InvalidArgumentException("You must have all required parameters! variable names: `{$names}`!");
+            // add dependency
+            $dependencies[] = $reflect->newInstance(
+                ...($reflect->getConstructor() && $reflect->getMethod('__construct')->isPublic() ? (new self)::getParameters($reflect->getConstructor()) : [])
+            );
         }
 
         return $dependencies;
+    }
+
+    /**
+     * This method will handle/validate parameters with arguments
+     *
+     * @param  ReflectionParameter $parameter
+     * @param  array               $dependencies
+     * @return void
+     * 
+     * @throws InvalidArgumentException
+     */
+    private static function handleAddDepenciesFromArguments(ReflectionParameter $parameter, array &$dependencies)
+    {
+        // when has default value or can be null and params does not exist in the given arguments
+        if (($parameter->isDefaultValueAvailable() || $parameter->allowsNull() || $parameter->isOptional()) && !array_key_exists($parameter->getName(), self::$arguments)) {
+            return;
+        }
+
+        // when the param does not exists inside the given arguments
+        if (!array_key_exists($parameter->getName(), self::$arguments)) {
+            throw new InvalidArgumentException('You must have a argument value inside the `handleClassMethod` or `handleClosure` with the name: `' . $parameter->getName() . '`');
+        }
+
+        // add dependency
+        $dependencies[] = self::$arguments[$parameter->getName()];
     }
 }

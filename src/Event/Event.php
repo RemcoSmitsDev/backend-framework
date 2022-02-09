@@ -87,14 +87,8 @@ class Event
 
 		// loop through all the listeners
 		foreach ($listeners as $listener) {
-			// call handle method
-			$eventClass = new $listener;
-
-			// get arguments
-			$arguments = Container::handleClassMethod($listener::class, 'handle', ['event' => $listener, 'data' => $data]);
-
-			// call handle method
-			$eventClass->handle(...$arguments);
+			// call method with dependencies injection
+			Container::handleClassMethod($listener, 'handle', ['event' => $listener, 'data' => $data]);
 		}
 	}
 

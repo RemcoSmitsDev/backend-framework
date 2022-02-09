@@ -103,18 +103,13 @@ class Router
             }
 
             // make instance of class
-            $class = new $action[0]();
+            $class = new $action[0];
 
             // method
             $method = $action[1];
 
-            // check if function exists
-            if (!method_exists($class, $method)) {
-                throw new Exception("Method `{$method}` couldn't be found inside the `" . $class::class . "` class!");
-            }
-
-            // call method with dependencies
-            $class->{$method}(...Container::handleClassMethod($class::class, $method, $data));
+            // call method with dependencies injection
+            Container::handleClassMethod($class::class, $method, $data);
 
             // stop function
             return;
@@ -125,8 +120,8 @@ class Router
             throw new Exception("Action must be a instnaceof \Closure or a callable([Test::class,'index'])!");
         }
 
-        // call function
-        call_user_func($action, ...Container::handleClosure($action, $data));
+        // call function with dependencies injection
+        Container::handleClosure($action, $data);
     }
 
     /**
@@ -291,11 +286,8 @@ class Router
             // return response code
             response()->code(403);
 
-            // call on middleware fail callback
-            call_user_func($this->onMiddlewareFailCallback, ...Container::handleClosure(
-                $this->onMiddlewareFailCallback,
-                ['route' => $failedRoute]
-            ));
+            // call function with dependencies injection
+            Container::handleClosure($this->onMiddlewareFailCallback, ['route' => $failedRoute]);
 
             // stop other actions
             response()->exit();
@@ -376,7 +368,7 @@ class Router
 
         // where there is no route
         if (!$this->currentRoute) {
-            // get output cache
+            // get output buffer
             ob_get_clean();
 
             response()->code(404)->view('responseView')->exit();

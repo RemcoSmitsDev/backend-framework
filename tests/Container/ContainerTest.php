@@ -5,73 +5,80 @@ declare(strict_types=1);
 namespace Framework\Tests\Container;
 
 use Framework\Container\Container;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
-
-class ConstructorTest
-{
-	public function __construct(
-		private ClosureTest $closureTest
-	) {
-	}
-
-	public function testWithConstructor(ClosureTest $closureTest)
-	{
-	}
-
-	private function testPrivateMethodException(ClosureTest $closureTest)
-	{
-	}
-}
+use InvalidArgumentException;
+use Framework\Http\Request;
 
 class ClosureTest
 {
-	public function test(ClosureTest $closureTest, string $name)
+	public function __construct(
+		public Request $request,
+		public string $name
+	) {
+	}
+
+	public function test(string $name, $test = null): ClosureTest
 	{
+		return $this;
 	}
 }
 
 class ContainerTest extends TestCase
 {
-	public function testHandleClosureParams()
+	public function test_handle_class_method_response()
 	{
-		$closure = function (ClosureTest $closureTest) {
-		};
+		$response = Container::handleClassMethod(ClosureTest::class, 'test', ['name' => 'test']);
 
-		$params = Container::handleClosure($closure);
+		$this->assertInstanceOf(ClosureTest::class, $response);
 
-		$this->assertInstanceOf(ClosureTest::class, reset($params));
+		$this->assertInstanceOf(Request::class, $response->request);
+		$this->assertEquals('test', $response->name);
 	}
 
-	public function testHandleClassMethodParams()
-	{
-		$params = Container::handleClassMethod(ClosureTest::class, 'test', ['name' => 'askdfjlksadjflksdj']);
-
-		$this->assertEquals([new ClosureTest, 'askdfjlksadjflksdj'], $params);
-	}
-
-	public function testHandleClassMethodParamsException()
+	public function test_handle_class_method_missing_arguments_exception()
 	{
 		$this->expectException(InvalidArgumentException::class);
 
-		$params = Container::handleClassMethod(ClosureTest::class, 'test', ['name' => 'askdfjlksadjflksdj', 'test' => '1', 'b' => '2']);
-
-		$this->assertEquals([new ClosureTest, 'askdfjlksadjflksdj'], $params);
+		Container::handleClassMethod(ClosureTest::class, 'test');
 	}
 
-	public function testClassMethodWithConstructor()
+	public function test_handle_private_function()
 	{
-		$params = Container::handleClassMethod(ConstructorTest::class, 'testWithConstructor');
+		$closure = function (ClosureTest $closureTest) {
+			return $closureTest;
+		};
 
-		$this->assertArrayHasKey(0, $params);
+		$response = Container::handleClosure($closure, ['name' => 'test1']);
 
-		$this->assertEquals([new ClosureTest], $params);
+		$this->assertInstanceOf(ClosureTest::class, $response);
+		$this->assertEquals('test1', $response->name);
+
+		$closure = function (ClosureTest $closureTest, string $test) {
+			return $closureTest;
+		};
+
+		$response = Container::handleClosure($closure, ['name' => 'test1', 'test' => 'this is a test string']);
+
+		$this->assertInstanceOf(ClosureTest::class, $response);
+		$this->assertEquals('test1', $response->name);
+
+		$closure = function (ClosureTest $closureTest, string $test = 'default') {
+			return $closureTest;
+		};
+
+		$response = Container::handleClosure($closure, ['name' => 'test1']);
+
+		$this->assertInstanceOf(ClosureTest::class, $response);
 	}
 
-	public function testPrivateMethod()
+	public function test_handle_private_function_missing_param()
 	{
-		$this->expectException(\ReflectionException::class);
+		$this->expectException(InvalidArgumentException::class);
 
-		Container::handleClassMethod(ConstructorTest::class, 'testPrivateMethodException');
+		$closure = function (ClosureTest $closureTest, string $test) {
+			return $closureTest;
+		};
+
+		Container::handleClosure($closure, ['name' => 'test1']);
 	}
 }
