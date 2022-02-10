@@ -283,7 +283,12 @@ The `data` parameter will allow you to use information inside all your views as 
 ```php
 content()->template('posts.index', ['posts' => []]); // set the template where all posts will display
 ```
-`view(view: string, data: array<string,mixed>)`
+
+`view(view: string, data: array<string,mixed>)` 
+The `data` parameter will allow you to use information inside all your views as a variable using the key of the array.
+```php
+content()->view('post', ['post' => ['title' => 'test']]);
+```
 
 ## Request
 #### Request methods
