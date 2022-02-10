@@ -14,7 +14,8 @@ composer require remcosmits/backend-framework
 ```
 
 - [Setup](#setup)
- - [Routing](#routing) 
+- [Routing](#routing) 
+- [Content](#content)
 - [Response](#response)
 - [Database](#querybuilder)
 
@@ -58,6 +59,7 @@ $route->init();
 ## Routing
 #### Basic routing
 Supported request methods: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`
+The request methods closures have a powerfull [`injection container`](https://riptutorial.com/php/example/4682/constructor-injection) support that will auto include the dependencies based on the parameters.
 ```php
 // supported request types/methods:
 $route->get();
@@ -81,7 +83,7 @@ $route->match('GET|POST','/user/{userID}', function ($userID) {
 ```
 
 #### Dynamic routing
-For dynamic routing you can use the `pattern` method to allow only specific values for a dynamic parameter. You can do this on each route method action `GET`, `POST`, `PUT`, `DELETE`, `PATCH` or `match` method(that allows multiple request methods). You can event overwrite them when you are in a nested route.
+For dynamic routing you can use the `pattern` method to allow only specific values for a dynamic parameter. You can do this on each route method action `GET`, `POST`, `PUT`, `DELETE`, `PATCH` or `match` method(that allows multiple request methods). You can even overwrite them when you are in a nested routes.
 ```php
 // route using dynamic routing(params)
 // all params can be accessed with the given name
@@ -227,8 +229,64 @@ $route->middleware(true)->group(function (Route $route) {
 });
 ```
 
+## Content
+#### Meanings:
+`layout`: is a file that contains the html structure like (`head`|`body`|`footer`). That file needs to have the method `content()->renderTemplate()` this will render the template that you set using `content()->template('posts')`.
+```html
+<html>
+    <head>
+    </head>
+    <body>
+        <div class="container">
+            // this will render the template that you set using `content()->template('posts', ['posts' => []])`
+            <php content()->renderTemplate(); ?>
+        </div>
+    </body>
+</html>
+```
+`template`: is a file that contains the global structure of page for example: `posts` this will have all the posts inside them. Each `post` wil be a view/component. 
+```html
+<div>
+    <?php content()->view('sidebar'); ?>
+    <div>
+        <?php content()->view('topbar'); ?>
+        <main>
+            <?php foreach($posts as $post): ?>
+                <?php content()->view('post', compact('post')); ?>
+            <?php endforeach; ?>
+        </main>
+    </div>
+</div>
+```
+`view`: is a file that is also called a `component` for example a single `post` inside the posts template. You will get the `$post` variable from the `content()->view('post', compact('post'))` passed true.
+```html
+<div>
+    <span><?= clearInjections($post->title); ?></span>
+    <p><?= nl2br(clearInjections($post->body)); ?></p>
+</div>
+```
+
+#### Content methods
+`content(viewPath: string|null = null, defaultLayout: string|false = false)`
+You want to use this inside your **index.php** before you want to use the **Content** methods. At the end of the **index.php** file you want to set `content()->listen()` this will show a **template** inside the right **layout**.
+```php
+$app->setInstance(
+    new Content(
+        '/path/to/all/templates' // The default path is: `SERVER_ROOT.'/../templates'`
+        'path from templates path + layout name' // defualt value is `false` you need to write the layout without the extention(`.php`)
+    )
+);
+```
+
+`template(template: string, data: array<string,mixed>)`
+The `data` parameter will allow you to use information inside all your views as a variable using the key of the array.
+```php
+content()->template('posts.index', ['posts' => []]); // set the template where all posts will display
+```
+`view(view: string, data: array<string,mixed>)`
+
 ## Request
-### Request methods
+#### Request methods
 `request()->all()` Will get all request information from `GET`, `POST` (php://input), `FILES`
 ```php
 request()->all();
@@ -620,7 +678,7 @@ $db->table('users')->one([], \POD::FETCH_ASSOC | \POD::FETCH_COLUMN);
 `column(fallbackReturnValue: mixed = false, column: int = 0)`
 ```php
 $userInfo = $db->table('users', 'username', 'email')->limit(1);
-// to retrieve `username` use
+// to retrieve `username` use You can event overwrite
 $username = $userInfo->column(0);
 
 // to retrieve `email` use
