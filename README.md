@@ -229,12 +229,16 @@ $route->middleware(true)->group(function (Route $route) {
 });
 ```
 
+## Redirect
+The **redirect** function can be used to redirect to a `page` or `route`. It will automatic make correct url with: **protocol**, **host**, **uri**
+
 ## Content
 #### Meanings:
-`layout`: is a file that contains the html structure like (`head`|`body`|`footer`). That file needs to have the method `content()->renderTemplate()` this will render the template that you set using `content()->template('posts')`.
+`layout`: is a file that contains the html structure like (`head`|`body`|`footer`). That file needs to have the method `content()->renderTemplate()` this will render the template that you set using `content()->template('posts')->title('This page shows all posts')`.
 ```html
 <html>
     <head>
+    <title><?= content()->getTitle(); ?></title>
     </head>
     <body>
         <div class="container">
@@ -258,7 +262,7 @@ $route->middleware(true)->group(function (Route $route) {
     </div>
 </div>
 ```
-`view`: is a file that is also called a `component` for example a single `post` inside the posts template. You will get the `$post` variable from the `content()->view('post', compact('post'))` passed true.
+`view`: is a file that is also called a `component` for example a single `post` inside the posts template. You will get the `$post` variable from the `content()->view('post', compact('post'))` passed true. **A view will always render directly!**
 ```html
 <div>
     <span><?= clearInjections($post->title); ?></span>
@@ -289,6 +293,28 @@ The `data` parameter will allow you to use information inside all your views as 
 ```php
 content()->view('post', ['post' => ['title' => 'test']]);
 ```
+
+`content()->title()` This can set the **title** that you can get inside your layout with `content()->getTitle()`. You can only use it before your template is renderd.
+```php
+content()->template('posts')->title('This is a test title for all posts');
+```
+
+`content()->renderTemplate()` This will render the template that you have set inside the **layout**.
+```html
+<html>
+    <head>
+    <title><?= content()->getTitle(); ?></title>
+    </head>
+    <body>
+        <div class="container">
+            // This will render the template that your set
+            <php content()->renderTemplate(); ?>
+        </div>
+    </body>
+</html>
+```
+
+`content()->listen()` This will listen for what **layout** to render. This must be at the bottom of your `index.php`.
 
 ## Request
 #### Request methods
