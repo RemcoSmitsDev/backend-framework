@@ -13,9 +13,14 @@ class Debug
 	const MAX_DISTANCE = 10;
 
 	/**
+	 * @var boolean
+	 */
+	private static bool $renderd = false;
+
+	/**
 	 * @var array
 	 */
-	public static array $data = [
+	private static array $data = [
 		'errors' => [],
 		'queries' => [],
 		'requests' => [],
@@ -51,7 +56,10 @@ class Debug
 	public static function render()
 	{
 		// stop when there where no errors found
-		if (empty(self::$data['errors'])) return;
+		if (empty(self::$data['errors']) || self::$renderd) return;
+
+		// set renderd
+		self::$renderd = true;
 
 		// catch all content
 		ob_get_clean();
