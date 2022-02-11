@@ -229,7 +229,9 @@ class Ray implements RayInterface
         // loop trough data and format as dump
         foreach ($debugData['data']['original'] as $value) {
             ob_start();
-            dd($value);
+            echo "<pre>";
+            print_r($value);
+            echo "</pre>";
             $debugData['data']['dd'][] = $this->type === 'query' ? htmlspecialchars_decode(ob_get_clean()) : ob_get_clean();
 
             // check if xdebug var_dump function exists
