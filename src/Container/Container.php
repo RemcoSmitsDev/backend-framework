@@ -11,6 +11,7 @@ use ReflectionMethod;
 use ReflectionClass;
 use Exception;
 use Closure;
+use Throwable;
 
 class Container
 {
@@ -125,11 +126,6 @@ class Container
                 continue;
             }
 
-            // check if type exists
-            if (!$type instanceof ReflectionNamedType && !interface_exists((string) $type)) {
-                throw new Exception("Used unsupported parameter type: `{$type}`");
-            }
-
             // make reflection of class
             $reflect = new ReflectionClass($type = (string) $type);
 
@@ -162,13 +158,26 @@ class Container
      */
     private static function handleAddDepenciesFromArguments(ReflectionParameter $parameter, array &$dependencies)
     {
+        // check if parameter exists inside arguments
+        $foundArgument = array_key_exists($parameter->getName(), self::$arguments);
+
         // when has default value or can be null and params does not exist in the given arguments
-        if (($parameter->isDefaultValueAvailable() || $parameter->allowsNull() || $parameter->isOptional()) && !array_key_exists($parameter->getName(), self::$arguments)) {
+        if ($parameter->isDefaultValueAvailable() && !$foundArgument) {
+            // append default value
+            $dependencies[] = $parameter->getDefaultValue();
+
+            return;
+        }
+
+        if ($parameter->allowsNull() && !$foundArgument) {
+            // append dependency
+            $dependencies[] = null;
+
             return;
         }
 
         // when the param does not exists inside the given arguments
-        if (!array_key_exists($parameter->getName(), self::$arguments)) {
+        if (!$foundArgument) {
             throw new InvalidArgumentException('You must have a argument value inside the `handleClassMethod` or `handleClosure` with the name: `' . $parameter->getName() . '`');
         }
 
