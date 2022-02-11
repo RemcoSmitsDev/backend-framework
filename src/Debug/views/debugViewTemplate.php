@@ -224,6 +224,9 @@ use Framework\Debug\Debug;
                             <?= clearInjections($query['error']); ?>
                         </span>
                     <?php endif; ?>
+                    <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-gray-500 whitespace-nowrap overflow-x-auto">
+                        Bindings: '<?= implode('\', \'',clearInjections($query['bindings'])); ?>'
+                    </span>
                 </span>
                 <pre><code class="language-sql text-xs"><?= clearInjections($query['query']); ?></code></pre>
             </div>
