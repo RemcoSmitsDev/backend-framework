@@ -3,3 +3,4 @@
 /cache/
 .phpunit.result.cache
 /.idea
+/.phpintel
