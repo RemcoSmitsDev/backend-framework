@@ -54,11 +54,17 @@ class SubQuery implements Stringable
 		return $this;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getBefore(): string
 	{
 		return $this->before;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getAfter(): string
 	{
 		return $this->after;
@@ -77,6 +83,6 @@ class SubQuery implements Stringable
 			$query = $this->builder->selectToSql($this->query)[0];
 		}
 
-		return trim("{$this->before}($query){$this->after}");
+		return trim($this->getBefore() . "($query)" . $this->getAfter());
 	}
 }
