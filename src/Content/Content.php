@@ -15,14 +15,14 @@ class Content
 	private string $template = '404';
 
 	/**
-	 * @var string|false $layout Keeps track of layout(head, global structure, footer)
+	 * @var string|bool $layout Keeps track of layout(head, global structure, footer)
 	 */
-	private string|false $layout = '';
+	private string|bool $layout = '';
 
 	/**
-	 * @var string|false $defaultLayout Keeps track of an default template
+	 * @var string|bool $defaultLayout Keeps track of an default template
 	 */
-	private string|false $defaultLayout = false;
+	private string|bool $defaultLayout = false;
 
 	/**
 	 * @var string $title Keeps track of page title
@@ -36,9 +36,9 @@ class Content
 
 	/**
 	 * @param string|null $viewPath
-	 * @param string|false $defaultLayout
+	 * @param string|bool $defaultLayout
 	 */
-	public function __construct(?string $viewPath = null, string|false $defaultLayout = false)
+	public function __construct(?string $viewPath = null, string|bool $defaultLayout = false)
 	{
 		$this->viewPath = rtrim(
 			$viewPath ?: SERVER_ROOT . '/../templates',
@@ -67,10 +67,10 @@ class Content
 
 	/**
 	 * This function sets the layout type, this wil make an file path like: include{type}Content.php
-	 * @param string|false $layout
+	 * @param string|bool $layout
 	 * @return Content
 	 */
-	public function layout(string|false $layout): self
+	public function layout(string|bool $layout): self
 	{
 		// set layout
 		$this->layout = $layout;

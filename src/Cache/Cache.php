@@ -49,12 +49,12 @@ class Cache
         $file = $debugTrace[0]['file'];
 
         // get last modified based on if there is an active cache
-        $lastModified = request()->headers('If-Modified-Since') ? (new DateTime(request()->headers('If-Modified-Since')))->getTimestamp() : filemtime($file);
+        $lastModified = request()->headers('If-Modified-Since') ? (new DateTime(request()->headers('If-Modified-Since', 'now')))->getTimestamp() : (int) filemtime($file);
 
         // check if file is not modified between new last modified date
-        if (filemtime($file) > $lastModified) {
+        if ((int) filemtime($file) > $lastModified) {
             // set last modified to file modified date
-            $lastModified = filemtime($file);
+            $lastModified = (int) filemtime($file);
         }
 
         // check if there is an current http cache make sure the max-age us incrementing
@@ -213,7 +213,7 @@ class Cache
         $identifier = $this->generateFileName($identifier);
 
         // default returndata template
-        $returnData = (object)[
+        $returnData = (object) [
             'data' => null,
             'lastModified' => null,
             'fileName' => $identifier . '.json',
@@ -238,7 +238,7 @@ class Cache
         }
 
         // set cache data to return data object
-        $returnData->data = json_decode($cacheItemData);
+        $returnData->data = json_decode((string) $cacheItemData);
 
         // return data
         return $returnData;
@@ -251,8 +251,13 @@ class Cache
      */
     private function checkCacheItemLifeTime(string $fileName): bool|string|null
     {
+        // check if cache file exists
+        if (!file_exists($this->cacheFolderPath . $fileName)) {
+            return false;
+        }
+
         // get cache item
-        $cacheItemData = explode(';', file_get_contents($this->cacheFolderPath . $fileName), 2);
+        $cacheItemData = explode(';', file_get_contents($this->cacheFolderPath . $fileName) ?: '', 2);
 
         // get cache file last modified date
         $lastModified = filemtime($this->cacheFolderPath . $fileName);
@@ -304,11 +309,6 @@ class Cache
      */
     public function flush(): self
     {
-        // check if cache location exists
-        if (!file_exists($this->cacheFolderPath)) {
-            return false;
-        }
-
         // loop through files and remove file 
         $this->scanCacheFolder(function ($file) {
             // delete cache file
@@ -327,6 +327,11 @@ class Cache
      */
     private function scanCacheFolder(callable $callback)
     {
+        // check if cache location exists
+        if (!file_exists($this->cacheFolderPath)) {
+            return;
+        }
+
         // make closure from callable
         $callback = Closure::fromCallable($callback);
 

@@ -32,7 +32,7 @@ function stripAccents(string $input): string
 /**
  * This functon will generate a unique/random string
  *
- * @param  integer $length
+ * @param  int $length
  * @return string
  */
 function randomString(int $length = 15): string
@@ -57,12 +57,14 @@ function randomString(int $length = 15): string
 }
 
 /**
+ * @template TValue
+ *
  * This function clears injections (xss)
  *
- * @param  mixed $value
- * @return mixed
+ * @param  TValue $value
+ * @return TValue|string|array
  */
-function clearInjections(mixed $value): mixed
+function clearInjections(mixed $value)
 {
 	// check if is not the right type
 	if (!is_array($value) && !is_string($value)) {
@@ -72,9 +74,7 @@ function clearInjections(mixed $value): mixed
 	// kijk of input value een array is
 	if (is_array($value)) {
 		// ga door alle keys/values heen
-		return collection($value)->map(function ($item) {
-			return clearInjections($item);
-		})->toArray();
+		return collection($value)->map(fn($item) => clearInjections($item))->toArray();
 	}
 
 	return htmlspecialchars($value);
@@ -103,8 +103,10 @@ function dd(mixed ...$values)
 /**
  * This function will get the short name of a class(without namespace)
  *
- * @param  object|string $class
+ * @param  object|class-string<object> $class
  * @return string
+ * 
+ * @throws ReflectionException
  */
 function getClassName(object|string $class): string
 {
@@ -115,19 +117,20 @@ function getClassName(object|string $class): string
  * This function will get the request singleton
  * When passing a paramters it will find it inside the request
  *
- * @param  string|integer|null $find
- * @return mixed
+ * @param  string|null $find
+ * @return Request|string|array<int|string, mixed>
  */
-function request(string|int|null $find = null): mixed
+function request(string|null $find = null)
 {
 	global $request;
 
-	$request = app('request') ?: app(
+	/** @var Request $request */
+	$request = app(Request::class) ?: app(
 		$request instanceof Request ? $request : new Request
 	);
 
 	return !is_null($find) ?
-		(array_key_exists($find, $request->requestData) ? $request->requestData[$find] : null) :
+		(array_key_exists($find, $request->all()) ? $request->all()[$find] : null) :
 		$request;
 }
 
@@ -169,15 +172,16 @@ function redirect(?string $path = null, int $responseCode = 302, bool|null $secu
 /**
  * This function will get the singleton of Content
  *
- * @param  string|null  $viewPath
- * @param  boolean      $defaultLayout
- * @return Content|null
+ * @param  string|null  	$viewPath
+ * @param  string|boolean 	$defaultLayout
+ * @return Content
  */
-function content(?string $viewPath = null, string|false $defaultLayout = false): ?Content
+function content(?string $viewPath = null, string|bool $defaultLayout = false): Content
 {
 	global $content;
 
-	return app('content') ?: app(
+	/** @var Content */
+	return app(Content::class) ?: app(
 		$content instanceof Content ? $content : new Content($viewPath, $defaultLayout)
 	);
 }
@@ -185,13 +189,14 @@ function content(?string $viewPath = null, string|false $defaultLayout = false):
 /**
  * This function will get the singleton of Seo
  *
- * @return Seo|null
+ * @return Seo
  */
-function seo(): ?Seo
+function seo(): Seo
 {
 	global $seo;
 
-	return app('seo') ?: app(
+	/** @var Seo */
+	return app(Seo::class) ?: app(
 		$seo instanceof Seo ? $seo : new Seo()
 	);
 }
@@ -199,13 +204,14 @@ function seo(): ?Seo
 /**
  * This function will get the singleton of Route
  *
- * @return Route|null
+ * @return Route
  */
-function route(): ?Route
+function route(): Route
 {
 	global $route;
 
-	return app('route') ?: app(
+	/** @var Route */
+	return app(Route::class) ?: app(
 		$route instanceof Route ? $route : new Route()
 	);
 }
@@ -219,7 +225,8 @@ function cache(): Cache
 {
 	global $cache;
 
-	return app('cache') ?: app(
+	/** @var Cache */
+	return app(Cache::class) ?: app(
 		$cache instanceof Cache ? $cache : new Cache()
 	);
 }
@@ -228,11 +235,12 @@ function cache(): Cache
  * This function will return the app instance
  * If you pass in a parameter it will try to find singleton of the the class name
  *
- * @param object|string|null $class
+ * @param App|object|null $class
  * @return App|object|null
  */
-function app(object|string|null $class = null): ?object
+function app(object|string|null $class = null)
 {
+	/** @var App */
 	global $app;
 
 	// check if app is an instance of app class
@@ -243,12 +251,13 @@ function app(object|string|null $class = null): ?object
 	// check if is object
 	if (is_object($class)) {
 		// set/get instance
-		return $app->setInstance($class)->getInstance(lcfirst(getClassName($class)));
+		return $app->setInstance($class)->getInstance($class);
 	} // when you want to access an stored class
 	elseif (is_string($class)) {
 		return $app->getInstance($class);
 	}
 
+	/** @var App */
 	return $app;
 }
 
@@ -256,14 +265,14 @@ function app(object|string|null $class = null): ?object
  * This function
  *
  * @param mixed ...$data
- * @return Ray
+ * @return Ray|object
  */
 function ray(mixed ...$data)
 {
 	if (!app()->rayIsEnabled()) {
 		return new class
 		{
-			public function __call($name, $arguments)
+			public function __call(string $name, array $arguments): self
 			{
 				return $this;
 			}
@@ -272,7 +281,7 @@ function ray(mixed ...$data)
 
 	return new class($data, debug_backtrace()) extends Ray
 	{
-		public function __construct(private mixed $_data, array $trace)
+		public function __construct(private array $_data, array $trace)
 		{
 			// call parent constructor
 			parent::__construct();
@@ -281,9 +290,9 @@ function ray(mixed ...$data)
 			$this->backtrace = $trace;
 
 			// check if there exists an global instance
-			if (app('ray')) {
+			if (app()->getInstance(Ray::class)) {
 				// keep track of measure info
-				$this->measure = app('ray')->measure;
+				$this->measure = app()->getInstance(Ray::class)->measure;
 			}
 		}
 
@@ -296,7 +305,9 @@ function ray(mixed ...$data)
 			}
 
 			// update global instance to keep track of information that need to be keeped
-			app()->ray = $this;
+			app()->setInstance(
+				new Ray()
+			);
 		}
 	};
 }
@@ -304,10 +315,10 @@ function ray(mixed ...$data)
 /**
  * This function will create a new collection
  *
- * @param array|object $collection
+ * @param array<int|string, mixed>|Traversable|Collection $collection
  * @return Collection
  */
-function collection(array|object $collection): Collection
+function collection(array|Traversable|Collection $collection): Collection
 {
 	return Collection::make($collection);
 }
@@ -342,9 +353,9 @@ function isMultidimensional(mixed $value): bool
  *
  * @param  array  $data
  * @param  string ...$without
- * @return void
+ * @return array
  */
-function arrayWithout(array $data, string ...$without)
+function arrayWithout(array $data, string ...$without): array
 {
 	$without = flattenArray($without);
 

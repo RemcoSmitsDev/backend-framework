@@ -18,7 +18,7 @@ class Database extends QueryBuilder
     {
         // check if there is an connection
         if(!$connection){
-            $connection = app('connection');
+            $connection = app(Connection::class);
         }
 
         // throw exception when there is no connection

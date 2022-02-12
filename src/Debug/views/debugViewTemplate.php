@@ -72,7 +72,7 @@ use Framework\Debug\Debug;
                     <li>
                         <a href="#request" class="uppercase tracking-wider text-gray-500 text-xs font-bold">Request</a>
                     </li>
-                    <?php if (!empty(app('route')?->getRoutes() ?? [])) : ?>
+                    <?php if (!empty(route()->getRoutes() ?? [])) : ?>
                         <li>
                             <a href="#routes" class="uppercase tracking-wider text-gray-500 text-xs font-bold">Routes</a>
                         </li>
@@ -122,7 +122,7 @@ use Framework\Debug\Debug;
                             </dd>
                         </div>
                     </dl>
-                    <?php if (!empty(app('route')?->getRoutes() ?? [])) : ?>
+                    <?php if (!empty(route()->getRoutes() ?? [])) : ?>
                         <a id="routes"></a>
                         <h2 class="font-bold text-xs uppercase tracking-wider">
                             Routes
@@ -130,7 +130,7 @@ use Framework\Debug\Debug;
                         <dl class="grid grid-cols-1 gap-2">
                             <div class="flex items-baseline gap-10">
                                 <dd class="px-2 flex-grow min-w-0 bg-gray-900/20">
-                                    <?php foreach (app('route')?->getRoutes() ?? [] as $route) : ?>
+                                    <?php foreach (route()->getRoutes() ?? [] as $route) : ?>
                                         <div class="overflow-x-auto py-2 text-xs">
                                             <?= clearInjections($route['uri']); ?>
                                         </div>
@@ -224,9 +224,11 @@ use Framework\Debug\Debug;
                             <?= clearInjections($query['error']); ?>
                         </span>
                     <?php endif; ?>
+                    <?php if (!empty($query['bindings'])) : ?>
                     <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-gray-500 whitespace-nowrap overflow-x-auto">
                         Bindings: '<?= implode('\', \'',clearInjections($query['bindings'])); ?>'
                     </span>
+                    <?php endif; ?>
                 </span>
                 <pre><code class="language-sql text-xs"><?= clearInjections($query['query']); ?></code></pre>
             </div>

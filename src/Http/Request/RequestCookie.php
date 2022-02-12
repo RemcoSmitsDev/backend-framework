@@ -19,7 +19,7 @@ final class RequestCookie extends GetAble
 		parent::__construct('cookies');
 
 		// set headers
-		$cookies = $headers->get('cookie') ?: '';
+		$cookies = $headers->get('cookie', '');
 
 		// explode cookies
 		$cookies = explode('; ', $cookies);
@@ -33,11 +33,13 @@ final class RequestCookie extends GetAble
 		array_walk($cookies, function (&$cookie) {
 			$parts = explode('=', $cookie, 2);
 
-			$cookie = [$parts[0] => $parts[1]];
+			$cookie = [
+				($parts[0] ?? '') => $parts[1] ?? null
+			];
 		});
 
 		// flatten to one layer
-		$this->cookies = array_merge(...$cookies);
+		$this->cookies = collection(array_merge(...$cookies))->filter()->toArray();
 	}
 
 	/**

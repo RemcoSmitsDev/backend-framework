@@ -42,9 +42,9 @@ $app->setInstance(
 
 // When you want to use the instance you can do that like this:
 /** @var Route */
-1. $app->getInstance('route');
-2. app()->getInstance('route');
-3. app('route');
+1. $app->getInstance(Route::class);
+2. app()->getInstance(Route::class);
+3. app(Route::class);
 
 // make instance of Route class
 $route = new Route();

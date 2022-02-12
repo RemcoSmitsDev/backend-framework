@@ -45,7 +45,7 @@ final class Request extends RequestValidator
 	/**
 	 * @var array
 	 */
-	public array $requestData;
+	public array $requestData = [];
 
 	public function __construct()
 	{
@@ -134,9 +134,9 @@ final class Request extends RequestValidator
 
 	/**
 	 * This function will return all request information
-	 * @return array|null
+	 * @return array
 	 */
-	public function all(): ?array
+	public function all(): array
 	{
 		return $this->requestData;
 	}

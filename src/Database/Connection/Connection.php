@@ -15,9 +15,9 @@ class Connection
 	private ?PDO $pdo;
 
 	/**
-	 * @var PDOStatement|false
+	 * @var PDOStatement|bool
 	 */
-	public PDOStatement|false $statement;
+	public PDOStatement|bool $statement;
 
 	/**
 	 * @var int|float|string

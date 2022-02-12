@@ -6,9 +6,11 @@ use Framework\Event\DefaultEvents\QueryEvent;
 use Framework\Event\DefaultEvents\ErrorEvent;
 use Framework\Debug\Debug;
 use Framework\Event\Event;
-use ReflectionException;
 use Framework\Http\Api;
 use ErrorException;
+use Exception;
+
+use function PHPUnit\Framework\throwException;
 
 final class App
 {
@@ -187,7 +189,7 @@ final class App
         // loop trough all classes
         foreach ($classes as $class) {
             // set class
-            self::$properties[lcfirst(getClassName($class))] = $class;
+            self::$properties[strtolower(getClassName($class))] = $class;
         }
 
         // return self
@@ -198,11 +200,11 @@ final class App
      * This method will get the container property instnace
      *
      * @param  object|string $class
-     * @return object|null
+     * @return ?object
      */
-    public static function getInstance(object|string $class): object|null
+    public static function getInstance(object|string $class): ?object
     {
-        return self::$properties[is_object($class) ? lcfirst(getClassName($class)) : $class] ?? null;
+        return self::$properties[strtolower(getClassName($class))] ?? null;
     }
 
     /**

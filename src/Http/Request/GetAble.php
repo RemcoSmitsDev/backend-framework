@@ -22,10 +22,10 @@ class GetAble implements Countable, JsonSerializable, ArrayAccess, IteratorAggre
 
 	/**
 	 * This method will get all the values
-	 *
+	 * @param int|bool $case
 	 * @return array
 	 */
-	public function all(int|false $case = false): array
+	public function all(int|bool $case = false): array
 	{
 		return $case !== false ? array_change_key_case($this->{$this->getName()}, $case) : $this->{$this->getName()};
 	}

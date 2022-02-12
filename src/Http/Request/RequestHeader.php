@@ -22,12 +22,22 @@ final class RequestHeader extends GetAble
 		$this->headers = function_exists('getallheaders') ? getallheaders() : $server->all();
 	}
 
-	public function __get(string $name): mixed
+	/**
+	 * @param string $name
+	 *
+	 * @return string|null
+	 */
+	public function __get(string $name): ?string
 	{
 		return $this->get($name);
 	}
 
-	public function __set($name, $value): void
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return void
+	 */
+	public function __set(string $name, mixed $value): void
 	{
 		$this->headers[$name] = $value;
 	}
