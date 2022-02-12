@@ -160,7 +160,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 */
 	public function select(string|array $select): self
 	{
-		// check if column was already set
+		// check if column was already set(when your use table()->select())
 		if (($key = $this->checkIfColumnWasAlreadySet('*')) !== false) {
 			unset($this->columns[$key]);
 		}
