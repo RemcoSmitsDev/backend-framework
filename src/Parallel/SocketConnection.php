@@ -60,9 +60,9 @@ class SocketConnection
     }
 
     /**
-     * @return false|int
+     * @return bool|int
      */
-    private function selectSocket(): false|int
+    private function selectSocket(): bool|int
     {
         $write = [$this->socket];
         $read = null;
