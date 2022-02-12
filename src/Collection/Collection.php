@@ -102,7 +102,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	/**
 	 * This method will return all results when you use the is without getting is to an array first
 	 *
-	 * @return ArrayIterator
+	 * @return ArrayIterator<int|string,mixed>
 	 */
 	public function getIterator(): ArrayIterator
 	{
@@ -112,7 +112,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
 	/**
 	 * This method will count the total length of the collection
 	 *
-	 * @return integer
+	 * @return int
 	 */
 	public function count(): int
 	{
