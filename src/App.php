@@ -8,9 +8,6 @@ use Framework\Debug\Debug;
 use Framework\Event\Event;
 use Framework\Http\Api;
 use ErrorException;
-use Exception;
-
-use function PHPUnit\Framework\throwException;
 
 final class App
 {
