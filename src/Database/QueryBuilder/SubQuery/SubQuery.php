@@ -24,9 +24,44 @@ class SubQuery implements Stringable
 		private bool $isWhereClause = false,
 		public string $boolean = 'AND'
 	) {
-		// if not empty add space
-		$this->before = !empty($this->before) ? trim($this->before) . ' ' : $this->before;
-		$this->after = !empty($this->after) ? ' ' . trim($this->after) : $this->after;
+		// set before
+		$this->setBefore($this->before);
+		$this->setAfter($this->after);
+	}
+
+	/**
+	 * This method will set the before value for a sub query for example `avg`, `min`, `max`
+	 * @param string $before
+	 * @return self
+	 */
+	public function setBefore(string $before): self
+	{
+		$this->before = !empty($before) ? trim($before) . ' ' : '';
+
+		return $this;
+	}
+
+	/**
+	 * This method will set the after value for a sub query for example the name
+	 * 
+	 * @param string $after
+	 * @return self
+	 */
+	public function setAfter(string $after): self
+	{
+		$this->after = !empty($after) ? ' ' . trim($after) : '';
+
+		return $this;
+	}
+
+	public function getBefore(): string
+	{
+		return $this->before;
+	}
+
+	public function getAfter(): string
+	{
+		return $this->after;
 	}
 
 	/**

@@ -161,7 +161,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	public function select(string|array $select): self
 	{
 		// check if column was already set
-		if ($key = $this->checkIfColumnWasAlreadySet('*')) {
+		if (($key = $this->checkIfColumnWasAlreadySet('*')) !== false) {
 			unset($this->columns[$key]);
 		}
 
@@ -177,7 +177,10 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 					$column,
 					after: (is_string($as) ? ' as ' . $as : '')
 				);
-			} // when column is an array
+			} elseif($column instanceof SubQuery){
+				$this->columns[] = $column->setAfter(is_string($as) ? $as : $column->getAfter());
+			}
+			// when column is an array
 			elseif (is_array($column)) {
 				$this->columns = array_merge(
 					$this->columns,
@@ -201,9 +204,9 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 	 * This method will check if an column already exists
 	 *
 	 * @param string $column
-	 * @return false|integer
+	 * @return bool|integer
 	 */
-	private function checkIfColumnWasAlreadySet(string $column): false|int
+	private function checkIfColumnWasAlreadySet(string $column): bool|int
 	{
 		// find column
 		$key = array_search($column, $this->columns);
