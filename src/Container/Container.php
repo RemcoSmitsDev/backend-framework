@@ -32,12 +32,10 @@ class Container
         // make arguments global
         self::$arguments = $arguments;
 
-        $dependencies = self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)));
-
         // return parameters bij reflection of closure function
         return call_user_func(
             $callback,
-            ...$dependencies
+            ...self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)))
         );
     }
 
