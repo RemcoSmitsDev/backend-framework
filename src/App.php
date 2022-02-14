@@ -7,7 +7,6 @@ use Framework\Event\DefaultEvents\ErrorEvent;
 use Framework\Debug\Debug;
 use Framework\Event\Event;
 use Framework\Http\Api;
-use ErrorException;
 
 final class App
 {
@@ -41,35 +40,23 @@ final class App
             return;
         }
 
-        // cache output
-        ob_start();
-
-        // register shutdown
-        register_shutdown_function(function () {
-            // check if is not development mode
-            if (!IS_DEVELOPMENT_MODE || !Api::fromOwnServer()) return;
-
-            // when comes from api | or wants json back
-            if (str_contains(request()->headers('Content-Type', ''), 'application/json') || Api::fromAjax()) return;
-
-            // render debug screen
-            Debug::render();
-        });
+        // check if app is in development mode
+        self::checkAppState();
 
         // set app started
         self::$isStarted = true;
 
-        // check if app is in development mode
-        self::checkAppState();
+        // start output buffer
+        ob_start();
+
+        // This will register the needed actions to catch all errors/exceptions
+        Debug::register();
 
         // register default events
         Event::listen([
             'database-query' => QueryEvent::class,
             'error' => ErrorEvent::class
         ]);
-
-        // get error based on config option debug mode
-        self::catchErrors();
 
         // set timezone
         date_default_timezone_set('Europe/Amsterdam');
@@ -121,37 +108,6 @@ final class App
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-    }
-
-    /**
-     * This function handles/enables error reporting
-     * @return void
-     */
-    private static function catchErrors(): void
-    {
-        // set show errors base on development mode
-        ini_set('display_errors', IS_DEVELOPMENT_MODE);
-        ini_set('display_startup_errors', IS_DEVELOPMENT_MODE);
-
-        // shows errors when debug mode is on
-        if (!IS_DEVELOPMENT_MODE) {
-            return;
-        }
-
-        // report all errors
-        error_reporting(E_ALL);
-
-        // catch all errors/exceptions and send event
-        set_error_handler(function (
-            int $level,
-            string $message,
-            string $file = '',
-            int $line = 0
-        ) {
-            // make Error exception
-            throw new ErrorException($message, 0, $level, $file, $line);
-        });
-        set_exception_handler(fn ($exception) => Event::notify('error', ['data' => $exception, 'type' => 'Exception']));
     }
 
     /**

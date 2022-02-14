@@ -4,6 +4,8 @@ namespace Framework\Debug;
 
 use Curl\CaseInsensitiveArray;
 use Framework\Content\Content;
+use Framework\Http\Api;
+use ErrorException;
 
 class Debug
 {
@@ -26,6 +28,44 @@ class Debug
 		'requests' => [],
 		'dumps' => []
 	];
+
+	/**
+	 * @return void
+	 */
+	public static function register(): void
+	{
+		// set show errors base on development mode
+		ini_set('display_errors', IS_DEVELOPMENT_MODE);
+		ini_set('display_startup_errors', IS_DEVELOPMENT_MODE);
+
+		// shows errors when debug mode is on
+		if (!IS_DEVELOPMENT_MODE) {
+			return;
+		}
+
+		// register shutdown function
+		register_shutdown_function(fn() => self::render());
+
+		// report all errors
+		error_reporting(E_ALL);
+
+		// catch all errors/exceptions and send event
+		set_error_handler(function (int $level, string $message, string $file = '', int $line = 0) {
+			throw new ErrorException($message, 0, $level, $file, $line);
+		});
+
+		// handle exception handler
+		set_exception_handler(function ($exception) {
+			// append error
+			self::$data['errors'][] = [
+				'data' => $exception,
+				'type' => 'Exception'
+			];
+
+			// render debug page
+			self::render();
+		});
+	}
 
 	/**
 	 * This method will append a information to the state
@@ -56,7 +96,14 @@ class Debug
 	public static function render()
 	{
 		// stop when there where no errors found
-		if (empty(self::$data['errors']) || self::$renderd) return;
+		if (
+			empty(self::$data['errors']) ||
+			self::$renderd ||
+			!IS_DEVELOPMENT_MODE ||
+			!Api::fromOwnServer() ||
+			str_contains(request()->headers('Accept', ''), 'json') ||
+			Api::fromAjax()
+		) return;
 
 		// set renderd
 		self::$renderd = true;
