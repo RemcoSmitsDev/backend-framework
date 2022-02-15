@@ -3,7 +3,6 @@
 namespace Framework\Http;
 
 use Framework\Interfaces\Http\ResponseInterface;
-use Framework\Content\Content;
 use ReflectionException;
 
 class Response implements ResponseInterface
