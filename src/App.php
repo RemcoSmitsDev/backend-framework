@@ -7,6 +7,7 @@ use Framework\Event\DefaultEvents\ErrorEvent;
 use Framework\Debug\Debug;
 use Framework\Event\Event;
 use Framework\Http\Api;
+use Exception;
 
 final class App
 {
@@ -37,7 +38,7 @@ final class App
     {
         // check if app is already started
         if (self::$isStarted) {
-            return;
+            throw new Exception('Application already started!');
         }
 
         // check if app is in development mode
