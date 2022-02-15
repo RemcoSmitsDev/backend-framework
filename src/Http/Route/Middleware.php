@@ -2,8 +2,8 @@
 
 namespace Framework\Http\Route;
 
-use Framework\Interfaces\Http\MiddlewareInterface;
 use Framework\Container\Container;
+use Framework\Interfaces\Http\MiddlewareInterface;
 
 class Middleware implements MiddlewareInterface
 {
@@ -15,6 +15,7 @@ class Middleware implements MiddlewareInterface
     /**
      * @param array $route
      * @param array $middlewareRules
+     *
      * @return bool
      */
     public static function validate(array $route, array $middlewareRules): bool

@@ -8,69 +8,69 @@ use PHPUnit\Framework\TestCase;
 
 class ApiTest extends TestCase
 {
-	protected function setUp(): void
-	{
-		$_SERVER['HTTP_HOST'] = 'test.local';
-		$_SERVER['REQUEST_URI'] = '/api/test';
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-	}
+    protected function setUp(): void
+    {
+        $_SERVER['HTTP_HOST'] = 'test.local';
+        $_SERVER['REQUEST_URI'] = '/api/test';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+    }
 
-	public function testIsFromAjax()
-	{
-		$this->assertFalse(Api::fromAjax());
+    public function testIsFromAjax()
+    {
+        $this->assertFalse(Api::fromAjax());
 
-		$_SERVER['X-REQUESTED-WITH'] = 'xmlhttprequest';
+        $_SERVER['X-REQUESTED-WITH'] = 'xmlhttprequest';
 
-		app()->setInstance(new Request);
+        app()->setInstance(new Request());
 
-		$this->assertTrue(Api::fromAjax());
-	}
+        $this->assertTrue(Api::fromAjax());
+    }
 
-	public function testFromOwnServer()
-	{
-		$this->assertFalse(Api::fromOwnServer());
+    public function testFromOwnServer()
+    {
+        $this->assertFalse(Api::fromOwnServer());
 
-		$_SERVER['HTTP_REFERER'] = 'test.local';
+        $_SERVER['HTTP_REFERER'] = 'test.local';
 
-		app()->setInstance(new Request);
+        app()->setInstance(new Request());
 
-		$this->assertTrue(Api::fromOwnServer());
+        $this->assertTrue(Api::fromOwnServer());
 
-		$_SERVER['HTTP_REFERER'] = 'test2.local';
+        $_SERVER['HTTP_REFERER'] = 'test2.local';
 
-		app()->setInstance(new Request);
+        app()->setInstance(new Request());
 
-		$this->assertFalse(Api::fromOwnServer());
-	}
+        $this->assertFalse(Api::fromOwnServer());
+    }
 
-	public function testValidateToken()
-	{
-		$token = Api::generateRequestToken();
+    public function testValidateToken()
+    {
+        $token = Api::generateRequestToken();
 
-		$this->assertTrue(isset($_COOKIE['requestToken']));
+        $this->assertTrue(isset($_COOKIE['requestToken']));
 
-		$this->assertEquals($token, $_COOKIE['requestToken']);
+        $this->assertEquals($token, $_COOKIE['requestToken']);
 
-		$_SESSION['requestToken'] = $token;
+        $_SESSION['requestToken'] = $token;
 
-		$this->assertFalse(Api::validateToken());
+        $this->assertFalse(Api::validateToken());
 
-		$_SERVER['Requesttoken'] = $token;
+        $_SERVER['Requesttoken'] = $token;
 
-		app()->setInstance(new Request);
+        app()->setInstance(new Request());
 
-		$this->assertTrue(Api::validateToken());
+        $this->assertTrue(Api::validateToken());
 
-		$_SERVER['Requesttoken'] = $token . 'a';
+        $_SERVER['Requesttoken'] = $token.'a';
 
-		app()->setInstance(new Request);
+        app()->setInstance(new Request());
 
-		$this->assertFalse(Api::validateToken());
+        $this->assertFalse(Api::validateToken());
 
-		unset($_SERVER['Requesttoken']);
+        unset($_SERVER['Requesttoken']);
 
-		app()->setInstance(new Request);
+        app()->setInstance(new Request());
 
-		$this->assertFalse(Api::validateToken());
-	}
+        $this->assertFalse(Api::validateToken());
+    }
 }

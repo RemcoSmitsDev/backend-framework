@@ -8,8 +8,9 @@ use ReflectionException;
 class Response implements ResponseInterface
 {
     /**
-     * Holds all response messages by response code
-     * @var array $statusTexts
+     * Holds all response messages by response code.
+     *
+     * @var array
      */
     public array $statusTexts = [
         100 => 'Continue',
@@ -77,44 +78,52 @@ class Response implements ResponseInterface
     ];
 
     /**
-     * Keeps track of response data
-     * @var string $responseData
+     * Keeps track of response data.
+     *
+     * @var string
      */
     private string $responseData = '';
 
     /**
-     * Keeps track of responseCode
-     * @var int|string|null $responseCode
+     * Keeps track of responseCode.
+     *
+     * @var int|string|null
      */
     private int|string|null $responseCode = null;
 
     /**
-     * keeps track of is json
-     * @var bool $isJson
+     * keeps track of is json.
+     *
+     * @var bool
      */
     private bool $isJson = false;
 
     /**
-     * Keeps track of exit code/message
-     * @var string|int $exitMessage
+     * Keeps track of exit code/message.
+     *
+     * @var string|int
      */
     private string|int $exitMessage = 0;
 
     /**
-     * Keep track if need to exit out
-     * @var bool $exit
+     * Keep track if need to exit out.
+     *
+     * @var bool
      */
     private bool $exit = false;
 
     /**
-     * Keeps track of content class
-     * @var bool $content
+     * Keeps track of content class.
+     *
+     * @var bool
      */
     private bool $content = false;
 
     /**
-     * formats responseData into json based in input data
+     * formats responseData into json based in input data.
+     *
      * @param mixed $responseData
+     *
      * @return self
      **/
     public function json(mixed $responseData): self
@@ -129,8 +138,10 @@ class Response implements ResponseInterface
     }
 
     /**
-     * sets reponse data
+     * sets reponse data.
+     *
      * @param string $responseData
+     *
      * @return self
      **/
     public function text(string $responseData): self
@@ -145,8 +156,10 @@ class Response implements ResponseInterface
     }
 
     /**
-     * send http response code to the client
+     * send http response code to the client.
+     *
      * @param int $responseCode = 200
+     *
      * @return self
      **/
     public function code(int $responseCode = 200): self
@@ -159,8 +172,10 @@ class Response implements ResponseInterface
     }
 
     /**
-     * formats headers and send headers to the client
+     * formats headers and send headers to the client.
+     *
      * @param array $headers
+     *
      * @return self
      **/
     public function headers(array $headers): self
@@ -168,7 +183,7 @@ class Response implements ResponseInterface
         // loop trough all headers
         foreach ($headers as $key => $value) {
             // split array into string with comma's
-            $value = implode(',', (array)$value);
+            $value = implode(',', (array) $value);
 
             // set header with value
             header("{$key}:{$value}");
@@ -179,8 +194,10 @@ class Response implements ResponseInterface
     }
 
     /**
-     * stops the page for rendering other data with responseCode
+     * stops the page for rendering other data with responseCode.
+     *
      * @param string|int $status
+     *
      * @return self
      */
     public function exit(string|int $status = 0): self
@@ -194,9 +211,11 @@ class Response implements ResponseInterface
     }
 
     /**
-     * get view into response data
+     * get view into response data.
+     *
      * @param string $view
-     * @param array $data
+     * @param array  $data
+     *
      * @return self
      */
     public function view(string $view, array $data = []): self
@@ -212,8 +231,10 @@ class Response implements ResponseInterface
     }
 
     /**
-     * This function returns response message based on responseCode
+     * This function returns response message based on responseCode.
+     *
      * @param int|null $responseCode
+     *
      * @return string
      */
     public function getMessage(?int $responseCode = null): string
@@ -222,7 +243,8 @@ class Response implements ResponseInterface
     }
 
     /**
-     * handles response to user when class closes
+     * handles response to user when class closes.
+     *
      * @throws ReflectionException
      */
     public function __destruct()
@@ -232,7 +254,7 @@ class Response implements ResponseInterface
             // check if there was an response code set
             if (isset($this->responseCode)) {
                 // set response code
-                header('HTTP/1.1 ' . $this->responseCode . ' ' . ($this->statusTexts[$this->responseCode] ?? ''));
+                header('HTTP/1.1 '.$this->responseCode.' '.($this->statusTexts[$this->responseCode] ?? ''));
             }
 
             // check if is json

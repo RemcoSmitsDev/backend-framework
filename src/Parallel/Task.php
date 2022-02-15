@@ -31,7 +31,7 @@ class Task
 
     /**
      * @param callable $callback
-     * @param int $order
+     * @param int      $order
      */
     public function __construct(callable $callback, private int $order)
     {
@@ -52,7 +52,7 @@ class Task
         }
 
         // return response
-        return base64_encode($this->token . serialize($response));
+        return base64_encode($this->token.serialize($response));
     }
 
     /**
@@ -125,6 +125,7 @@ class Task
     /**
      * @param SocketConnection $socketToChild
      * @param SocketConnection $socketToParent
+     *
      * @return void
      */
     private function runChildTask(SocketConnection $socketToChild, SocketConnection $socketToParent): void
@@ -170,6 +171,7 @@ class Task
 
     /**
      * @param SocketConnection $connection
+     *
      * @return $this
      */
     public function setConnection(SocketConnection $connection): self
@@ -183,6 +185,7 @@ class Task
 
     /**
      * @param int $processId
+     *
      * @return $this
      */
     public function setProcessId(int $processId): self

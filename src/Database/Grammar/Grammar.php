@@ -2,14 +2,16 @@
 
 namespace Framework\Database\Grammar;
 
-use Framework\Database\QueryBuilder\SubQuery\SubQuery;
 use Framework\Database\QueryBuilder\QueryBuilder;
+use Framework\Database\QueryBuilder\SubQuery\SubQuery;
 
 class Grammar
 {
     /**
-     * function selectToSql
+     * function selectToSql.
+     *
      * @param QueryBuilder $query
+     *
      * @return array
      */
     public function selectToSql(QueryBuilder $query): array
@@ -19,15 +21,17 @@ class Grammar
 
         // return select query
         return [
-            "SELECT {$select} FROM `{$query->from}`" . $this->format($query),
-            flattenArray($query->bindings)
+            "SELECT {$select} FROM `{$query->from}`".$this->format($query),
+            flattenArray($query->bindings),
         ];
     }
 
     /**
-     * function insertToSql
+     * function insertToSql.
+     *
      * @param QueryBuilder $builder
-     * @param array $insertData
+     * @param array        $insertData
+     *
      * @return array
      */
     public function insertToSql(QueryBuilder $builder, array $insertData): array
@@ -72,14 +76,16 @@ class Grammar
         // return insert query
         return [
             "INSERT INTO `{$builder->from}` (`{$columns}`) VALUES ({$valuePlaceholders})",
-            flattenArray($insertData)
+            flattenArray($insertData),
         ];
     }
 
     /**
-     * function updateToSql
+     * function updateToSql.
+     *
      * @param QueryBuilder $builder
-     * @param array $updateData
+     * @param array        $updateData
+     *
      * @return array
      */
     public function updateToSql(QueryBuilder $builder, array $updateData): array
@@ -107,28 +113,32 @@ class Grammar
 
         // return query and bindings
         return [
-            "UPDATE `{$builder->from}` SET {$setPlaceholders}" . $this->format($builder),
-            array_merge($bindData, flattenArray($builder->bindings))
+            "UPDATE `{$builder->from}` SET {$setPlaceholders}".$this->format($builder),
+            array_merge($bindData, flattenArray($builder->bindings)),
         ];
     }
 
     /**
-     * function deleteToSql
+     * function deleteToSql.
+     *
      * @param QueryBuilder $builder
+     *
      * @return array
      */
     public function deleteToSql(QueryBuilder $builder): array
     {
         // return query and bindings
         return [
-            "DELETE FROM `{$builder->from}`" . $this->format($builder),
-            flattenArray($builder->bindings)
+            "DELETE FROM `{$builder->from}`".$this->format($builder),
+            flattenArray($builder->bindings),
         ];
     }
 
     /**
-     * function format
+     * function format.
+     *
      * @param QueryBuilder $builder
+     *
      * @return string
      */
     protected function format(QueryBuilder $builder): string
@@ -143,10 +153,10 @@ class Grammar
         $whereClause = !empty($whereClause) ? " WHERE {$whereClause}" : '';
 
         // format group by
-        $groupBy = !empty($builder->groups) ? ' GROUP BY ' . $this->formatGroupBy($builder->groups) : '';
+        $groupBy = !empty($builder->groups) ? ' GROUP BY '.$this->formatGroupBy($builder->groups) : '';
 
         // format order by
-        $orderBy = !empty($builder->orders) ? ' ORDER BY ' . $this->formatOrderBy($builder->orders) : '';
+        $orderBy = !empty($builder->orders) ? ' ORDER BY '.$this->formatOrderBy($builder->orders) : '';
 
         // format limit
         $limit = isset($builder->limit) ? " LIMIT {$builder->limit}" : '';
@@ -155,12 +165,14 @@ class Grammar
         $offset = isset($builder->offset) ? " OFFSET {$builder->offset}" : '';
 
         // return query and bindData
-        return $joins . $whereClause . $groupBy . $orderBy . $limit . $offset;
+        return $joins.$whereClause.$groupBy.$orderBy.$limit.$offset;
     }
 
     /**
-     * function formatGroupBy
+     * function formatGroupBy.
+     *
      * @param array $groups
+     *
      * @return string
      */
     private function formatGroupBy(array $groups): string
@@ -175,8 +187,10 @@ class Grammar
     }
 
     /**
-     * function formatOrderBy
+     * function formatOrderBy.
+     *
      * @param array $orders
+     *
      * @return string
      */
     private function formatOrderBy(array $orders): string
@@ -187,7 +201,7 @@ class Grammar
         // loop through all orders
         foreach ($orders as $order) {
             // add order to orderBy array
-            $orderBy[] = preg_replace('/([A-z0-9_\-]+)/', '`$1`', $order['column']) . ' ' . $order['direction'];
+            $orderBy[] = preg_replace('/([A-z0-9_\-]+)/', '`$1`', $order['column']).' '.$order['direction'];
         }
 
         // return string with comma as separator
@@ -195,8 +209,10 @@ class Grammar
     }
 
     /**
-     * function formatJoins
+     * function formatJoins.
+     *
      * @param QueryBuilder $builder
+     *
      * @return string
      */
     public function formatJoins(QueryBuilder $builder): string
@@ -207,7 +223,7 @@ class Grammar
         // loop through all join classes
         foreach ($builder->joins as $join) {
             // add statement to statement string
-            $joinStatement .= " {$join->type} JOIN `{$join->table}` ON " . $this->formatWhere($builder, $join->wheres);
+            $joinStatement .= " {$join->type} JOIN `{$join->table}` ON ".$this->formatWhere($builder, $join->wheres);
         }
 
         // return statement string
@@ -215,10 +231,12 @@ class Grammar
     }
 
     /**
-     * function formatSubSelect
+     * function formatSubSelect.
+     *
      * @param QueryBuilder $builder
-     * @param array $whereClause
-     * @param array $where
+     * @param array        $whereClause
+     * @param array        $where
+     *
      * @return array
      */
     public function formatSubSelect(QueryBuilder $builder, array $whereClause, array $where): array
@@ -238,9 +256,11 @@ class Grammar
     }
 
     /**
-     * function formatWhere
+     * function formatWhere.
+     *
      * @param QueryBuilder $builder
-     * @param array $where
+     * @param array        $where
+     *
      * @return string
      */
     public function formatWhere(QueryBuilder $builder, array $wherestatements): string
@@ -261,7 +281,7 @@ class Grammar
             // check if is instance of sub query
             if ($wherestatement instanceof SubQuery) {
                 // append to where clause
-                $whereClause[] = $wherestatement->boolean . ' ' . (string) $wherestatement;
+                $whereClause[] = $wherestatement->boolean.' '.(string) $wherestatement;
 
                 // continue to next where statement
                 continue;
@@ -278,7 +298,7 @@ class Grammar
 
             // check if type is raw
             if ($type === 'raw') {
-                $whereClause[] = ($wherestatement['boolean'] ?? '') . ' ' . $wherestatement['query'];
+                $whereClause[] = ($wherestatement['boolean'] ?? '').' '.$wherestatement['query'];
             } elseif ($type === 'column') {
                 $placeholder = $builder->formatColumnNames($wherestatement['value']);
             } elseif ($type === 'normal') {
@@ -292,14 +312,14 @@ class Grammar
 
             // make column format
             if (!empty($column) && !strpos($column, '.')) {
-                $column = $builder->formatColumnNames($builder->from . '.' . $column);
+                $column = $builder->formatColumnNames($builder->from.'.'.$column);
             } else {
                 // format columns
                 $column = $builder->formatColumnNames($column);
             }
 
             // add to where clause
-            $whereClause[] = strtoupper($wherestatement['boolean'] ?? '') . $column . ' ' . ($wherestatement['operator'] ?? '') . ' ' . $placeholder;
+            $whereClause[] = strtoupper($wherestatement['boolean'] ?? '').$column.' '.($wherestatement['operator'] ?? '').' '.$placeholder;
         }
 
         // return where clause

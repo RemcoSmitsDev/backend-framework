@@ -8,8 +8,10 @@ class Api
 {
     /**
      * @param string ...$whitelistedURIs
-     * @return bool
+     *
      * @throws ReflectionException
+     *
+     * @return bool
      */
     public static function listen(string ...$whitelistedURIs): bool
     {
@@ -28,6 +30,7 @@ class Api
         // kijkt of er een ajax request is gestuurt van de eigen server is
         if (!self::fromOwnServer()) {
             response()->code(403);
+
             return false;
         }
 
@@ -49,7 +52,7 @@ class Api
         $URL .= '.php';
 
         // file path to api
-        $path = realpath($_SERVER['DOCUMENT_ROOT'] . "/../{$URL}");
+        $path = realpath($_SERVER['DOCUMENT_ROOT']."/../{$URL}");
 
         // kijkt of de url van ajax request bestaat in de api folder
         if (!file_exists($path)) {
@@ -57,7 +60,7 @@ class Api
         }
 
         // require bestand zodat ajax een response terug kan krijgen
-        require_once($path);
+        require_once $path;
 
         exit(0);
     }
@@ -67,7 +70,7 @@ class Api
      */
     public static function fromOwnServer(): bool
     {
-        return str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", "", request()->headers('HTTP_REFERER', '')), explode("/", request()->headers('HTTP_HOST', '') . request()->uri())[0]);
+        return str_starts_with(preg_replace("/http:\/\/|https:\/\/|\/.*\/$|\s+/", '', request()->headers('HTTP_REFERER', '')), explode('/', request()->headers('HTTP_HOST', '').request()->uri())[0]);
     }
 
     /**

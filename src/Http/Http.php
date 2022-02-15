@@ -7,8 +7,8 @@ use Framework\Debug\Debug;
 
 class Http extends Curl
 {
-	public function __destruct()
-	{
-		Debug::add('requests', $this);
-	}
+    public function __destruct()
+    {
+        Debug::add('requests', $this);
+    }
 }

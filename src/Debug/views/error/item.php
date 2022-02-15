@@ -11,7 +11,7 @@ use Framework\Debug\Debug;
 			<?= basename($error->getFile()); ?>:<?= $error->getLine(); ?>
 		</a>
 	</span>
-	<?php if (!empty($error->getTrace())) : ?>
+	<?php if (!empty($error->getTrace())) { ?>
 		<?php content()->view('error/trace', compact('error')); ?>
-	<?php endif; ?>
+	<?php } ?>
 </div>
