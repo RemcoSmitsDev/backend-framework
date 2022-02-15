@@ -2,64 +2,73 @@
 
 namespace Framework\Http\Route;
 
+use Closure;
+use Exception;
 use Framework\Container\Container;
 use Framework\Http\Request;
-use Exception;
-use Closure;
 
 class Router
 {
     /**
-     * Keeps track of all routes
-     * @var array $routes
+     * Keeps track of all routes.
+     *
+     * @var array
      */
     protected array $routes = [];
 
     /**
-     * Keeps track of all names routes
-     * @var array $namedRoutes
+     * Keeps track of all names routes.
+     *
+     * @var array
      */
     protected array $namedRoutes = [];
 
     /**
-     * Keeps track of current prefix
-     * @var string $prefix
+     * Keeps track of current prefix.
+     *
+     * @var string
      */
     protected string $prefix = '';
 
     /**
-     * Keeps track of current groupprefix
-     * @var string $groupPrefix
+     * Keeps track of current groupprefix.
+     *
+     * @var string
      */
     protected string $groupPrefix = '';
 
     /**
-     * Keeps track of current middlewares
-     * @var array $middlewares
+     * Keeps track of current middlewares.
+     *
+     * @var array
      */
     protected array $middlewares = [];
 
     /**
-     * Keeps track of curren group middlewares
-     * @var array $groupMiddlewares
+     * Keeps track of curren group middlewares.
+     *
+     * @var array
      */
     protected array $groupMiddlewares = [];
 
     /**
-     * Keeps track of current Route
-     * @var ?array $currentRoute
+     * Keeps track of current Route.
+     *
+     * @var ?array
      */
     protected ?array $currentRoute = null;
 
     /**
-     * Default dynamic route pattern
-     * @var string $routeParamPattern
+     * Default dynamic route pattern.
+     *
+     * @var string
      */
     private string $routeParamPattern = '\{[A-Za-z_]+[0-9]*\}';
 
     /**
-     * Keeps track of request class
-     * @var Request $request
+     * Keeps track of request class.
+     *
+     * @var Request
      */
     protected Request $request;
 
@@ -77,11 +86,14 @@ class Router
     }
 
     /**
-     * Handles the action(function/class method)
+     * Handles the action(function/class method).
+     *
      * @param array $route
      * @param array $data
-     * @return void
+     *
      * @throws Exception
+     *
+     * @return void
      */
     protected function handleRouteAction(array $route, array $data = []): void
     {
@@ -95,7 +107,7 @@ class Router
         if (is_array($action)) {
             // check if information is correct
             if (!isset($action[0], $action[1]) || !is_string($action[0]) || !is_string($action[1])) {
-                throw new Exception("Your array must have as first item an class and as seconde item function name!");
+                throw new Exception('Your array must have as first item an class and as seconde item function name!');
             }
             // is no class was found throw error
             if (!class_exists($action[0])) {
@@ -103,7 +115,7 @@ class Router
             }
 
             // make instance of class
-            $class = new $action[0];
+            $class = new $action[0]();
 
             // method
             $method = $action[1];
@@ -125,7 +137,8 @@ class Router
     }
 
     /**
-     * Get all routes bij a requestMethod
+     * Get all routes bij a requestMethod.
+     *
      * @return null|array
      */
     public function getRoutes(): ?array
@@ -134,16 +147,18 @@ class Router
     }
 
     /**
-     * add route to routes array based on requestMethod
-     * @param array $methods
-     * @param string $uri
+     * add route to routes array based on requestMethod.
+     *
+     * @param array         $methods
+     * @param string        $uri
      * @param Closure|array $action
+     *
      * @return Router
      */
     protected function addRoute(array $methods, string $uri, Closure|array $action): self
     {
         // replace alle dubbele slashes
-        $uri = preg_replace("/\/+/", "/", '/' . $this->prefix . '/' . $uri);
+        $uri = preg_replace("/\/+/", '/', '/'.$this->prefix.'/'.$uri);
 
         // kijk of er nog wat overblijf als je laatste slash verwijder
         // anders is '/' -> ''
@@ -151,15 +166,15 @@ class Router
 
         // voeg de route toe aan bij het request type
         $this->routes[] = [
-            'uri' => $uri,
-            'isDynamic' => preg_match('/' . $this->routeParamPattern . '/', $uri),
-            'methods' => $methods,
-            'name' => '',
-            'action' => $action,
-            'patterns' => [],
+            'uri'         => $uri,
+            'isDynamic'   => preg_match('/'.$this->routeParamPattern.'/', $uri),
+            'methods'     => $methods,
+            'name'        => '',
+            'action'      => $action,
+            'patterns'    => [],
             'middlewares' => [
                 ...$this->middlewares,
-            ]
+            ],
         ];
 
         // reset alle middlewares/prefix
@@ -170,9 +185,11 @@ class Router
     }
 
     /**
-     * replace all dynamic routing params to regex
+     * replace all dynamic routing params to regex.
+     *
      * @param string $uri
-     * @param array $route
+     * @param array  $route
+     *
      * @return string
      */
     private function replaceRouteURLPatterns(string $uri, array $route): string
@@ -187,15 +204,17 @@ class Router
         }
 
         // make regex string and replace other patterns
-        return "/^" . preg_replace('/' . $this->routeParamPattern . '/', "([^\/]+)", str_replace('/', '\/', $uri)) . "(?!.)/";
+        return '/^'.preg_replace('/'.$this->routeParamPattern.'/', "([^\/]+)", str_replace('/', '\/', $uri)).'(?!.)/';
     }
 
     /**
      * kijk of er de route dynamic params heeft
      * als de route dynamic routes heeft en deze matched mat de current url
-     * return dan de dynamic params values met de naam als key
+     * return dan de dynamic params values met de naam als key.
+     *
      * @param array $route
-     * @return boolean|array
+     *
+     * @return bool|array
      */
     private function validateDynamicUri(array $route): bool|array
     {
@@ -217,7 +236,7 @@ class Router
         // loop trough all url parts
         foreach ($explodeRouteURL as $key => $part) {
             // check if dynamic parameter was found
-            if (preg_match('/' . $this->routeParamPattern . '/', $part)) {
+            if (preg_match('/'.$this->routeParamPattern.'/', $part)) {
                 // add data to globals
                 $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
             }
@@ -227,24 +246,27 @@ class Router
     }
 
     /**
-     * This function replaces dynamic routes and checks if all the dynamic parts are fulfilled
+     * This function replaces dynamic routes and checks if all the dynamic parts are fulfilled.
+     *
      * @param string $route
-     * @param array $params
-     * @param array $wrongParams
-     * @return string
+     * @param array  $params
+     * @param array  $wrongParams
+     *
      * @throws Exception
+     *
+     * @return string
      */
     protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = []): string
     {
         // check if there are dynamic params in route url
-        if (!preg_match('/' . $this->routeParamPattern . '/', $route)) {
+        if (!preg_match('/'.$this->routeParamPattern.'/', $route)) {
             return $route;
         }
 
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams) . '!');
+            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: ".json_encode($wrongParams).'!');
         }
 
         // loop trough all params and replace params
@@ -265,6 +287,7 @@ class Router
 
     /**
      * @param callable $callback
+     *
      * @return Router
      */
     public function onMiddlewareFail(callable $callback): self
@@ -275,8 +298,10 @@ class Router
     }
 
     /**
-     * This method will handle when an middleware fails
+     * This method will handle when an middleware fails.
+     *
      * @param array $failedRoute
+     *
      * @throws \ReflectionException
      */
     private function handleOnMiddlewareFail(array $failedRoute): void
@@ -301,7 +326,8 @@ class Router
     }
 
     /**
-     * get route by current request url
+     * get route by current request url.
+     *
      * @throws Exception
      */
     public function init()

@@ -2,16 +2,15 @@
 
 namespace Framework\Container;
 
+use Closure;
+use Exception;
 use InvalidArgumentException;
+use ReflectionClass;
 use ReflectionException;
-use ReflectionParameter;
-use ReflectionNamedType;
 use ReflectionFunction;
 use ReflectionMethod;
-use ReflectionClass;
-use Exception;
-use Closure;
-use Throwable;
+use ReflectionNamedType;
+use ReflectionParameter;
 
 class Container
 {
@@ -21,10 +20,11 @@ class Container
     private static array $arguments = [];
 
     /**
-     * Get all parameters from class method reflection
+     * Get all parameters from class method reflection.
      *
-     * @param  callable $callback
-     * @param  array<string,mixed>    $arguments
+     * @param callable            $callback
+     * @param array<string,mixed> $arguments
+     *
      * @return mixed
      */
     public static function handleClosure(callable $callback, array $arguments = []): mixed
@@ -40,16 +40,17 @@ class Container
     }
 
     /**
-     * Get all parameters from class method reflection
+     * Get all parameters from class method reflection.
      *
-     * @param  object|class-string<object> $class
-     * @param  string                      $method
-     * @param  array<string,mixed>         $arguments
-     * @param  object|null                 $classInstance
-     * @return mixed
-     * 
+     * @param object|class-string<object> $class
+     * @param string                      $method
+     * @param array<string,mixed>         $arguments
+     * @param object|null                 $classInstance
+     *
      * @throws Exception
      * @throws InvalidArgumentException
+     *
+     * @return mixed
      */
     public static function handleClassMethod(object|string $class, string $method, array $arguments = [], ?object &$classInstance = null): mixed
     {
@@ -90,13 +91,14 @@ class Container
     }
 
     /**
-     * Get all parameters from function/method reflection
+     * Get all parameters from function/method reflection.
      *
-     * @param  ReflectionMethod|ReflectionFunction $reflection
-     * @return array<int,mixed>
-     * 
+     * @param ReflectionMethod|ReflectionFunction $reflection
+     *
      * @throws Exception
      * @throws InvalidArgumentException
+     *
+     * @return array<int,mixed>
      */
     public static function getParameters(ReflectionMethod|ReflectionFunction $reflection): array
     {
@@ -138,7 +140,7 @@ class Container
 
             // add dependency
             $dependencies[] = $reflect->newInstance(
-                ...($reflect->getConstructor() && $reflect->getMethod('__construct')->isPublic() ? (new self)::getParameters($reflect->getConstructor()) : [])
+                ...($reflect->getConstructor() && $reflect->getMethod('__construct')->isPublic() ? (new self())::getParameters($reflect->getConstructor()) : [])
             );
         }
 
@@ -146,13 +148,14 @@ class Container
     }
 
     /**
-     * This method will handle/validate parameters with arguments
+     * This method will handle/validate parameters with arguments.
      *
-     * @param  ReflectionParameter $parameter
-     * @param  array               $dependencies
-     * @return void
-     * 
+     * @param ReflectionParameter $parameter
+     * @param array               $dependencies
+     *
      * @throws InvalidArgumentException
+     *
+     * @return void
      */
     private static function handleAddDepenciesFromArguments(ReflectionParameter $parameter, array &$dependencies)
     {
@@ -176,7 +179,7 @@ class Container
 
         // when the param does not exists inside the given arguments
         if (!$foundArgument) {
-            throw new InvalidArgumentException('You must have a argument value inside the `handleClassMethod` or `handleClosure` with the name: `' . $parameter->getName() . '`');
+            throw new InvalidArgumentException('You must have a argument value inside the `handleClassMethod` or `handleClosure` with the name: `'.$parameter->getName().'`');
         }
 
         // add dependency

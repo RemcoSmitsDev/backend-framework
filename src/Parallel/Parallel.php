@@ -3,8 +3,8 @@
 namespace Framework\Parallel;
 
 use Closure;
-use Opis\Closure\SerializableClosure;
 use Exception;
+use Opis\Closure\SerializableClosure;
 
 class Parallel
 {
@@ -18,12 +18,13 @@ class Parallel
     public function __construct()
     {
         if (!function_exists('pcntl_fork')) {
-            throw new Exception("Cannot create process forks: PCNTL is not supported on this system!");
+            throw new Exception('Cannot create process forks: PCNTL is not supported on this system!');
         }
     }
 
     /**
      * @param callable ...$callbacks
+     *
      * @return mixed|void
      */
     public function add(callable ...$callbacks)
@@ -41,7 +42,7 @@ class Parallel
         $arg = base64_encode(serialize($serializedCallbacks));
 
         // execute parallel executor
-        exec('php ForkTest.php ' . $arg, $output, $code);
+        exec('php ForkTest.php '.$arg, $output, $code);
 
         try {
             return unserialize($output[0]);
@@ -56,6 +57,7 @@ class Parallel
 
     /**
      * @param callable ...$callbacks
+     *
      * @return array
      */
     public function run(callable ...$callbacks): array
@@ -75,6 +77,7 @@ class Parallel
 
     /**
      * @param Task ...$queue
+     *
      * @return array
      */
     private function wait(Task ...$queue): array
@@ -113,6 +116,7 @@ class Parallel
 
     /**
      * @param array $queue
+     *
      * @return void
      */
     protected function runQueue(array $queue): void
@@ -132,13 +136,14 @@ class Parallel
 
     /**
      * @param Task $task
+     *
      * @return mixed
      */
     public function finishTask(Task $task): mixed
     {
         $response = $task->output();
 
-        // remove task from tasks 
+        // remove task from tasks
         unset($this->runningTasks[$task->getOrder()]);
 
         // return response

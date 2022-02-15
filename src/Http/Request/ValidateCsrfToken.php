@@ -9,18 +9,18 @@ namespace Framework\Http\Request;
 
 trait ValidateCsrfToken
 {
-	/**
-	 * @return bool
-	 */
-	public function validateCsrf(): bool
-	{
-		// validate token
-		$passed = hash_equals(\request()->post('_token') ?: '', $_SESSION['_csrf_token'] ?? randomString(40));
+    /**
+     * @return bool
+     */
+    public function validateCsrf(): bool
+    {
+        // validate token
+        $passed = hash_equals(\request()->post('_token') ?: '', $_SESSION['_csrf_token'] ?? randomString(40));
 
-		// unset token
-		unset($_SESSION['_csrf_token']);
+        // unset token
+        unset($_SESSION['_csrf_token']);
 
-		// return token validation passed status
-		return $passed;
-	}
+        // return token validation passed status
+        return $passed;
+    }
 }

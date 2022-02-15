@@ -26,8 +26,8 @@ use Framework\Debug\Debug;
 </section>
 <section class="flex flex-start md:flex-row flex-col-reverse h-full container mx-auto bg-gray-800">
     <debug-error-list class="block h-full w-full max-w-md divide-y divide-gray-700/50">
-        <?php foreach ($errors as $error) : ?>
-            <?php if ($error['type'] === 'Error') : ?>
+        <?php foreach ($errors as $error) { ?>
+            <?php if ($error['type'] === 'Error') { ?>
                 <div class="p-5 bg-gray-800 flex flex-start space-x-4">
                     <div class="w-20">
                         <span class="h-min inline-block px-2 py-1 border-dashed border-2 border-gray-700/30 rounded text-xs text-gray-600">
@@ -36,7 +36,7 @@ use Framework\Debug\Debug;
                     </div>
                     <?php content()->view('error/item', ['error' => $error['data']]); ?>
                 </div>
-            <?php elseif ($error['type'] === 'Exception') : ?>
+            <?php } elseif ($error['type'] === 'Exception') { ?>
                 <div class="p-5 bg-gray-800 flex flex-start space-x-4">
                     <div class="w-20">
                         <span class="h-min inline-block px-2 py-1 border-dashed border-2 border-gray-700/30 rounded text-xs text-gray-600">
@@ -45,18 +45,18 @@ use Framework\Debug\Debug;
                     </div>
                     <?php content()->view('exception/item', ['error' => $error['data']]); ?>
                 </div>
-            <?php endif; ?>
-        <?php endforeach; ?>
+            <?php } ?>
+        <?php } ?>
     </debug-error-list>
     <div class="relative flex items-stretch flex-grow overflow-y-hidden overflow-x-auto">
         <div class="sticky left-0 block bg-gray-800 border-r border-gray-700/70">
-            <?php foreach ($codepreview['lineNumbers'] as $lineNumber) : ?>
+            <?php foreach ($codepreview['lineNumbers'] as $lineNumber) { ?>
                 <p class="px-2 font-mono leading-loose select-none text-xs <?= $lineNumber === $codepreview['line'] ? 'bg-red-500/60' : ''; ?>">
                     <span class="text-gray-500">
                         <?= $lineNumber; ?>
                     </span>
                 </p>
-            <?php endforeach; ?>
+            <?php } ?>
         </div>
         <debug-code-preview class="block flex-grow" data-file="<?= clearInjections($codepreview['file']); ?>" data-line="<?= clearInjections($codepreview['line']); ?>">
             <pre><code class="language-php" style="white-space: pre; padding: 0px!important;"><?= $codepreview['snippet']; ?></code></pre>
@@ -72,11 +72,11 @@ use Framework\Debug\Debug;
                     <li>
                         <a href="#request" class="uppercase tracking-wider text-gray-500 text-xs font-bold">Request</a>
                     </li>
-                    <?php if (!empty(route()->getRoutes() ?? [])) : ?>
+                    <?php if (!empty(route()->getRoutes() ?? [])) { ?>
                         <li>
                             <a href="#routes" class="uppercase tracking-wider text-gray-500 text-xs font-bold">Routes</a>
                         </li>
-                    <?php endif; ?>
+                    <?php } ?>
                     <li>
                         <a href="#cookies" class="uppercase tracking-wider text-gray-500 text-xs font-bold">Cookies</a>
                     </li>
@@ -93,7 +93,7 @@ use Framework\Debug\Debug;
                 <div class="mt-3 grid grid-cols-1 gap-6">
                     <div>
                         <div class="text-lg font-semibold flex items-center gap-2">
-                            <span><?= request()->host() . request()->uri(); ?></span>
+                            <span><?= request()->host().request()->uri(); ?></span>
                             <div class="<?= http_response_code() >= 400 ? 'text-red-600 border-red-500/50' : 'text-green-600 border-green-500/50' ?> px-1.5 py-0.5 rounded-sm bg-opacity-20 border text-xs font-medium uppercase tracking-wider">
                                 <?= request()->method(); ?>
                             </div>
@@ -122,7 +122,7 @@ use Framework\Debug\Debug;
                             </dd>
                         </div>
                     </dl>
-                    <?php if (!empty(route()->getRoutes() ?? [])) : ?>
+                    <?php if (!empty(route()->getRoutes() ?? [])) { ?>
                         <a id="routes"></a>
                         <h2 class="font-bold text-xs uppercase tracking-wider">
                             Routes
@@ -130,22 +130,22 @@ use Framework\Debug\Debug;
                         <dl class="grid grid-cols-1 gap-2">
                             <div class="flex items-baseline gap-10">
                                 <dd class="px-2 flex-grow min-w-0 bg-gray-900/20">
-                                    <?php foreach (route()->getRoutes() ?? [] as $route) : ?>
+                                    <?php foreach (route()->getRoutes() ?? [] as $route) { ?>
                                         <div class="overflow-x-auto py-2 text-xs">
                                             <?= clearInjections($route['uri']); ?>
                                         </div>
-                                    <?php endforeach; ?>
+                                    <?php } ?>
                                 </dd>
                             </div>
                         </dl>
-                    <?php endif; ?>
+                    <?php } ?>
 
                     <a id="cookies"></a>
                     <h2 class="font-bold text-xs uppercase tracking-wider">
                         Cookies
                     </h2>
                     <dl class="grid grid-cols-1 gap-2 ">
-                        <?php foreach ($_COOKIE as $key => $value) : ?>
+                        <?php foreach ($_COOKIE as $key => $value) { ?>
                             <div class="flex items-baseline gap-10">
                                 <dt class="flex-none truncate w-32 text-sm"><?= clearInjections($key); ?></dt>
                                 <dd class="px-2 flex-grow min-w-0 bg-gray-900/20">
@@ -154,7 +154,7 @@ use Framework\Debug\Debug;
                                     </div>
                                 </dd>
                             </div>
-                        <?php endforeach; ?>
+                        <?php } ?>
                     </dl>
 
                     <a id="session"></a>
@@ -162,7 +162,7 @@ use Framework\Debug\Debug;
                         Session
                     </h2>
                     <dl class="grid grid-cols-1 gap-2 ">
-                        <?php foreach ($_SESSION as $key => $value) : ?>
+                        <?php foreach ($_SESSION as $key => $value) { ?>
                             <div class="flex items-baseline gap-10">
                                 <dt class="flex-none truncate w-32 text-sm"><?= clearInjections($key); ?></dt>
                                 <dd class="px-2 flex-grow min-w-0 bg-gray-900/20">
@@ -171,15 +171,15 @@ use Framework\Debug\Debug;
                                     </div>
                                 </dd>
                             </div>
-                        <?php endforeach; ?>
+                        <?php } ?>
                     </dl>
                 </div>
             </section>
         </div>
     </div>
 </section>
-<?php foreach ($data as $key => $item) : ?>
-    <?php if (count($item) > 0) : ?>
+<?php foreach ($data as $key => $item) { ?>
+    <?php if (count($item) > 0) { ?>
         <section class="px-10 pt-10 pb-8 space-y-4 relative container mx-auto bg-gray-800">
             <div class="z-10 relative -mt-14 flex items-center justify-center">
                 <span class="px-2 py-1 bg-gray-900/70 whitespace-nowrap rounded-lg shadow-lg text-sm">
@@ -187,16 +187,16 @@ use Framework\Debug\Debug;
                 </span>
             </div>
 
-            <?php foreach ($item as $value) : ?>
+            <?php foreach ($item as $value) { ?>
                 <div class="bg-gray-900/20 rounded-lg overflow-x-hidden">
                     <pre><code class="language-sql text-xs"><?php dd($value); ?></code></pre>
                 </div>
-            <?php endforeach; ?>
+            <?php } ?>
         </section>
-    <?php endif; ?>
-<?php endforeach; ?>
+    <?php } ?>
+<?php } ?>
 
-<?php if (count($queries) > 0) : ?>
+<?php if (count($queries) > 0) { ?>
     <section class="px-10 pt-10 pb-8 space-y-4 relative container mx-auto bg-gray-800">
         <div class="z-10 relative -mt-14 flex items-center justify-center">
             <span class="px-2 py-1 bg-gray-900/70 whitespace-nowrap rounded-lg shadow-lg text-sm">
@@ -204,7 +204,7 @@ use Framework\Debug\Debug;
             </span>
         </div>
 
-        <?php foreach ($queries as $query) : ?>
+        <?php foreach ($queries as $query) { ?>
             <div class="bg-gray-900/20 rounded-lg overflow-x-hidden">
                 <span class="divide-x divide-gray-600/10 inline-flex items-center relative w-full">
                     <span class="px-2 py-1 space-x-1 inline-flex items-center bg-gray-900 rounded-tl-lg text-sm">
@@ -219,24 +219,24 @@ use Framework\Debug\Debug;
                     <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-gray-500 whitespace-nowrap overflow-x-auto">
                         <?= clearInjections($query['effectedRows']); ?> Row(s)
                     </span>
-                    <?php if ($query['failed']) : ?>
+                    <?php if ($query['failed']) { ?>
                         <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-red-500 whitespace-nowrap overflow-x-auto">
                             <?= clearInjections($query['error']); ?>
                         </span>
-                    <?php endif; ?>
-                    <?php if (!empty($query['bindings'])) : ?>
+                    <?php } ?>
+                    <?php if (!empty($query['bindings'])) { ?>
                     <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-gray-500 whitespace-nowrap overflow-x-auto">
-                        Bindings: '<?= implode('\', \'',clearInjections($query['bindings'])); ?>'
+                        Bindings: '<?= implode('\', \'', clearInjections($query['bindings'])); ?>'
                     </span>
-                    <?php endif; ?>
+                    <?php } ?>
                 </span>
                 <pre><code class="language-sql text-xs"><?= clearInjections($query['query']); ?></code></pre>
             </div>
-        <?php endforeach; ?>
+        <?php } ?>
     </section>
-<?php endif; ?>
+<?php } ?>
 
-<?php if (count($requests) > 0) : ?>
+<?php if (count($requests) > 0) { ?>
     <section class="px-10 pt-10 pb-8 space-y-4 relative container mx-auto bg-gray-800">
         <div class="z-10 relative -mt-14 flex items-center justify-center">
             <span class="px-2 py-1 bg-gray-900/70 whitespace-nowrap rounded-lg shadow-lg text-sm">
@@ -244,7 +244,7 @@ use Framework\Debug\Debug;
             </span>
         </div>
 
-        <?php foreach ($requests as $request) : ?>
+        <?php foreach ($requests as $request) { ?>
             <div class="bg-gray-900/20 rounded-lg overflow-x-hidden">
                 <span class="divide-x divide-gray-600/10 inline-flex items-center relative w-full">
                     <span class="px-2 py-1 space-x-1 inline-flex items-center bg-gray-900 text-gray-500 rounded-tl-lg text-sm">
@@ -256,17 +256,17 @@ use Framework\Debug\Debug;
                     <span class="px-2 py-1 space-x-1 inline-flex items-center bg-gray-900 text-gray-500 text-sm">
                         Retries <?= clearInjections($request->retries); ?>
                     </span>
-                    <?php if ($request->error) : ?>
+                    <?php if ($request->error) { ?>
                         <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-red-500 whitespace-nowrap overflow-x-auto">
                             <?= clearInjections($request->error); ?>
                         </span>
-                    <?php endif; ?>
+                    <?php } ?>
                 </span>
                 <pre><code class="language-sql text-xs"><?= Debug::formatCurlRequest($request->url, $request->requestHeaders); ?></code></pre>
             </div>
-        <?php endforeach; ?>
+        <?php } ?>
     </section>
-<?php endif; ?>
+<?php } ?>
 
 <script>
     document.addEventListener('DOMContentLoaded', (event) => {
