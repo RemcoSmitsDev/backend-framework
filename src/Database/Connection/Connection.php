@@ -3,6 +3,7 @@
 namespace Framework\Database\Connection;
 
 use Framework\Database\QueryBuilder\QueryBuilder;
+use Framework\Debug\Debug;
 use Framework\Event\Event;
 use PDOStatement;
 use PDO;
@@ -104,7 +105,7 @@ class Connection
 			);
 		} catch (\Throwable $th) {
 			// throw error this will get catch with the debug page
-			throw $th;
+			Debug::add('errors', $th);
 
 			// set failed to true
 			$this->failed = true;
