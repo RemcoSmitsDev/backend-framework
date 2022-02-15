@@ -2,8 +2,8 @@
 
 namespace Framework\Model;
 
-use Framework\Database\Database;
 use Exception;
+use Framework\Database\Database;
 
 abstract class BaseModel extends Database
 {
@@ -26,23 +26,23 @@ abstract class BaseModel extends Database
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1) . 'ie';
+            $table = substr($table, 0, -1).'ie';
         }
 
         // set table name
-        $this->from = $this->table ?? $table . 's';
+        $this->from = $this->table ?? $table.'s';
 
         // call database constructor
         parent::__construct();
     }
 
     /**
-     * @param mixed $find
+     * @param mixed       $find
      * @param string|null $key
-     * 
-     * @return mixed
-     * 
+     *
      * @throws Exception
+     *
+     * @return mixed
      */
     public function find(mixed $find, ?string $key = null): mixed
     {

@@ -7,12 +7,12 @@ use Generator;
 class SocketConnection
 {
     /**
-     * @var integer
+     * @var int
      */
     protected int $timeoutSeconds;
 
     /**
-     * @var integer
+     * @var int
      */
     protected int $timeoutMicroseconds;
 
@@ -55,7 +55,7 @@ class SocketConnection
         // get sockets
         return [
             new self($socketToParent),
-            new self($socketToChild)
+            new self($socketToChild),
         ];
     }
 
@@ -73,6 +73,7 @@ class SocketConnection
 
     /**
      * @param string $payload
+     *
      * @return $this
      */
     public function write(string $payload): self

@@ -7,51 +7,48 @@ use Framework\Interfaces\Debug\RayInterface;
 class Ray implements RayInterface
 {
     /**
-     * keep track of default propery values
+     * keep track of default propery values.
      */
     private ?array $defaultValues;
 
     /**
-     * Keep track of debug type (for the ui in the app)
+     * Keep track of debug type (for the ui in the app).
      */
     public string $type = 'normal';
 
     /**
-     * green | orange | red
+     * green | orange | red.
      */
     private string $color = '';
 
     /**
-     * Title for inside ray app
+     * Title for inside ray app.
      */
     private string $title = '';
 
     /**
-     * Data that will be displayed
+     * Data that will be displayed.
      */
     private mixed $data = [];
 
     /**
-     * Show an fresh page
+     * Show an fresh page.
      */
     private bool $fresh = false;
 
     /**
-     * This will be displayed when measure was ended
+     * This will be displayed when measure was ended.
      */
     public array $measure = [
-        'startTime' => 0,
-        'endTime' => 0,
+        'startTime'          => 0,
+        'endTime'            => 0,
         'totalExecutionTime' => 0,
-        'startMemory' => 0,
-        'peekMemory' => 0,
-        'totalMemoryUsage' => 0,
-        'done' => false
+        'startMemory'        => 0,
+        'peekMemory'         => 0,
+        'totalMemoryUsage'   => 0,
+        'done'               => false,
     ];
 
-    /**
-     * 
-     */
     protected array $backtrace = [];
 
     public function __construct()
@@ -60,9 +57,10 @@ class Ray implements RayInterface
     }
 
     /**
-     * This method will set the type
+     * This method will set the type.
      *
      * @param string $type
+     *
      * @return self
      */
     public function type(string $type): self
@@ -75,9 +73,10 @@ class Ray implements RayInterface
     }
 
     /**
-     * This method will set data to send to ray app
+     * This method will set data to send to ray app.
      *
      * @param array $data
+     *
      * @return self
      */
     public function data(array $data): self
@@ -93,7 +92,7 @@ class Ray implements RayInterface
     }
 
     /**
-     * This method will trigger fresh app
+     * This method will trigger fresh app.
      *
      * @return self
      */
@@ -105,7 +104,7 @@ class Ray implements RayInterface
     }
 
     /**
-     * This method start/stop measure
+     * This method start/stop measure.
      *
      * @return self
      */
@@ -121,7 +120,7 @@ class Ray implements RayInterface
             'MB',
             'GB',
             'TB',
-            'PB'
+            'PB',
         ];
 
         // set measure time
@@ -145,7 +144,7 @@ class Ray implements RayInterface
                     ))
                 ),
                 2
-            ) . ' ' . $memoryUnit[$x];
+            ).' '.$memoryUnit[$x];
         }
 
         // return self
@@ -153,9 +152,10 @@ class Ray implements RayInterface
     }
 
     /**
-     * $this method will set the color
+     * $this method will set the color.
      *
      * @param string $color
+     *
      * @return self
      */
     public function color(string $color): self
@@ -168,9 +168,10 @@ class Ray implements RayInterface
     }
 
     /**
-     * This method will set the title
+     * This method will set the title.
      *
      * @param string $title
+     *
      * @return self
      */
     public function title(string $title): self
@@ -199,39 +200,39 @@ class Ray implements RayInterface
 
         // make data to send to application
         $debugData = [
-            'id' => uniqid(strval(time() + random_int(1, 10000))),
-            'type' => $this->type,
+            'id'    => uniqid(strval(time() + random_int(1, 10000))),
+            'type'  => $this->type,
             'fresh' => $this->fresh,
             'title' => $this->title,
             'color' => $this->color,
-            'data' => [
-                'found' => !empty($this->data),
+            'data'  => [
+                'found'   => !empty($this->data),
                 'request' => [
-                    'GET' => (array) request()->get(),
+                    'GET'  => (array) request()->get(),
                     'POST' => (array) request()->post(),
-                    'FILE' => (array) request()->file()
+                    'FILE' => (array) request()->file(),
                 ],
                 'original' => $this->data,
-                'dd' => [],
-                'xdebug' => []
+                'dd'       => [],
+                'xdebug'   => [],
             ],
-            'fileName' => isset($caller['file']) ? basename($caller['file']) . ':' . $caller['line'] : '',
-            'time' => $date->format('H:i:s'),
-            'trace' => [
+            'fileName' => isset($caller['file']) ? basename($caller['file']).':'.$caller['line'] : '',
+            'time'     => $date->format('H:i:s'),
+            'trace'    => [
                 'found' => !empty($this->backtrace),
-                'data' => $this->backtrace
+                'data'  => $this->backtrace,
             ],
-            'measure' => $this->measure,
+            'measure'        => $this->measure,
             'enableAutoShow' => app()->getRaySettings()['enableAutoShow'],
-            'host' => request()->server('HTTP_HOST')
+            'host'           => request()->server('HTTP_HOST'),
         ];
 
         // loop trough data and format as dump
         foreach ($debugData['data']['original'] as $value) {
             ob_start();
-            echo "<pre>";
+            echo '<pre>';
             print_r($value);
-            echo "</pre>";
+            echo '</pre>';
             $debugData['data']['dd'][] = $this->type === 'query' ? htmlspecialchars_decode(ob_get_clean()) : ob_get_clean();
 
             // check if xdebug var_dump function exists
@@ -265,23 +266,24 @@ class Ray implements RayInterface
     }
 
     /**
-     * This function will send request to ray application
-     * 
+     * This function will send request to ray application.
+     *
      * @return self
      */
     protected function send(): self
     {
         // send curl request without waiting for response
-        exec("curl --location --request POST 'http://localhost:9890' -d '" . base64_encode(json_encode($this->buildDebugArray())) . "' > /dev/null &");
+        exec("curl --location --request POST 'http://localhost:9890' -d '".base64_encode(json_encode($this->buildDebugArray()))."' > /dev/null &");
 
         // return self
         return $this;
     }
 
     /**
-     * This function will format error file to lines with numbers
+     * This function will format error file to lines with numbers.
      *
      * @param array $error
+     *
      * @return string
      */
     private function getErrorFileLines(array $error)
@@ -289,13 +291,14 @@ class Ray implements RayInterface
         // get code preview
         [$snippet, $lineNumbers, $line, $path] = Debug::getCodePreview($error['file'] ?? '', intval($error['line']));
 
-        return '<div class="line-numbers">' . implode('<br>', $lineNumbers) . '</div><div class="code">' . $snippet . '</div>';
+        return '<div class="line-numbers">'.implode('<br>', $lineNumbers).'</div><div class="code">'.$snippet.'</div>';
     }
 
     /**
-     * This will reset all class properties
+     * This will reset all class properties.
      *
-     * @param boolean $canResetMeasure
+     * @param bool $canResetMeasure
+     *
      * @return void
      */
     private function reset(bool $canResetMeasure = false)

@@ -6,9 +6,9 @@ use Framework\Database\QueryBuilder\QueryBuilder;
 
 class RawQuery
 {
-	public function __construct(
-		private QueryBuilder $builder,
-		private string $query
-	) {
-	}
+    public function __construct(
+        private QueryBuilder $builder,
+        private string $query
+    ) {
+    }
 }

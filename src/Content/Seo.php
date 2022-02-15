@@ -5,18 +5,20 @@ namespace Framework\Content;
 final class Seo
 {
     /**
-     * @var string $description Keeps track of description
+     * @var string Keeps track of description
      */
     public string $description = '';
 
     /**
-     * @var string $imageURL Keeps track of image url
+     * @var string Keeps track of image url
      */
     public string $imageURL = '';
 
     /**
-     * Set the description for seo tags
+     * Set the description for seo tags.
+     *
      * @param string $description
+     *
      * @return self
      */
     public function description(string $description): self
@@ -27,8 +29,10 @@ final class Seo
     }
 
     /**
-     * Set image url for seo tags
+     * Set image url for seo tags.
+     *
      * @param string $imageURL
+     *
      * @return self
      */
     public function image(string $imageURL): self
@@ -39,7 +43,8 @@ final class Seo
     }
 
     /**
-     * Returns description
+     * Returns description.
+     *
      * @return string
      */
     public function getDescription(): string
@@ -48,7 +53,8 @@ final class Seo
     }
 
     /**
-     * Return image url
+     * Return image url.
+     *
      * @return string
      */
     public function getImageURL(): string

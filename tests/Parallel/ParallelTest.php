@@ -12,18 +12,19 @@ class ParallelTest extends TestCase
 {
     public function testParallelResultEquals()
     {
-        if(strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'){
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             $this->expectException(Exception::class);
         }
-        
-        $parallel = new Parallel();
 
+        $parallel = new Parallel();
 
         $result = $parallel->run(function () {
             sleep(3);
+
             return 1;
         }, function () {
             sleep(2);
+
             return 0;
         });
 

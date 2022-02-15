@@ -2,27 +2,28 @@
 
 namespace Framework;
 
-use Framework\Event\DefaultEvents\QueryEvent;
-use Framework\Event\DefaultEvents\ErrorEvent;
+use Exception;
 use Framework\Debug\Debug;
+use Framework\Event\DefaultEvents\ErrorEvent;
+use Framework\Event\DefaultEvents\QueryEvent;
 use Framework\Event\Event;
 use Framework\Http\Api;
-use Exception;
 
 final class App
 {
     /**
-     * @var boolean
+     * @var bool
      */
     private static bool $isStarted = false;
 
     /**
      * @static
-     * @var array $raySettings
+     *
+     * @var array
      */
     private static array $raySettings = [
-        'enabled' => false,
-        'enableAutoShow' => true
+        'enabled'        => false,
+        'enableAutoShow' => true,
     ];
 
     /**
@@ -31,7 +32,8 @@ final class App
     private static $properties = [];
 
     /**
-     * This function will start all needed functions
+     * This function will start all needed functions.
+     *
      * @return void
      */
     public static function start(): void
@@ -56,7 +58,7 @@ final class App
         // register default events
         Event::listen([
             'database-query' => QueryEvent::class,
-            'error' => ErrorEvent::class
+            'error'          => ErrorEvent::class,
         ]);
 
         // set timezone
@@ -77,7 +79,8 @@ final class App
     }
 
     /**
-     * This function will set all needed security headers
+     * This function will set all needed security headers.
+     *
      * @return void
      */
     private static function setSecurityHeaders(): void
@@ -93,7 +96,8 @@ final class App
     }
 
     /**
-     * This function will set all secure session headers and start session
+     * This function will set all secure session headers and start session.
+     *
      * @return void
      */
     private static function setSession(): void
@@ -112,7 +116,8 @@ final class App
     }
 
     /**
-     * This function checks app state(local|live) based on host
+     * This function checks app state(local|live) based on host.
+     *
      * @return void
      */
     private static function checkAppState(): void
@@ -120,11 +125,11 @@ final class App
         // define localhost ips to check if is development
         $whitelistLocalIps = [
             '127.0.0.1',
-            '::1'
+            '::1',
         ];
 
         // kijk of de server local is zet dan development aan
-        define('IS_DEVELOPMENT_MODE', in_array(gethostbyname(request()->server('REMOTE_ADDR', '')), $whitelistLocalIps) || in_array(getHostByName(getHostName()), $whitelistLocalIps));
+        define('IS_DEVELOPMENT_MODE', in_array(gethostbyname(request()->server('REMOTE_ADDR', '')), $whitelistLocalIps) || in_array(gethostbyname(gethostname()), $whitelistLocalIps));
 
         // define host om in de config class te kunnen gebruiken
         define('HTTP_HOST', request()->server('HTTP_HOST', ''));
@@ -134,8 +139,10 @@ final class App
     }
 
     /**
-     * This function will store an instance of all classes
+     * This function will store an instance of all classes.
+     *
      * @param ...object $classes
+     *
      * @return self
      */
     public static function setInstance(object ...$classes): self
@@ -147,13 +154,14 @@ final class App
         }
 
         // return self
-        return new self;
+        return new self();
     }
 
     /**
-     * This method will get the container property instnace
+     * This method will get the container property instnace.
      *
-     * @param  object|string $class
+     * @param object|string $class
+     *
      * @return ?object
      */
     public static function getInstance(object|string $class): ?object
@@ -162,14 +170,15 @@ final class App
     }
 
     /**
-     * This function will enable ray
+     * This function will enable ray.
+     *
      * @return void
      */
     public static function enableRay(bool $enableAutoShow = true): void
     {
         self::$raySettings = [
-            'enabled' => true,
-            'enableAutoShow' => $enableAutoShow
+            'enabled'        => true,
+            'enableAutoShow' => $enableAutoShow,
         ];
     }
 

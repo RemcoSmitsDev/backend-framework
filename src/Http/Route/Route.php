@@ -2,9 +2,9 @@
 
 namespace Framework\Http\Route;
 
-use Framework\Interfaces\Http\RoutesInterface;
-use Exception;
 use Closure;
+use Exception;
+use Framework\Interfaces\Http\RoutesInterface;
 
 class Route extends Router implements RoutesInterface
 {
@@ -16,20 +16,23 @@ class Route extends Router implements RoutesInterface
         'post',
         'put',
         'patch',
-        'delete'
+        'delete',
     ];
 
     /**
-     * Call possible request route methods
+     * Call possible request route methods.
+     *
      * @param string $name
-     * @param array $arguments
-     * @return self
+     * @param array  $arguments
+     *
      * @throws Exception
+     *
+     * @return self
      */
     public function __call(string $name, array $arguments)
     {
         if (!in_array($name, $this->allowedMethods)) {
-            throw new Exception('The method: "' . $name . '" is not an valid method!');
+            throw new Exception('The method: "'.$name.'" is not an valid method!');
         }
 
         return $this->match(strtoupper($name), ...$arguments);
@@ -37,10 +40,12 @@ class Route extends Router implements RoutesInterface
 
     /**
      * match Route
-     * match more request methods for one route
-     * @param string $methods  '|' separator
-     * @param string $uri
+     * match more request methods for one route.
+     *
+     * @param string        $methods '|' separator
+     * @param string        $uri
      * @param Closure|array $action
+     *
      * @return self
      */
     public function match(string $methods, string $uri, Closure|array $action): self
@@ -50,8 +55,10 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * Middleware function
+     * Middleware function.
+     *
      * @param bool|string|array $validateRules
+     *
      * @return Route
      */
     public function middleware(...$validateRules): Route
@@ -60,7 +67,7 @@ class Route extends Router implements RoutesInterface
         // update route middlewares
         $this->middlewares = array_unique([
             ...$this->middlewares,
-            ...$validateRules
+            ...$validateRules,
         ]);
 
         // return self
@@ -69,10 +76,13 @@ class Route extends Router implements RoutesInterface
 
     /**
      * Prefix function
-     * set group prefix
+     * set group prefix.
+     *
      * @param string $prefix
-     * @return self
+     *
      * @throws Exception
+     *
+     * @return self
      */
     public function prefix(string $prefix): self
     {
@@ -82,17 +92,20 @@ class Route extends Router implements RoutesInterface
         }
 
         // make prefix
-        $this->prefix = str_replace('//', '/', '/' . $this->groupPrefix . '/' . trim($prefix, '/'));
+        $this->prefix = str_replace('//', '/', '/'.$this->groupPrefix.'/'.trim($prefix, '/'));
 
         return $this;
     }
 
     /**
      * Group function
-     * Group routes with prefix or middlewares
+     * Group routes with prefix or middlewares.
+     *
      * @param Closure $action
-     * @return void
+     *
      * @throws Exception
+     *
+     * @return void
      */
     public function group(Closure $action): void
     {
@@ -106,12 +119,12 @@ class Route extends Router implements RoutesInterface
         // merge middlewares met group middlewares
         $this->groupMiddlewares = [
             ...$this->middlewares,
-            ...$this->groupMiddlewares
+            ...$this->groupMiddlewares,
         ];
 
         // check of er wel group middleware / prefix is
         if (empty($this->groupMiddlewares) && empty($this->groupPrefix)) {
-            throw new Exception("You must use a prefix or middleware to use `group` method!");
+            throw new Exception('You must use a prefix or middleware to use `group` method!');
         }
 
         // call callback function
@@ -134,10 +147,13 @@ class Route extends Router implements RoutesInterface
 
     /**
      * pattern function
-     * Give a route a name
+     * Give a route a name.
+     *
      * @param array $patterns
-     * @return self
+     *
      * @throws Exception
+     *
+     * @return self
      */
     public function pattern(array $patterns): self
     {
@@ -160,10 +176,13 @@ class Route extends Router implements RoutesInterface
 
     /**
      * pattern function
-     * Give a route an name to access based on the given name
+     * Give a route an name to access based on the given name.
+     *
      * @param string $routeName
-     * @return self
+     *
      * @throws Exception
+     *
+     * @return self
      */
     public function name(string $routeName): self
     {
@@ -188,11 +207,14 @@ class Route extends Router implements RoutesInterface
 
     /**
      * getRouteByName function
-     * get a routeURL by given name
+     * get a routeURL by given name.
+     *
      * @param string $routeName
-     * @param array $params
-     * @return string
+     * @param array  $params
+     *
      * @throws Exception
+     *
+     * @return string
      */
     public function getRouteByName(string $routeName, array $params = []): string
     {
@@ -210,7 +232,8 @@ class Route extends Router implements RoutesInterface
 
     /**
      * getCurrentRoute function
-     * get current route
+     * get current route.
+     *
      * @return array
      */
     public function getCurrentRoute(): array
