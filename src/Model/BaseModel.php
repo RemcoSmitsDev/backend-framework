@@ -2,10 +2,10 @@
 
 namespace Framework\Model;
 
-use Framework\Database\QueryBuilder\QueryBuilder;
-use JsonSerializable;
 use ArrayObject;
 use Exception;
+use Framework\Database\QueryBuilder\QueryBuilder;
+use JsonSerializable;
 use stdClass;
 
 /**
@@ -47,12 +47,12 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
     protected string $primaryKey = 'id';
 
     /**
-     * @var string $table
+     * @var string
      */
     protected string $table = '';
 
     /**
-     * @var object|null $original
+     * @var object|null
      */
     private ?object $original = null;
 
@@ -65,15 +65,14 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
     }
 
     /**
-     * @param mixed $find
+     * @param mixed       $find
      * @param string|null $key
-     * @return mixed
-     * 
+     *
+     * @throws Exception
      * @throws Exception
      *
      * @return mixed
-     * 
-     * @throws Exception
+     * @return mixed
      */
     public function find(mixed $find, ?string $key = null): mixed
     {
@@ -82,8 +81,9 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
     /**
      * @param QueryBuilder $builder
-     * @param string $field
-     * @param mixed $value
+     * @param string       $field
+     * @param mixed        $value
+     *
      * @return object|null
      */
     public function routeModelBinding(QueryBuilder $builder, string $field, mixed $value): ?object
@@ -93,6 +93,7 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
     /**
      * @param object|null $original
+     *
      * @return void
      */
     public function setOriginal(?object $original): void
@@ -133,7 +134,10 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
     /**
      * @return string
+     *
      * @throws ReflectionException
+     *
+     * @return string
      */
     private function getTableFromModel(): string
     {
@@ -151,7 +155,7 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1) . 'ie';
+            $table = substr($table, 0, -1).'ie';
         }
 
         // set table name
@@ -160,7 +164,8 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
     /**
      * @param string $name
-     * @param mixed $value
+     * @param mixed  $value
+     *
      * @return void
      */
     public function __set(string $name, mixed $value): void
@@ -174,6 +179,7 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
     /**
      * @param string $name
+     *
      * @return bool
      */
     public function __isset(string $name): bool
@@ -183,6 +189,7 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
     /**
      * @param string $name
+     *
      * @return mixed
      */
     public function __get(string $name): mixed
@@ -192,14 +199,15 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
 
     /**
      * @param string $name
-     * @param array $arguments
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function __call(string $name, array $arguments = []): mixed
     {
         return call_user_func([
             $this->query()->table($this->getTableFromModel()),
-            $name
+            $name,
         ], ...$arguments);
     }
 
