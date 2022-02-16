@@ -11,6 +11,7 @@ use ReflectionFunction;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
+use ReflectionUnionType;
 
 class Container
 {
@@ -20,22 +21,36 @@ class Container
     private static array $arguments = [];
 
     /**
-     * Get all parameters from class method reflection.
+     * @param array<string,mixed> $data
+     * @return self
+     */
+    public static function setData(array $data): self
+    {
+        self::$arguments = array_merge(self::$arguments, $data);
+
+        return new self;
+    }
+
+    /**
+     * Get all parameters from class method reflection
      *
-     * @param callable            $callback
-     * @param array<string,mixed> $arguments
-     *
+     * @param  callable               $callback
+     * @param  array<string,mixed>    $arguments
+     * @param  array<int,mixed>       $parameters
      * @return mixed
      */
-    public static function handleClosure(callable $callback, array $arguments = []): mixed
+    public static function handleClosure(callable $callback, array $arguments = [], array &$parameters = []): mixed
     {
         // make arguments global
-        self::$arguments = $arguments;
+        self::$arguments = array_merge(self::$arguments, $arguments);
+
+        // get parameters
+        $parameters = self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)));
 
         // return parameters bij reflection of closure function
         return call_user_func(
             $callback,
-            ...self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)))
+            ...$parameters
         );
     }
 
@@ -55,8 +70,28 @@ class Container
     public static function handleClassMethod(object|string $class, string $method, array $arguments = [], ?object &$classInstance = null): mixed
     {
         // make arguments global
-        self::$arguments = $arguments;
+        self::$arguments = array_merge(self::$arguments, $arguments);
 
+        // validate class
+        [$classInstance, $reflectionMethod] = self::validateClassMethod($class, $method);
+
+        // call method with parameters and return response
+        return call_user_func(
+            [$classInstance, $method],
+            ...self::getParameters($reflectionMethod)
+        );
+    }
+
+    /**
+     * @param object|string $class
+     * @param string $method
+     * @return array<object,ReflectionMethod>
+     * 
+     * @throws Exception
+     * @throws ReflectionException
+     */
+    public static function validateClassMethod(object|string $class, string $method): array
+    {
         // checking if the class exists
         if (!class_exists(is_object($class) ? $class::class : $class)) {
             throw new Exception("Class not found {$class}!");
@@ -76,18 +111,17 @@ class Container
         );
 
         // make reflection
-        $reflectMethod = new ReflectionMethod($classInstance, $method);
+        $reflectionMethod = new ReflectionMethod($classInstance, $method);
 
         // check if method is public
-        if (!$reflectMethod->isPublic()) {
+        if (!$reflectionMethod->isPublic()) {
             throw new ReflectionException("The method `{$method}` on `{$class}` must be public!");
         }
 
-        // call method with parameters and return response
-        return call_user_func(
-            [$classInstance, $method],
-            ...self::getParameters($reflectMethod)
-        );
+        return [
+            $classInstance,
+            $reflectionMethod
+        ];
     }
 
     /**
@@ -119,7 +153,7 @@ class Container
             $type = $parameter->getType();
 
             // check if is buildin type(array, string, int, float, null)
-            if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {
+            if ($type instanceof ReflectionUnionType || $type instanceof ReflectionNamedType && $type->isBuiltin()) {
                 // handle buldint typed parameters
                 self::handleAddDepenciesFromArguments($parameter, $dependencies);
 
@@ -177,9 +211,16 @@ class Container
             return;
         }
 
+        if ($parameter->isOptional() && !$foundArgument) {
+            // append dependency
+            $dependencies[] = $parameter->getDefaultValueConstantName();
+
+            return;
+        }
+
         // when the param does not exists inside the given arguments
         if (!$foundArgument) {
-            throw new InvalidArgumentException('You must have a argument value inside the `handleClassMethod` or `handleClosure` with the name: `'.$parameter->getName().'`');
+            throw new InvalidArgumentException('You must have a argument value inside the `handleClassMethod` or `handleClosure` with the name: `' . $parameter->getName() . '`');
         }
 
         // add dependency
