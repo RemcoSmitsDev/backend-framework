@@ -101,11 +101,34 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
     }
 
     /**
+     * This will set the table to the model
+     * 
+     * @param string $table
+     * @return string
+     */
+    public function setTable(string $table): string
+    {
+        return $this->table = $table;
+    }
+
+    /**
+     * This will get the primary key
+     * 
      * @return string
      */
     public function getPrimaryKey(): string
     {
         return $this->primaryKey;
+    }
+
+    /**
+     * This will get the table name
+     * 
+     * @return string
+     */
+    public function getTable(): string
+    {
+        return $this->getTableFromModel();
     }
 
     /**
@@ -132,7 +155,7 @@ abstract class BaseModel extends ArrayObject implements JsonSerializable
         }
 
         // set table name
-        return $this->table = $this->table ?? $table . 's';
+        return $this->setTable($table . 's');
     }
 
     /**
