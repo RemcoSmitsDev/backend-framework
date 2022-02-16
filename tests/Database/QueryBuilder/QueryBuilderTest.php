@@ -3,7 +3,6 @@
 namespace Framework\tests\Database\QueryBuilder;
 
 use Framework\Database\Connection\Connection;
-use Framework\Database\Database;
 use Framework\Database\QueryBuilder\QueryBuilder;
 use Framework\Database\QueryBuilder\SubQuery\SubQuery;
 use PHPUnit\Framework\TestCase;
