@@ -18,14 +18,14 @@ class QueryBuilderTest extends TestCase
         $this->connection = new Connection(databaseName: 'db_test');
     }
 
-    public function testSetTable()
+    public function test_set_table()
     {
         $this->assertInstanceOf(QueryBuilder::class, $builder = QueryBuilder::new($this->connection)->table('users'));
 
         $this->assertEquals('users', $builder->from);
     }
 
-    public function testSetColumns()
+    public function test_set_columns()
     {
         $this->assertInstanceOf(QueryBuilder::class, $builder = QueryBuilder::new($this->connection)->table('users', ['id', 'username']));
 
@@ -36,7 +36,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals(['`email`', '`id`', '`username`'], $builder->columns);
     }
 
-    public function testSetSubSelectColumn()
+    public function test_set_sub_select_column()
     {
         $this->assertInstanceOf(
             QueryBuilder::class,
