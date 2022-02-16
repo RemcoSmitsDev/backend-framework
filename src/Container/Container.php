@@ -42,7 +42,7 @@ class Container
     public static function handleClosure(callable $callback, array $arguments = [], array &$parameters = []): mixed
     {
         // make arguments global
-        self::$arguments = array_merge(self::$arguments, $arguments);
+        self::$arguments = $arguments;
 
         // get parameters
         $parameters = self::getParameters(new ReflectionFunction(Closure::fromCallable($callback)));
@@ -70,7 +70,7 @@ class Container
     public static function handleClassMethod(object|string $class, string $method, array $arguments = [], ?object &$classInstance = null): mixed
     {
         // make arguments global
-        self::$arguments = array_merge(self::$arguments, $arguments);
+        self::$arguments = $arguments;
 
         // validate class
         [$classInstance, $reflectionMethod] = self::validateClassMethod($class, $method);
