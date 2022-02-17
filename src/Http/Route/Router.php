@@ -179,6 +179,11 @@ class Router
         // anders is '/' -> ''
         $uri = rtrim($uri, '/') ?: $uri;
 
+        // when GET is inside methods and HEAD is not
+        if (in_array('GET', $methods) && !in_array('HEAD', $methods)) {
+            $methods[] = 'HEAD';
+        }
+
         // voeg de route toe aan bij het request type
         $this->routes[] = [
             'uri' => $uri,

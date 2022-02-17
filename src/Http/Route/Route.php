@@ -7,12 +7,12 @@ use Exception;
 use Framework\Interfaces\Http\RoutesInterface;
 
 /**
- * @method get(string $uri, Closure|array $action)
- * @method post(string $uri, Closure|array $action)
- * @method put(string $uri, Closure|array $action)
- * @method patch(string $uri, Closure|array $action)
- * @method delete(string $uri, Closure|array $action)
- * @method options(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route get(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route post(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route put(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route patch(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route delete(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route options(string $uri, Closure|array $action)
  * 
  * @see \Framework\Http\Route\Route
  */
@@ -263,7 +263,7 @@ class Route extends Router implements RoutesInterface
      */
     public function getCurrentRoute(): array
     {
-        return $this->currentRoute ?: ['name' => '', 'route' => '', 'method' => '', 'middlewares' => [], 'patterns' => []];
+        return $this->currentRoute ?: ['name' => '', 'route' => '', 'methods' => [], 'middlewares' => [], 'patterns' => []];
     }
 
     /**
