@@ -2,8 +2,8 @@
 
 [![PHP tests](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml)
 
-Lightweight PHP Backend Framework. Includes fast and secure Database QueryBuilder,
-Advanced Routing with dynamic routes([middlewares](#route-middlewares), [groups](#route-group), [prefixes](#route-prefix), [dynamic routing](#dynamic-routing), [named routes](#named-routes))
+Lightweight PHP Backend Framework. Includes fast and secure [Database QueryBuilder](#querybuilder),
+Advanced Routing with [dynamic routing](#dynamic-routing) ([middlewares](#route-middlewares), [groups](#route-group), [prefixes](#route-prefix), [named routes](#named-routes))
 
 To setup this PHP Backend Framework you need to install this package with composer:
 
@@ -14,9 +14,11 @@ composer require remcosmits/backend-framework
 ```
 
 - [Setup](#setup)
- - [Routing](#routing) 
+- [Routing](#routing) 
+- [Request validator](#request-validate-methods)
 - [Response](#response)
-- [Database](#querybuilder)
+- [Querybuilder](#querybuilder)
+- [Model](#model)
 
 #### Setup
 
@@ -319,7 +321,7 @@ class YourCustomRuleClass extends CustomRule {
 ```
 
 `request()->csrf()` Generates a csrf token that you can validate with `request()->validateCsrf()`. You want to use this with every request to your backend that is not an `GET` request.
-```php
+```html
 <input type="hidden" name="_token" value="<?= request()->csrf(); ?>">
 ```
 
@@ -371,6 +373,9 @@ HTTP/1.1 200 OK
 `response()->exit()` Will use the `exit` function from php when response was send
 ```php
 response()->json(['message' => 'Something went wrong'])->exit();
+// headers
+Content-Type: Application/json; charset=UTF-8;
+HTTP/1.1 200 OK
 ```
 
 `response()->view()` Will append view(content file) to response
@@ -450,7 +455,7 @@ $db->table('users')->whereRaw('`users`.`email` LIKE %test@example.com%');
 // SELECT * FROM `users` WHERE `users`.`email` LIKE ? // bindings: ['test@example.com']
 $db->table('users')->whereRaw('`users`.`email` LIKE ?', ['test@example.com']);
 
-// SELECT * FROM `users` WHERE `users`.`email` LIKE ?
+// SELECT * FROM `users` WHERE `users`.`email` LIKE ? AND `users`.`email` LIKE ? // bindings: ['test@example.com', 'test@example.com']
 $db->table('users')->whereRaw('`users`.`email` LIKE ?', ['test@example.com'])->whereRaw('`users`.`email` LIKE ?', ['test@example.com'], 'AND');
 ```
 
@@ -647,4 +652,57 @@ $passed = $db->table('users')->where('id', '=', 1)->update([
 `delete()`
 ```php
 $passed = $db->table('users')->where('id', '=', 1)->delete();
+```
+
+### Model
+
+A model allow you to write less code and make 
+
+The model will automaticly try to guess the **database table** name base on your **model name**. When the guess isn't right you can specify the table name like this `protected string $table = 'table_name'` The default **primary key** is `id` you can overwite this by `protected string $primaryKey = 'your_primary_key'`
+
+```php
+use Framework\Model\BaseModel;
+// table name => `posts`
+// primaryKey => 'id'
+class Post extends BaseModel
+{
+}
+
+// table name => `categories`
+// primaryKey => 'id'
+class Category extends BaseModel
+{
+}
+
+// table name => `posts`
+// primaryKey => 'ID'
+class WeirdModelName extends BaseModel
+{
+    protected string $table = 'posts';
+    protected string $primaryKey = 'ID'
+}
+```
+
+The **model** will automaticly specify the **table name** when you make a query.
+When you want to use the `QueryBuilder` you can do that like this:
+
+```php
+use Framework\Model\BaseModel;
+
+class Post extends BaseModel
+{
+    public function paginatePosts(int $currentPage = 1, int $perPage = 15): array
+    {
+        return $this->orderBy('created_at', 'ASC')->paginate($currentPage, $perPage);
+    }
+}
+
+// Make instance of `Post` model
+$post = new Post();
+
+// This will contain all posts from the database
+$posts = $post->all([]);
+
+// This will get all posts with pagination
+$paginatedPosts = $post->paginate(currentPage: 1, perPage: 25);
 ```
