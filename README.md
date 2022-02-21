@@ -206,7 +206,7 @@ class CustomMiddlewareClass
 ```
 
 #### Route group
-Grouping routes can be very nice when you have middlewares/a prefix that need to apply to a number of routes.
+Grouping routes can be very nice when you have middlewares/prefix that need to apply to a number of routes.
 ```php
 // Grouped routes with prefix
 $route->prefix('account')->group(function (Route $route) {
@@ -242,7 +242,7 @@ $_GET['name'] = 'test';
 request()->get('name'); // test
 ```
 
-`request()->post()` Will get all request information from `POST`
+`request()->post()` Will get all request information from `POST` (php://input)
 ```php
 $_POST['name'] = 'test';
 request()->post('name'); // test
@@ -441,10 +441,10 @@ $db->table('users')->where('email', '=', 'test@example.com');
 $db->table('users')->where('email', 'test@example.com');
 
 // SELECT * FROM `users` WHERE `email` = ? OR `email` = ? // bindings: ['test@example.com', 'test@example.com']
-$db->table('users')->where('email', '=', 'test@example.com')->where('email', 'test@example.com', 'OR');
+$db->table('users')->where('email', '=', 'test@example.com')->where('email', '=', 'test@example.com', 'OR');
 
 // SELECT * FROM `users` WHERE `email` = ? AND `email` = ? // bindings: ['test@example.com', 'test@example.com']
-$db->table('users')->where('email', '=', 'test@example.com')->where('email', 'test@example.com', 'AND');
+$db->table('users')->where('email', '=', 'test@example.com')->where('email', '=', 'test@example.com', 'AND');
 ```
 
 `whereRaw(query: string|closure, bindData: array = [], boolean: string(OR|AND) = 'AND')`
@@ -479,7 +479,7 @@ $db->table('users')->whereIn('id', function(QueryBuilder $query){
 ```php
 // SELECT * FROM `users` WHERE EXISTS (SELECT `created_at` FROM `posts` WHERE `created_at` > ? AND `users`.`id` = `posts`.`user_id` LIMIT 1 OFFSET 0)
 $db->table('users')->whereExists(function(QueryBuilder $query){
-    $query->table('posts', 'created_at')->whereColumn('created_at', '>', '2022-01-01')
+    $query->table('posts', 'created_at')->where('created_at', '>', '2022-01-01')
                                         ->whereColumn('posts.id', '=', 'users.id', 'AND')
                                         ->limit(1);
 });
@@ -489,7 +489,7 @@ $db->table('users')->whereExists(function(QueryBuilder $query){
 ```php
 // SELECT * FROM `users` WHERE NOT EXISTS (SELECT `created_at` FROM `posts` WHERE `created_at` > ? AND `users`.`id` = `posts`.`user_id` LIMIT 1 OFFSET 0)
 $db->table('users')->whereNotExists(function(QueryBuilder $query){
-    $query->table('posts', 'created_at')->whereColumn('created_at', '>', '2022-01-01')
+    $query->table('posts', 'created_at')->where('created_at', '>', '2022-01-01')
                                         ->whereColumn('posts.id', '=', 'users.id', 'AND')
                                         ->limit(1);
 });
@@ -642,22 +642,20 @@ $insertId = $db->table('posts')->insert([
 ]);
 ```
 
-`update(updateData: array<string,mixed>)`
+`update(updateData: array<string,mixed>)` Returns boolean based on if there where effected rows
 ```php
 $passed = $db->table('users')->where('id', '=', 1)->update([
     'titel' => 'Update title'
 ]);
 ```
 
-`delete()`
+`delete()` Returns boolean based on if there where effected rows
 ```php
 $passed = $db->table('users')->where('id', '=', 1)->delete();
 ```
 
 ### Model
-
-A model allow you to write less code and make 
-
+A model will represent a database table. This will allow you to only write code that belongs to a single database table.
 The model will automaticly try to guess the **database table** name base on your **model name**. When the guess isn't right you can specify the table name like this `protected string $table = 'table_name'` The default **primary key** is `id` you can overwite this by `protected string $primaryKey = 'your_primary_key'`
 
 ```php
@@ -685,7 +683,7 @@ class WeirdModelName extends BaseModel
 
 The **model** will automaticly specify the **table name** when you make a query.
 When you want to use the `QueryBuilder` you can do that like this:
-
+The **BaseModel** has a method called `find($find: mixed, $key: string|null = null)` this is a shorthand for finding a single result.
 ```php
 use Framework\Model\BaseModel;
 
@@ -700,9 +698,13 @@ class Post extends BaseModel
 // Make instance of `Post` model
 $post = new Post();
 
+// This finds a single result in the database based on the primary key
+$singlePost = $post->find(find: 'some_primary_key');
+$singlePost = $post->find(find: 'some_title', key: 'title');
+
 // This will contain all posts from the database
 $posts = $post->all([]);
 
-// This will get all posts with pagination
+// This will get all posts with pagination that where orderd by `created_at` ASC
 $paginatedPosts = $post->paginate(currentPage: 1, perPage: 25);
 ```
