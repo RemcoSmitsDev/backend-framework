@@ -3,7 +3,6 @@
 namespace Framework\Event;
 
 use Exception;
-use Framework\Container\Container;
 use Framework\Container\DependencyInjector;
 use Framework\Event\Interfaces\BaseEventInterface;
 use ReflectionClass;
@@ -20,10 +19,11 @@ class Event
      *
      * @param string                                                     $name
      * @param BaseEventInterface|array<BaseEventInterface|string>|string $listener
-     * @return void
-     * 
+     *
      * @throws Exception
      * @throws ReflectionException
+     *
+     * @return void
      */
     public static function add(string $name, BaseEventInterface|array|string $listener): void
     {
@@ -52,6 +52,7 @@ class Event
      * This method will apply the default listeners and starts listening for events.
      *
      * @param array<string> $defaultListeners
+     *
      * @return void
      */
     public static function listen(array $defaultListeners = []): void
@@ -65,6 +66,7 @@ class Event
      * This method will remove an event.
      *
      * @param string $name
+     *
      * @return void
      */
     public static function remove(string $name): void
@@ -77,6 +79,7 @@ class Event
      *
      * @param string $name
      * @param mixed  $data
+     *
      * @return void
      */
     public static function notify(string $name, mixed $data = null): void
@@ -100,6 +103,7 @@ class Event
      * This method will get all listeners for a event.
      *
      * @param string $name
+     *
      * @return array<BaseEventInterface>|null
      */
     public static function get(string $name): ?array
@@ -121,10 +125,11 @@ class Event
      * This method will validate the given event string class path/name.
      *
      * @param string $class
-     * @return void
      *
      * @throws Exception
      * @throws \ReflectionException
+     *
+     * @return void
      */
     private static function validateEventClass(string $class): void
     {

@@ -21,22 +21,21 @@ class ContainerTest extends TestCase
 
     public function test_add_binding()
     {
-        $container = new Container;
+        $container = new Container();
 
         $container->bind(TH::class, function () {
-            return new Request;
+            return new Request();
         });
 
         $this->assertInstanceOf(Request::class, $container->getBinding(TH::class));
 
         $container = new Container();
 
-        $container->bind(TH::class, new Request);
+        $container->bind(TH::class, new Request());
 
         $this->assertInstanceOf(Request::class, $container->getBinding(TH::class));
     }
 }
-
 
 class TH implements THInterface
 {
