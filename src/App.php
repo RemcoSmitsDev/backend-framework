@@ -3,6 +3,7 @@
 namespace Framework;
 
 use Exception;
+use Framework\Container\Container;
 use Framework\Debug\Debug;
 use Framework\Event\DefaultEvents\ErrorEvent;
 use Framework\Event\DefaultEvents\QueryEvent;
@@ -14,40 +15,49 @@ final class App
     /**
      * @var bool
      */
-    private static bool $isStarted = false;
+    private bool $isStarted = false;
+
+    /**
+     * @var Container|null
+     */
+    private ?Container $container = null;
 
     /**
      * @static
      *
-     * @var array
+     * @var array<string, bool>
      */
-    private static array $raySettings = [
+    private array $raySettings = [
         'enabled'        => false,
         'enableAutoShow' => true,
     ];
 
-    /**
-     * @var array
-     */
-    private static $properties = [];
+    public function __construct()
+    {
+        $this->container = Container::getInstance();
+
+        $this->container()->addSingleton($this);
+    }
 
     /**
-     * This function will start all needed functions.
+     * This function will start all needed functions
      *
      * @return void
+     * 
+     * @throws Exception
      */
-    public static function start(): void
+    public function start(): void
     {
         // check if app is already started
-        if (self::$isStarted) {
+        if ($this->isStarted) {
             throw new Exception('Application already started!');
         }
 
         // check if app is in development mode
-        self::checkAppState();
+        $this->checkAppState();
 
         // set app started
-        self::$isStarted = true;
+        $this->isStarted = true;
 
         // start output buffer
         ob_start();
@@ -66,10 +76,10 @@ final class App
         setlocale(LC_ALL, 'nl_NL');
 
         // set Security headers
-        self::setSecurityHeaders();
+        $this->setSecurityHeaders();
 
         // set session settings
-        self::setSession();
+        $this->setSession();
 
         // kijk of een van de tokens niet bestaat generate dan een token
         // om later ajax request te kunnen valideren
@@ -79,14 +89,14 @@ final class App
     }
 
     /**
-     * This function will set all needed security headers.
+     * This function will set all needed security headers
      *
      * @return void
      */
-    private static function setSecurityHeaders(): void
+    private function setSecurityHeaders(): void
     {
         // block all iframes
-        header('X-Frame-Options:deny');
+        header('X-Frame-Options: deny');
         // set xxs header protection header
         header('X-XSS-Protection: 1; mode=block');
         // protect content type
@@ -96,11 +106,11 @@ final class App
     }
 
     /**
-     * This function will set all secure session headers and start session.
+     * This function will set all secure session headers and start session
      *
      * @return void
      */
-    private static function setSession(): void
+    private function setSession(): void
     {
         // voeg http only session.cookie toe als de app niet op development mode staat
         ini_set('session.cookie_httponly', !IS_DEVELOPMENT_MODE);
@@ -116,11 +126,11 @@ final class App
     }
 
     /**
-     * This function checks app state(local|live) based on host.
+     * This function checks app state(local|live) based on host
      *
      * @return void
      */
-    private static function checkAppState(): void
+    private function checkAppState(): void
     {
         // define localhost ips to check if is development
         $whitelistLocalIps = [
@@ -139,62 +149,73 @@ final class App
     }
 
     /**
-     * This function will store an instance of all classes.
+     * Gets the singleton instance of the container
+     * 
+     * @return Container
+     */
+    public function container(): Container
+    {
+        return $this->container ??= Container::getInstance();
+    }
+
+    /**
+     * Set singleton instances to the container
      *
      * @param ...object $classes
-     *
      * @return self
      */
-    public static function setInstance(object ...$classes): self
+    public function setInstance(object ...$classes): self
     {
         // loop trough all classes
         foreach ($classes as $class) {
-            // set class
-            self::$properties[strtolower(getClassName($class))] = $class;
+            $this->container()->addSingleton($class);
         }
 
         // return self
-        return new self();
+        return $this;
     }
 
     /**
-     * This method will get the container property instnace.
+     * Get singleton instance from the container
      *
-     * @param object|string $class
-     *
+     * @param object|string-class $class
      * @return ?object
      */
-    public static function getInstance(object|string $class): ?object
+    public function getInstance(object|string $class): ?object
     {
-        return self::$properties[strtolower(getClassName($class))] ?? null;
+        return $this->container()->getSingleton(is_object($class) ? $class::class : $class);
     }
 
     /**
-     * This function will enable ray.
+     * Enables ray application and allows you to show debug information
      *
      * @return void
      */
-    public static function enableRay(bool $enableAutoShow = true): void
+    public function enableRay(bool $enableAutoShow = true): void
     {
-        self::$raySettings = [
+        $this->raySettings = [
             'enabled'        => true,
             'enableAutoShow' => $enableAutoShow,
         ];
     }
 
     /**
+     * Checks if ray is enabled to send information to the application
+     * 
      * @return bool
      */
-    public static function rayIsEnabled(): bool
+    public function rayIsEnabled(): bool
     {
-        return self::getRaySettings()['enabled'];
+        return $this->getRaySettings()['enabled'];
     }
 
     /**
-     * @return array This will return current ray settings
+     * This will return current ray settings
+     * 
+     * @return array
      */
-    public static function getRaySettings(): array
+    public function getRaySettings(): array
     {
-        return self::$raySettings;
+        return $this->raySettings;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Framework\Http\Route;
 
-use Framework\Container\Container;
+use Framework\Container\DependencyInjector;
 use Framework\Interfaces\Http\MiddlewareInterface;
 
 class Middleware implements MiddlewareInterface
@@ -64,7 +64,7 @@ class Middleware implements MiddlewareInterface
 
             // call method with dependencies injection
             // validate rule with response
-            return Container::handleClassMethod($rule, 'handle', ['route' => self::$route, 'next' => $next]) === $rule;
+            return DependencyInjector::resolve($rule, 'handle')->with(['route' => self::$route, 'next' => $next])->getContent() === $rule;
         }
 
         return false;

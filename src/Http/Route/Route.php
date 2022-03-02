@@ -13,8 +13,6 @@ use Framework\Interfaces\Http\RoutesInterface;
  * @method \Framework\Http\Route\Route patch(string $uri, Closure|array $action)
  * @method \Framework\Http\Route\Route delete(string $uri, Closure|array $action)
  * @method \Framework\Http\Route\Route options(string $uri, Closure|array $action)
- * 
- * @see \Framework\Http\Route\Route
  */
 
 class Route extends Router implements RoutesInterface
@@ -40,8 +38,6 @@ class Route extends Router implements RoutesInterface
      * @return self
      * 
      * @throws Exception
-     *
-     * @return self
      */
     public function __call(string $name, array $arguments): self
     {
@@ -223,10 +219,7 @@ class Route extends Router implements RoutesInterface
      */
     public function actionOnRouteModelBindingFail(?Closure $callback = null): self
     {
-        // get last route key that is inserted
-        $routeKey = array_key_last($this->routes);
-        // voeg naam toe aan route
-        $this->routes[$routeKey]['onRouteModelBindingFail'] = $callback;
+        $this->routes[array_key_last($this->routes)]['onRouteModelBindingFail'] = $callback;
 
         return $this;
     }

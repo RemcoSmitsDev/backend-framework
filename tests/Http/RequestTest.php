@@ -2,6 +2,7 @@
 
 namespace tests\Http;
 
+use Framework\App;
 use Framework\Http\Request;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +14,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/api/test/?test=true';
         $_SERVER['REQUEST_METHOD'] = 'GET';
 
-        app()->setInstance(new Request());
+        new App();
     }
 
     public function testGetHost()

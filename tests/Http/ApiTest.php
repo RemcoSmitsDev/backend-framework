@@ -2,6 +2,7 @@
 
 namespace tests\Http;
 
+use Framework\App;
 use Framework\Http\Api;
 use Framework\Http\Request;
 use PHPUnit\Framework\TestCase;
@@ -10,9 +11,13 @@ class ApiTest extends TestCase
 {
     protected function setUp(): void
     {
+        parent::setUp();
+
         $_SERVER['HTTP_HOST'] = 'test.local';
         $_SERVER['REQUEST_URI'] = '/api/test';
         $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        new App();
     }
 
     public function testIsFromAjax()

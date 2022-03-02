@@ -5,62 +5,47 @@ namespace Framework\Http\Route;
 use Closure;
 use Exception;
 use Framework\Container\Container;
+use Framework\Container\DependencyInjector;
 use Framework\Model\BaseModel;
-use ReflectionFunction;
 
 class Router
 {
     /**
-     * Keeps track of all routes.
-     *
      * @var array
      */
     protected array $routes = [];
 
     /**
-     * Keeps track of all names routes.
-     *
      * @var array
      */
     protected array $namedRoutes = [];
 
     /**
-     * Keeps track of current prefix.
-     *
      * @var string
      */
     protected string $prefix = '';
 
     /**
-     * Keeps track of current groupprefix.
-     *
      * @var string
      */
     protected string $groupPrefix = '';
 
     /**
-     * Keeps track of current middlewares.
-     *
      * @var array
      */
     protected array $middlewares = [];
 
     /**
-     * Keeps track of curren group middlewares.
-     *
      * @var array
      */
     protected array $groupMiddlewares = [];
 
     /**
-     * Keeps track of current Route.
-     *
      * @var ?array
      */
     protected ?array $currentRoute = null;
 
     /**
-     * Default dynamic route pattern
      * @var string
      */
     const DYNAMIC_ROUTE_PATTERN = '\{[A-Za-z_]+[0-9]*(\:[A-Za-z_]+)*\}';
@@ -73,59 +58,39 @@ class Router
     /**
      * Handles the action(function/class method)
      * @param array $route
-     * @param array $data
+     * @param array $dynamicData
      *
      * @throws Exception
      *
-     * @return void
+     * @return mixed
      */
-    protected function handleRouteAction(array $route, array $data = []): void
+    protected function handleRouteAction(array $route, array $dynamicData = []): mixed
     {
-        // set action function
-        $action = $route['action'];
-
-        // set current route
         $this->currentRoute = $route;
 
-        // when array [Test::class,'index']
-        if (is_array($action)) {
-            // check if information is correct
-            if (!isset($action[0], $action[1]) || !is_string($action[0]) || !is_string($action[1])) {
-                throw new Exception('Your array must have as first item an class and as seconde item function name!');
-            }
+        $resolver = DependencyInjector::resolve(
+            target: is_array($route['action']) ? $route['action'][0] : $route['action'],
+            method: is_array($route['action']) ? $route['action'][1] : null
+        )->with($dynamicData);
 
-            // validate if can inject method
-            [$classInstance, $reflectionMethod] = Container::validateClassMethod($action[0], $action[1]);
-
-            // call method with dependencies injection
-            $parameters = Container::getParameters($reflectionMethod);
-
-            // make action
-            $action = Closure::fromCallable([$classInstance, $action[1]]);
-        } elseif ($action instanceof Closure) {
-            // call function with dependencies injection
-            $parameters = Container::setData($data)->getParameters(new ReflectionFunction($action));
-        } else {
-            throw new Exception("Action must be a instnaceof \Closure or a callable([Test::class,'index'])!");
-        }
-
-        // execute closure
-        call_user_func($action, ...$this->handleRouteModelBinding($route, $parameters, $data));
+        return $resolver->with(
+            $this->handleRouteModelBinding($route, $resolver->getParameters(), $dynamicData)
+        )->getContent();
     }
 
     /**
      * @param array<int,mixed> $parameters
-     * @param array<string,mixed> $data
+     * @param array<string,mixed> $dynamicData
      */
-    private function handleRouteModelBinding(array $route, array $parameters, array $data): array
+    private function handleRouteModelBinding(array $route, array $parameters, array $dynamicData): array
     {
         // loop through all dynamic params with values
-        foreach ($data as $key => $value) {
+        foreach ($dynamicData as $key => $value) {
             // explode dynamic param
             $parts = explode(':', $key, 2);
 
             // loop through all the parameters
-            $parameters = collection($parameters)->each(function (&$parameter) use ($parts, $value, $route) {
+            $parameters = collection($parameters)->each(function (&$parameter) use ($parts, $value, $route, $dynamicData) {
                 // when is not a model
                 if (!$parameter instanceof BaseModel) return;
 
@@ -136,15 +101,15 @@ class Router
                 if (strtolower($classname) !== strtolower($parts[0])) return;
 
                 // get data by dynamic route
-                $data = $parameter->routeModelBinding($parameter->query(), $parts[1] ?? $parameter->getPrimaryKey(), $value);
+                $bindingData = $parameter->routeModelBinding($parts[1] ?? $parameter->getPrimaryKey(), $value, $dynamicData);
 
                 // abort when there is no data found
-                if ($data === null && $route['onRouteModelBindingFail']) {
+                if ($bindingData === null && $route['onRouteModelBindingFail'] !== null) {
                     ($route['onRouteModelBindingFail'])();
                 }
 
                 // append data to model
-                $parameter->setOriginal($data);
+                $parameter->setOriginal($bindingData);
             })->toArray();
         }
 
@@ -154,11 +119,11 @@ class Router
     /**
      * Get all routes bij a requestMethod.
      *
-     * @return null|array
+     * @return array
      */
-    public function getRoutes(): ?array
+    public function getRoutes(): array
     {
-        return $this->routes ?? null;
+        return $this->routes;
     }
 
     /**
@@ -335,7 +300,7 @@ class Router
             response()->code(403);
 
             // call function with dependencies injection
-            Container::handleClosure($this->onMiddlewareFailCallback, ['route' => $failedRoute]);
+            // DependencyInjector::resolve($this->onMiddlewareFailCallback)->with(['route' => $failedRoute])->getContent();
 
             // stop other actions
             response()->exit();

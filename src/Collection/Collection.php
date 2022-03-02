@@ -17,12 +17,12 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     /**
      * This will keep track of all items of the collection.
      *
-     * @var array<int|string,mixed>
+     * @var array<int|string, mixed>
      */
     protected array $items = [];
 
     /**
-     * @param array<int|string,mixed>|Traversable|Collection $collection
+     * @param array<int|string, mixed>|Traversable|Collection $collection
      */
     public function __construct(array|Traversable|Collection $collection)
     {
@@ -32,7 +32,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     /**
      * This method wil create an instance of a new collection.
      *
-     * @param array<int|string,mixed>|Traversable|Collection $collection
+     * @param array<int|string, mixed>|Traversable|Collection $collection
      *
      * @return Collection
      */
@@ -44,9 +44,9 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     /**
      * This method will return the right format for the collection to apply to.
      *
-     * @param array<int|string,mixed>|Traversable|Collection $collection
+     * @param array<int|string, mixed>|Traversable|Collection $collection
      *
-     * @return array<int|string,mixed>
+     * @return array<int|string, mixed>
      */
     private function getCollection(array|Traversable|Collection $collection): array
     {
@@ -64,7 +64,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     /**
      * This method will return array of items from the collection.
      *
-     * @return array<int|string,mixed>
+     * @return array<int|string, mixed>
      */
     public function toArray(): array
     {
@@ -94,7 +94,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     /**
      * this will allow collection to be formatted to json.
      *
-     * @return array<int|string,mixed>
+     * @return array<int|string, mixed>
      */
     public function jsonSerialize(): array
     {
@@ -104,7 +104,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     /**
      * This method will return all results when you use the is without getting is to an array first.
      *
-     * @return ArrayIterator<int|string,mixed>
+     * @return ArrayIterator<int|string, mixed>
      */
     public function getIterator(): ArrayIterator
     {
