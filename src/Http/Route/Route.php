@@ -14,7 +14,6 @@ use Framework\Interfaces\Http\RoutesInterface;
  * @method \Framework\Http\Route\Route delete(string $uri, Closure|array $action)
  * @method \Framework\Http\Route\Route options(string $uri, Closure|array $action)
  */
-
 class Route extends Router implements RoutesInterface
 {
     /**
@@ -26,34 +25,36 @@ class Route extends Router implements RoutesInterface
         'put',
         'patch',
         'delete',
-        'options'
+        'options',
     ];
 
     /**
      * Call possible request route methods:
-     * `GET`, `post`, `put`, `patch`, `delete` or `options`
-     * 
-     * @param string $name
+     * `GET`, `post`, `put`, `patch`, `delete` or `options`.
+     *
+     * @param string           $name
      * @param array<int,mixed> $arguments
-     * @return self
-     * 
+     *
      * @throws Exception
+     *
+     * @return self
      */
     public function __call(string $name, array $arguments): self
     {
         if (!in_array($name, $this->allowedMethods)) {
-            throw new Exception('The method: "' . $name . '" is not an valid method!');
+            throw new Exception('The method: "'.$name.'" is not an valid method!');
         }
 
         return $this->match(strtoupper($name), ...$arguments);
     }
 
     /**
-     * Match more request methods for one route with `|` separator
-     * 
-     * @param string $methods
-     * @param string $uri
+     * Match more request methods for one route with `|` separator.
+     *
+     * @param string                    $methods
+     * @param string                    $uri
      * @param Closure|array<int,string> $action
+     *
      * @return self
      */
     public function match(string $methods, string $uri, Closure|array $action): self
@@ -81,13 +82,13 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * Give a single route a prefix or grouped routes a prefix
-     * 
+     * Give a single route a prefix or grouped routes a prefix.
+     *
      * @param string $prefix
-     * @return self
-     * 
+     *
      * @throws Exception
      *
+     * @return self
      * @return self
      */
     public function prefix(string $prefix): self
@@ -98,19 +99,19 @@ class Route extends Router implements RoutesInterface
         }
 
         // make prefix
-        $this->prefix = str_replace('//', '/', '/' . $this->groupPrefix . '/' . trim($prefix, '/'));
+        $this->prefix = str_replace('//', '/', '/'.$this->groupPrefix.'/'.trim($prefix, '/'));
 
         return $this;
     }
 
     /**
-     * Group routes to apply a prefix or middleware to all nested routes
-     * 
+     * Group routes to apply a prefix or middleware to all nested routes.
+     *
      * @param Closure $action
-     * @return void
-     * 
+     *
      * @throws Exception
      *
+     * @return void
      * @return void
      */
     public function group(Closure $action): void
@@ -152,12 +153,12 @@ class Route extends Router implements RoutesInterface
 
     /**
      * You can give a route a name so you can get the route information or navigate to the route.
-     * 
+     *
      * @param array<string,string> $patterns
-     * @return self
-     * 
+     *
      * @throws Exception
      *
+     * @return self
      * @return self
      */
     public function pattern(array $patterns): self
@@ -180,13 +181,13 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * Give a route an name to access based on the given name
-     * 
+     * Give a route an name to access based on the given name.
+     *
      * @param string $routeName
-     * @return self
-     * 
+     *
      * @throws Exception
      *
+     * @return self
      * @return self
      */
     public function name(string $routeName): self
@@ -212,9 +213,10 @@ class Route extends Router implements RoutesInterface
 
     /**
      * When the route model binding couldn't found a match
-     * It will fire this callback or continues when is null
-     * 
+     * It will fire this callback or continues when is null.
+     *
      * @param Closure|null $callback
+     *
      * @return self
      */
     public function actionOnRouteModelBindingFail(?Closure $callback = null): self
@@ -225,14 +227,14 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * Gets a route URI by the given name or and empty string when there was no route found
-     * 
-     * @param string $routeName
+     * Gets a route URI by the given name or and empty string when there was no route found.
+     *
+     * @param string               $routeName
      * @param array<string,string> $params
-     * @return string
-     * 
+     *
      * @throws Exception
      *
+     * @return string
      * @return string
      */
     public function getRouteByName(string $routeName, array $params = []): string
@@ -250,8 +252,8 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * Gets the current route information
-     * 
+     * Gets the current route information.
+     *
      * @return array<string,mixed>
      */
     public function getCurrentRoute(): array
@@ -260,9 +262,10 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * Returns a boolean if the name belongs to current route
-     * 
+     * Returns a boolean if the name belongs to current route.
+     *
      * @param string $name
+     *
      * @return bool
      */
     public function isCurrentRoute(string $name): bool

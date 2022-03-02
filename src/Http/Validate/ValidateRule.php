@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Framework\Http\Validate;
 
 use Exception;
-use Framework\Container\Container;
 use Framework\Container\DependencyInjector;
 use ReflectionClass;
 

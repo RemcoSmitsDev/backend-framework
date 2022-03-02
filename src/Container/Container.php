@@ -22,24 +22,25 @@ class Container
     private static ?Container $instance = null;
 
     /**
-     * Returns the singleton instance
-     * 
+     * Returns the singleton instance.
+     *
      * @return self
      */
     public static function getInstance()
     {
         if (is_null(self::$instance)) {
-            self::$instance = new self;
+            self::$instance = new self();
         }
 
         return self::$instance;
     }
 
     /**
-     * Bind contract to class and store inside the container bindings
-     * 
+     * Bind contract to class and store inside the container bindings.
+     *
      * @param class-string $contract
-     * @param object $callback
+     * @param object       $callback
+     *
      * @return self
      */
     public function bind(string $contract, object $callback): self
@@ -50,25 +51,30 @@ class Container
     }
 
     /**
-     * Get class by contract from the container bindings
-     * 
+     * Get class by contract from the container bindings.
+     *
      * @param class-string $contract
+     *
      * @return object|null
      */
     public function getBinding(string $contract): ?object
     {
         $binding = $this->bindings[$contract] ?? null;
 
-        if (!$binding instanceof Closure) return $binding;
+        if (!$binding instanceof Closure) {
+            return $binding;
+        }
 
         return ($binding)();
     }
 
     /**
-     * Add a singleton to the container singletons
-     * 
+     * Add a singleton to the container singletons.
+     *
      * @template T of object
+     *
      * @param T $class
+     *
      * @return T
      */
     public function addSingleton(object $class)
@@ -79,9 +85,10 @@ class Container
     }
 
     /**
-     * Get a singleton from the container singletons
-     * 
+     * Get a singleton from the container singletons.
+     *
      * @param class-string $class
+     *
      * @return object|null
      */
     public function getSingleton(string $class): ?object

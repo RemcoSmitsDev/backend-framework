@@ -40,11 +40,11 @@ final class App
     }
 
     /**
-     * This function will start all needed functions
+     * This function will start all needed functions.
+     *
+     * @throws Exception
      *
      * @return void
-     * 
-     * @throws Exception
      */
     public function start(): void
     {
@@ -89,7 +89,7 @@ final class App
     }
 
     /**
-     * This function will set all needed security headers
+     * This function will set all needed security headers.
      *
      * @return void
      */
@@ -106,7 +106,7 @@ final class App
     }
 
     /**
-     * This function will set all secure session headers and start session
+     * This function will set all secure session headers and start session.
      *
      * @return void
      */
@@ -126,7 +126,7 @@ final class App
     }
 
     /**
-     * This function checks app state(local|live) based on host
+     * This function checks app state(local|live) based on host.
      *
      * @return void
      */
@@ -149,8 +149,8 @@ final class App
     }
 
     /**
-     * Gets the singleton instance of the container
-     * 
+     * Gets the singleton instance of the container.
+     *
      * @return Container
      */
     public function container(): Container
@@ -159,9 +159,10 @@ final class App
     }
 
     /**
-     * Set singleton instances to the container
+     * Set singleton instances to the container.
      *
      * @param ...object $classes
+     *
      * @return self
      */
     public function setInstance(object ...$classes): self
@@ -176,9 +177,10 @@ final class App
     }
 
     /**
-     * Get singleton instance from the container
+     * Get singleton instance from the container.
      *
      * @param object|string-class $class
+     *
      * @return ?object
      */
     public function getInstance(object|string $class): ?object
@@ -187,7 +189,7 @@ final class App
     }
 
     /**
-     * Enables ray application and allows you to show debug information
+     * Enables ray application and allows you to show debug information.
      *
      * @return void
      */
@@ -200,8 +202,8 @@ final class App
     }
 
     /**
-     * Checks if ray is enabled to send information to the application
-     * 
+     * Checks if ray is enabled to send information to the application.
+     *
      * @return bool
      */
     public function rayIsEnabled(): bool
@@ -210,8 +212,8 @@ final class App
     }
 
     /**
-     * This will return current ray settings
-     * 
+     * This will return current ray settings.
+     *
      * @return array
      */
     public function getRaySettings(): array

@@ -77,9 +77,9 @@ abstract class BaseModel implements JsonSerializable
     }
 
     /**
-     * @param string       $field
-     * @param mixed        $value
-     * @param array        $dynamicData
+     * @param string $field
+     * @param mixed  $value
+     * @param array  $dynamicData
      *
      * @return object|null
      */
@@ -99,9 +99,10 @@ abstract class BaseModel implements JsonSerializable
     }
 
     /**
-     * This will set the table to the model
-     * 
+     * This will set the table to the model.
+     *
      * @param string $table
+     *
      * @return string
      */
     public function setTable(string $table): string
@@ -110,8 +111,8 @@ abstract class BaseModel implements JsonSerializable
     }
 
     /**
-     * This will get the primary key
-     * 
+     * This will get the primary key.
+     *
      * @return string
      */
     public function getPrimaryKey(): string
@@ -120,8 +121,8 @@ abstract class BaseModel implements JsonSerializable
     }
 
     /**
-     * This will get the table name
-     * 
+     * This will get the table name.
+     *
      * @return string
      */
     public function getTable(): string
@@ -130,10 +131,9 @@ abstract class BaseModel implements JsonSerializable
     }
 
     /**
-     * @return string
-     *
      * @throws ReflectionException
      *
+     * @return string
      * @return string
      */
     private function getTableFromModel(): string
@@ -152,11 +152,11 @@ abstract class BaseModel implements JsonSerializable
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1) . 'ie';
+            $table = substr($table, 0, -1).'ie';
         }
 
         // set table name
-        return $this->setTable($table . 's');
+        return $this->setTable($table.'s');
     }
 
     /**
@@ -210,12 +210,13 @@ abstract class BaseModel implements JsonSerializable
 
     /**
      * @param string $name
-     * @param array $arguments
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public static function __callStatic(string $name, array $arguments = []): mixed
     {
-        return call_user_func_array([new static, $name], $arguments);
+        return call_user_func_array([new static(), $name], $arguments);
     }
 
     /**
