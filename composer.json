@@ -3,12 +3,16 @@
     "description": "Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Advanced Routing with dynamic routes(middleware, grouping, prefix)",
     "autoload": {
         "psr-4": {
-            "Framework\\": "src/",
-            "Framework\\tests\\": "tests/"
+            "Framework\\": "src/"
         },
         "files": [
             "src/helperFunctions.php"
         ]
+    },
+    "autoload-dev":{
+        "psr-4": {
+            "Framework\\tests\\": "tests/"
+        }
     },
     "authors": [
         {

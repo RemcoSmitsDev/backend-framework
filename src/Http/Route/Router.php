@@ -5,72 +5,50 @@ namespace Framework\Http\Route;
 use Closure;
 use Exception;
 use Framework\Container\Container;
-use Framework\Http\Request;
+use Framework\Container\DependencyInjector;
+use Framework\Model\BaseModel;
 
 class Router
 {
     /**
-     * Keeps track of all routes.
-     *
      * @var array
      */
     protected array $routes = [];
 
     /**
-     * Keeps track of all names routes.
-     *
      * @var array
      */
     protected array $namedRoutes = [];
 
     /**
-     * Keeps track of current prefix.
-     *
      * @var string
      */
     protected string $prefix = '';
 
     /**
-     * Keeps track of current groupprefix.
-     *
      * @var string
      */
     protected string $groupPrefix = '';
 
     /**
-     * Keeps track of current middlewares.
-     *
      * @var array
      */
     protected array $middlewares = [];
 
     /**
-     * Keeps track of curren group middlewares.
-     *
      * @var array
      */
     protected array $groupMiddlewares = [];
 
     /**
-     * Keeps track of current Route.
-     *
      * @var ?array
      */
     protected ?array $currentRoute = null;
 
     /**
-     * Default dynamic route pattern.
-     *
      * @var string
      */
-    private string $routeParamPattern = '\{[A-Za-z_]+[0-9]*\}';
-
-    /**
-     * Keeps track of request class.
-     *
-     * @var Request
-     */
-    protected Request $request;
+    const DYNAMIC_ROUTE_PATTERN = '\{[A-Za-z_]+[0-9]*(\:[A-Za-z_]+)*\}';
 
     /**
      * @var callable
@@ -78,72 +56,74 @@ class Router
     private $onMiddlewareFailCallback;
 
     /**
-     * @throws \ReflectionException
-     */
-    public function __construct()
-    {
-        $this->request = request();
-    }
-
-    /**
-     * Handles the action(function/class method).
-     *
+     * Handles the action(function/class method)
      * @param array $route
-     * @param array $data
+     * @param array $dynamicData
      *
      * @throws Exception
      *
-     * @return void
+     * @return mixed
      */
-    protected function handleRouteAction(array $route, array $data = []): void
+    protected function handleRouteAction(array $route, array $dynamicData = []): mixed
     {
-        // set action function
-        $action = $route['action'];
-
-        // set current route
         $this->currentRoute = $route;
 
-        // when array [Test::class,'index']
-        if (is_array($action)) {
-            // check if information is correct
-            if (!isset($action[0], $action[1]) || !is_string($action[0]) || !is_string($action[1])) {
-                throw new Exception('Your array must have as first item an class and as seconde item function name!');
-            }
-            // is no class was found throw error
-            if (!class_exists($action[0])) {
-                throw new Exception("Class `{$action[0]}` couldn't be found!");
-            }
+        $resolver = DependencyInjector::resolve(
+            target: is_array($route['action']) ? $route['action'][0] : $route['action'],
+            method: is_array($route['action']) ? $route['action'][1] : null
+        )->with($dynamicData);
 
-            // make instance of class
-            $class = new $action[0]();
+        return $resolver->with(
+            $this->handleRouteModelBinding($route, $resolver->getParameters(), $dynamicData)
+        )->getContent();
+    }
 
-            // method
-            $method = $action[1];
+    /**
+     * @param array<int,mixed> $parameters
+     * @param array<string,mixed> $dynamicData
+     */
+    private function handleRouteModelBinding(array $route, array $parameters, array $dynamicData): array
+    {
+        // loop through all dynamic params with values
+        foreach ($dynamicData as $key => $value) {
+            // explode dynamic param
+            $parts = explode(':', $key, 2);
 
-            // call method with dependencies injection
-            Container::handleClassMethod($class::class, $method, $data);
+            // loop through all the parameters
+            $parameters = collection($parameters)->each(function (&$parameter) use ($parts, $value, $route, $dynamicData) {
+                // when is not a model
+                if (!$parameter instanceof BaseModel) return;
 
-            // stop function
-            return;
+                // get classname
+                $classname = getClassName($parameter);
+
+                // when is no the model that belongs to the dynamic param
+                if (strtolower($classname) !== strtolower($parts[0])) return;
+
+                // get data by dynamic route
+                $bindingData = $parameter->routeModelBinding($parts[1] ?? $parameter->getPrimaryKey(), $value, $dynamicData);
+
+                // abort when there is no data found
+                if ($bindingData === null && $route['onRouteModelBindingFail'] !== null) {
+                    ($route['onRouteModelBindingFail'])();
+                }
+
+                // append data to model
+                $parameter->setOriginal($bindingData);
+            })->toArray();
         }
 
-        // check if action is and closure
-        if (!$action instanceof Closure) {
-            throw new Exception("Action must be a instnaceof \Closure or a callable([Test::class,'index'])!");
-        }
-
-        // call function with dependencies injection
-        Container::handleClosure($action, $data);
+        return $parameters;
     }
 
     /**
      * Get all routes bij a requestMethod.
      *
-     * @return null|array
+     * @return array
      */
-    public function getRoutes(): ?array
+    public function getRoutes(): array
     {
-        return $this->routes ?? null;
+        return $this->routes;
     }
 
     /**
@@ -158,23 +138,31 @@ class Router
     protected function addRoute(array $methods, string $uri, Closure|array $action): self
     {
         // replace alle dubbele slashes
-        $uri = preg_replace("/\/+/", '/', '/'.$this->prefix.'/'.$uri);
+        $uri = preg_replace("/\/+/", '/', '/' . $this->prefix . '/' . $uri);
 
         // kijk of er nog wat overblijf als je laatste slash verwijder
         // anders is '/' -> ''
         $uri = rtrim($uri, '/') ?: $uri;
 
+        // when GET is inside methods and HEAD is not
+        if (in_array('GET', $methods) && !in_array('HEAD', $methods)) {
+            $methods[] = 'HEAD';
+        }
+
         // voeg de route toe aan bij het request type
         $this->routes[] = [
-            'uri'         => $uri,
-            'isDynamic'   => preg_match('/'.$this->routeParamPattern.'/', $uri),
-            'methods'     => $methods,
-            'name'        => '',
-            'action'      => $action,
-            'patterns'    => [],
+            'uri' => $uri,
+            'isDynamic' => preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $uri),
+            'methods' => $methods,
+            'name' => '',
+            'action' => $action,
+            'patterns' => [],
             'middlewares' => [
                 ...$this->middlewares,
             ],
+            'onRouteModelBindingFail' => function () {
+                abort(404);
+            }
         ];
 
         // reset alle middlewares/prefix
@@ -204,7 +192,7 @@ class Router
         }
 
         // make regex string and replace other patterns
-        return '/^'.preg_replace('/'.$this->routeParamPattern.'/', "([^\/]+)", str_replace('/', '\/', $uri)).'(?!.)/';
+        return "/^" . preg_replace('/' . self::DYNAMIC_ROUTE_PATTERN . '/', "([^\/]+)", str_replace('/', '\/', $uri)) . "(?!.)/";
     }
 
     /**
@@ -222,7 +210,7 @@ class Router
         $regexString = $this->replaceRouteURLPatterns($route['uri'], $route);
 
         // check if there is an match
-        if (!preg_match($regexString, $this->request->uri())) {
+        if (!preg_match($regexString, request()->uri())) {
             return false;
         }
 
@@ -230,13 +218,13 @@ class Router
         $data = [];
 
         // explode route url into parts to get values from dynamic route
-        $explodeCurrentURL = explode('/', trim($this->request->uri(), '/'));
+        $explodeCurrentURL = explode('/', trim(request()->uri(), '/'));
         $explodeRouteURL = explode('/', trim($route['uri'], '/'));
 
         // loop trough all url parts
         foreach ($explodeRouteURL as $key => $part) {
             // check if dynamic parameter was found
-            if (preg_match('/'.$this->routeParamPattern.'/', $part)) {
+            if (preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $part)) {
                 // add data to globals
                 $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
             }
@@ -259,20 +247,20 @@ class Router
     protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = []): string
     {
         // check if there are dynamic params in route url
-        if (!preg_match('/'.$this->routeParamPattern.'/', $route)) {
+        if (!preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $route)) {
             return $route;
         }
 
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: ".json_encode($wrongParams).'!');
+            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams) . '!');
         }
 
         // loop trough all params and replace params
         foreach ($params as $key => $value) {
             // replace param and remove param from array when is found and replaced
-            $route = preg_replace_callback("/\{{$key}\}/", function ($string) use ($value, $key, &$params) {
+            $route = preg_replace_callback("/\{{$key}(\:[A-z_]+)\}/", function () use ($value, $key, &$params) {
                 // remove param from array
                 unset($params[$key]);
                 // return value
@@ -312,16 +300,13 @@ class Router
             response()->code(403);
 
             // call function with dependencies injection
-            Container::handleClosure($this->onMiddlewareFailCallback, ['route' => $failedRoute]);
+            // DependencyInjector::resolve($this->onMiddlewareFailCallback)->with(['route' => $failedRoute])->getContent();
 
             // stop other actions
             response()->exit();
         } else {
-            // get output cache
-            ob_get_clean();
-
             // send forbidden response code
-            response()->code(403)->view('responseView')->exit();
+            abort(403);
         }
     }
 
@@ -339,12 +324,12 @@ class Router
         }
 
         // krijg current request url
-        $uri = $this->request->uri();
+        $uri = request()->uri();
 
         // loop trough all routes
         foreach ($this->getRoutes() as $route) {
             // check if request method is in array of methods
-            if (!in_array($this->request->method(), $route['methods'])) {
+            if (!in_array(request()->method(), $route['methods'])) {
                 continue;
             }
 
@@ -394,10 +379,7 @@ class Router
 
         // where there is no route
         if (!$this->currentRoute) {
-            // get output buffer
-            ob_get_clean();
-
-            response()->code(404)->view('responseView')->exit();
+            abort(404);
         }
     }
 }

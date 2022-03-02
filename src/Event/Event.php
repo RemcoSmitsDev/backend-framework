@@ -4,6 +4,7 @@ namespace Framework\Event;
 
 use Exception;
 use Framework\Container\Container;
+use Framework\Container\DependencyInjector;
 use Framework\Event\Interfaces\BaseEventInterface;
 use ReflectionClass;
 
@@ -19,8 +20,10 @@ class Event
      *
      * @param string                                                     $name
      * @param BaseEventInterface|array<BaseEventInterface|string>|string $listener
-     *
      * @return void
+     * 
+     * @throws Exception
+     * @throws ReflectionException
      */
     public static function add(string $name, BaseEventInterface|array|string $listener): void
     {
@@ -49,7 +52,6 @@ class Event
      * This method will apply the default listeners and starts listening for events.
      *
      * @param array<string> $defaultListeners
-     *
      * @return void
      */
     public static function listen(array $defaultListeners = []): void
@@ -63,7 +65,6 @@ class Event
      * This method will remove an event.
      *
      * @param string $name
-     *
      * @return void
      */
     public static function remove(string $name): void
@@ -76,10 +77,9 @@ class Event
      *
      * @param string $name
      * @param mixed  $data
-     *
      * @return void
      */
-    public static function notify(string $name, mixed $data = null)
+    public static function notify(string $name, mixed $data = null): void
     {
         // filter out all listeners
         $listeners = collection(self::get($name) ?: [])->filter(fn ($listener) => $listener instanceof BaseEventInterface);
@@ -92,7 +92,7 @@ class Event
         // loop through all the listeners
         foreach ($listeners as $listener) {
             // call method with dependencies injection
-            Container::handleClassMethod($listener, 'handle', ['event' => $listener, 'data' => $data]);
+            DependencyInjector::resolve($listener, 'handle')->with(['event' => $listener, 'data' => $data])->getContent();
         }
     }
 
@@ -100,7 +100,6 @@ class Event
      * This method will get all listeners for a event.
      *
      * @param string $name
-     *
      * @return array<BaseEventInterface>|null
      */
     public static function get(string $name): ?array
@@ -111,7 +110,7 @@ class Event
     /**
      * This method will get all events.
      *
-     * @return array<array<BaseEventInterface>>
+     * @return BaseEventInterface[]
      */
     public static function all()
     {
@@ -122,12 +121,12 @@ class Event
      * This method will validate the given event string class path/name.
      *
      * @param string $class
-     *
-     * @throws \ReflectionException
-     *
      * @return void
+     *
+     * @throws Exception
+     * @throws \ReflectionException
      */
-    private static function validateEventClass(string $class)
+    private static function validateEventClass(string $class): void
     {
         // make new reflection class
         $reflection = new ReflectionClass($class);

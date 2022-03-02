@@ -6,6 +6,7 @@ namespace Framework\Http\Validate;
 
 use Exception;
 use Framework\Container\Container;
+use Framework\Container\DependencyInjector;
 use ReflectionClass;
 
 class ValidateRule
@@ -135,8 +136,11 @@ class ValidateRule
             throw new Exception("The class `{$this->rule}` must extends `CustomRule` class!");
         }
 
+        // get class instance
+        $classInstance = DependencyInjector::resolve($this->rule)->getContent();
+
         // call method with dependencies injection
-        $passed = Container::handleClassMethod($this->rule, 'validate', ['value' => $this->value], $classInstance);
+        $passed = DependencyInjector::resolve($classInstance, 'validate')->with(['value' => $this->value])->getContent();
 
         // set message when there was an message set
         if (!$passed && !empty($classInstance->getMessage())) {

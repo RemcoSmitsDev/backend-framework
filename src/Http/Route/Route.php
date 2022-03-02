@@ -6,10 +6,19 @@ use Closure;
 use Exception;
 use Framework\Interfaces\Http\RoutesInterface;
 
+/**
+ * @method \Framework\Http\Route\Route get(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route post(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route put(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route patch(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route delete(string $uri, Closure|array $action)
+ * @method \Framework\Http\Route\Route options(string $uri, Closure|array $action)
+ */
+
 class Route extends Router implements RoutesInterface
 {
     /**
-     * @var array|string[]
+     * @var array<int,string>
      */
     private array $allowedMethods = [
         'get',
@@ -17,40 +26,38 @@ class Route extends Router implements RoutesInterface
         'put',
         'patch',
         'delete',
+        'options'
     ];
 
     /**
-     * Call possible request route methods.
-     *
+     * Call possible request route methods:
+     * `GET`, `post`, `put`, `patch`, `delete` or `options`
+     * 
      * @param string $name
-     * @param array  $arguments
-     *
-     * @throws Exception
-     *
+     * @param array<int,mixed> $arguments
      * @return self
+     * 
+     * @throws Exception
      */
-    public function __call(string $name, array $arguments)
+    public function __call(string $name, array $arguments): self
     {
         if (!in_array($name, $this->allowedMethods)) {
-            throw new Exception('The method: "'.$name.'" is not an valid method!');
+            throw new Exception('The method: "' . $name . '" is not an valid method!');
         }
 
         return $this->match(strtoupper($name), ...$arguments);
     }
 
     /**
-     * match Route
-     * match more request methods for one route.
-     *
-     * @param string        $methods '|' separator
-     * @param string        $uri
-     * @param Closure|array $action
-     *
+     * Match more request methods for one route with `|` separator
+     * 
+     * @param string $methods
+     * @param string $uri
+     * @param Closure|array<int,string> $action
      * @return self
      */
     public function match(string $methods, string $uri, Closure|array $action): self
     {
-        // add route
         return $this->addRoute(explode('|', strtoupper($methods)), $uri, $action);
     }
 
@@ -63,7 +70,6 @@ class Route extends Router implements RoutesInterface
      */
     public function middleware(...$validateRules): Route
     {
-        // dd($validateRules);
         // update route middlewares
         $this->middlewares = array_unique([
             ...$this->middlewares,
@@ -75,11 +81,11 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * Prefix function
-     * set group prefix.
-     *
+     * Give a single route a prefix or grouped routes a prefix
+     * 
      * @param string $prefix
-     *
+     * @return self
+     * 
      * @throws Exception
      *
      * @return self
@@ -92,17 +98,17 @@ class Route extends Router implements RoutesInterface
         }
 
         // make prefix
-        $this->prefix = str_replace('//', '/', '/'.$this->groupPrefix.'/'.trim($prefix, '/'));
+        $this->prefix = str_replace('//', '/', '/' . $this->groupPrefix . '/' . trim($prefix, '/'));
 
         return $this;
     }
 
     /**
-     * Group function
-     * Group routes with prefix or middlewares.
-     *
+     * Group routes to apply a prefix or middleware to all nested routes
+     * 
      * @param Closure $action
-     *
+     * @return void
+     * 
      * @throws Exception
      *
      * @return void
@@ -134,23 +140,22 @@ class Route extends Router implements RoutesInterface
         // merge nieuwe routes met huidige routes
         $this->routes = $routeGroup->routes;
 
-        // reset waardes voor andere routes
-        $this->groupMiddlewares = [];
-
         // set prefix to first prefix from main group
         $this->groupPrefix = $prefix;
         $this->prefix = $prefix;
 
+        // reset waardes voor andere routes
+        $this->groupMiddlewares = [];
         // set middlewares to first middlewares from main group
         $this->middlewares = $middlewares;
     }
 
     /**
-     * pattern function
-     * Give a route a name.
-     *
-     * @param array $patterns
-     *
+     * You can give a route a name so you can get the route information or navigate to the route.
+     * 
+     * @param array<string,string> $patterns
+     * @return self
+     * 
      * @throws Exception
      *
      * @return self
@@ -175,11 +180,11 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * pattern function
-     * Give a route an name to access based on the given name.
-     *
+     * Give a route an name to access based on the given name
+     * 
      * @param string $routeName
-     *
+     * @return self
+     * 
      * @throws Exception
      *
      * @return self
@@ -206,12 +211,26 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * getRouteByName function
-     * get a routeURL by given name.
-     *
+     * When the route model binding couldn't found a match
+     * It will fire this callback or continues when is null
+     * 
+     * @param Closure|null $callback
+     * @return self
+     */
+    public function actionOnRouteModelBindingFail(?Closure $callback = null): self
+    {
+        $this->routes[array_key_last($this->routes)]['onRouteModelBindingFail'] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Gets a route URI by the given name or and empty string when there was no route found
+     * 
      * @param string $routeName
-     * @param array  $params
-     *
+     * @param array<string,string> $params
+     * @return string
+     * 
      * @throws Exception
      *
      * @return string
@@ -231,13 +250,23 @@ class Route extends Router implements RoutesInterface
     }
 
     /**
-     * getCurrentRoute function
-     * get current route.
-     *
-     * @return array
+     * Gets the current route information
+     * 
+     * @return array<string,mixed>
      */
     public function getCurrentRoute(): array
     {
-        return $this->currentRoute ?: ['name' => '', 'route' => '', 'method' => '', 'middlewares' => '', 'patterns' => []];
+        return $this->currentRoute ?: ['name' => '', 'route' => '', 'methods' => [], 'middlewares' => [], 'patterns' => []];
+    }
+
+    /**
+     * Returns a boolean if the name belongs to current route
+     * 
+     * @param string $name
+     * @return bool
+     */
+    public function isCurrentRoute(string $name): bool
+    {
+        return $this->getCurrentRoute()['name'] === $name;
     }
 }

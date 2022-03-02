@@ -1,7 +1,7 @@
 parameters:
 	level: 9
 	paths:
-		- src/Collection
+		- src/helperFunctions.php
 	checkMissingIterableValueType: false
 	checkGenericClassInNonGenericObjectType: false
     

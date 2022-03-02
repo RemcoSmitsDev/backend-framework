@@ -4,6 +4,7 @@ use Curl\Curl;
 use Framework\App;
 use Framework\Cache\Cache;
 use Framework\Collection\Collection;
+use Framework\Container\Container;
 use Framework\Content\Content;
 use Framework\Content\Seo;
 use Framework\Debug\Debug;
@@ -23,11 +24,10 @@ use Framework\Http\Route\Route;
  */
 function stripAccents(string $input): string
 {
-    //Unwanted array
-    $unwantedArray = ['Š' => 'S', 'š' => 's', 'Ž' => 'Z', 'ž' => 'z', 'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A', 'Æ' => 'A', 'Ç' => 'C', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E', 'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I', 'Ñ' => 'N', 'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O', 'Ø' => 'O', 'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U', 'Ý' => 'Y', 'Þ' => 'B', 'ß' => 'Ss', 'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a', 'æ' => 'a', 'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i', 'ð' => 'o', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ø' => 'o', 'ù' => 'u', 'ú' => 'u', 'ü' => 'u', 'û' => 'u', 'ý' => 'y', 'þ' => 'b', 'ÿ' => 'y'];
-
-    //Return the input
-    return strtr((string) $input, $unwantedArray);
+    return strtr(
+        $input,
+        ['Š' => 'S', 'š' => 's', 'Ž' => 'Z', 'ž' => 'z', 'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A', 'Æ' => 'A', 'Ç' => 'C', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E', 'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I', 'Ñ' => 'N', 'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O', 'Ø' => 'O', 'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U', 'Ý' => 'Y', 'Þ' => 'B', 'ß' => 'Ss', 'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a', 'æ' => 'a', 'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i', 'ð' => 'o', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ø' => 'o', 'ù' => 'u', 'ú' => 'u', 'ü' => 'u', 'û' => 'u', 'ý' => 'y', 'þ' => 'b', 'ÿ' => 'y']
+    );
 }
 
 /**
@@ -101,7 +101,7 @@ function dd(mixed ...$values)
     Debug::add('dumps', $values);
 
     // echo dump
-    echo "<pre style='width:auto;overflow:auto;'>".collection($values)->map(fn ($value) => clearInjections(print_r($value, true)))->toString('<br>').'</pre>';
+    echo "<pre style='width:auto;overflow:auto;'>" . collection($values)->map(fn ($value) => clearInjections(print_r($value, true)))->toString('<br>') . '</pre>';
 }
 
 /**
@@ -131,6 +131,7 @@ function request(string|null $find = null)
     global $request;
 
     /** @var Request $request */
+
     $request = app(Request::class) ?: app(
         $request instanceof Request ? $request : new Request()
     );
@@ -173,7 +174,7 @@ function abort(int $code = 404): never
     ob_get_clean();
 
     if (str_contains(request()->headers('Accept', ''), 'json')) {
-        response()->json(['message' => 'Aborted with code: '.$code])->code($code)->exit();
+        response()->json(['message' => 'Aborted with code: ' . $code])->code($code)->exit();
     } else {
         response()->view('responseView')->code($code)->exit();
     }
@@ -262,25 +263,15 @@ function cache(): Cache
  */
 function app(object|string|null $class = null)
 {
-    /** @var App */
-    global $app;
-
-    // check if app is an instance of app class
-    if (!$app instanceof App) {
-        $app = new App();
-    }
-
-    // check if is object
     if (is_object($class)) {
-        // set/get instance
-        return $app->setInstance($class)->getInstance($class);
-    } // when you want to access an stored class
-    elseif (is_string($class)) {
-        return $app->getInstance($class);
+        return Container::getInstance()->addSingleton($class);
+    } 
+
+    if (is_string($class)) {
+        return Container::getInstance()->getSingleton($class);
     }
 
-    /** @var App */
-    return $app;
+    return Container::getInstance()->getSingleton(App::class);
 }
 
 /**
@@ -293,7 +284,8 @@ function app(object|string|null $class = null)
 function ray(mixed ...$data)
 {
     if (!app()->rayIsEnabled()) {
-        return new class() {
+        return new class()
+        {
             public function __call(string $name, array $arguments): self
             {
                 return $this;
@@ -301,7 +293,8 @@ function ray(mixed ...$data)
         };
     }
 
-    return new class($data, debug_backtrace()) extends Ray {
+    return new class($data, debug_backtrace()) extends Ray
+    {
         public function __construct(private array $_data, array $trace)
         {
             // call parent constructor
