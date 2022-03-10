@@ -2,19 +2,21 @@
 
 namespace Framework\Database\QueryBuilder\Paginator;
 
+use ArrayAccess;
 use ArrayIterator;
+use BadMethodCallException;
 use Framework\Database\QueryBuilder\QueryBuilder;
 use IteratorAggregate;
 use JsonSerializable;
 
-class Paginator implements IteratorAggregate, JsonSerializable
+class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
 {
     /**
      * Keep track of data paginate data.
      *
      * @var array
      */
-    private $paginate = [
+    private array $paginate = [
         'first_page'    => 1,
         'prev_page'     => [],
         'current_page'  => null,
@@ -61,11 +63,11 @@ class Paginator implements IteratorAggregate, JsonSerializable
      * @param int          $perPage
      * @param int          $currentPage
      *
-     * @return static
+     * @return self
      */
-    public static function make(QueryBuilder $query, int $totalResults, int $perPage, int $currentPage): static
+    public static function make(QueryBuilder $query, int $totalResults, int $perPage, int $currentPage): self
     {
-        return new static($query, $totalResults, $perPage, $currentPage);
+        return new self($query, $totalResults, $perPage, $currentPage);
     }
 
     /**
@@ -109,7 +111,7 @@ class Paginator implements IteratorAggregate, JsonSerializable
      */
     public function getIterator(): ArrayIterator
     {
-        return new ArrayIterator($this->toArray());
+        return new ArrayIterator($this->toArray()['results']->all());
     }
 
     /**
@@ -126,5 +128,75 @@ class Paginator implements IteratorAggregate, JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->toArray();
+    }
+
+    /**
+     * @param  string  $name
+     * 
+     * @return mixed
+     */
+    public function __get(string $name): mixed
+    {
+        return $this->toArray()[$name];
+    }
+
+    /**
+     * @param  mixed  $offset
+     * 
+     * @return mixed
+     */
+    public function offsetGet(mixed $offset): mixed
+    {
+        if (!$this->offsetExists($offset)) {
+            return null;
+        }
+
+        return $this->toArray()[$offset];
+    }
+
+    /**
+     * @param  mixed  $offset
+     * 
+     * @return bool
+     */
+    public function offsetExists(mixed $offset): bool
+    {
+        return array_key_exists($offset, $this->toArray());
+    }
+
+    /**
+     * @param  mixed  $offset
+     * @param  mixed  $value
+     * 
+     * @return void
+     */
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        $this->paginate[$offset] = $value;
+    }
+
+    /**
+     * @param  mixed  $offset
+     * 
+     * @return void
+     */
+    public function offsetUnset(mixed $offset): void
+    {
+        if ($this->offsetExists($offset)) {
+            unset($this->paginate[$offset]);
+        }
+    }
+
+    /**
+     * @param  string  $name
+     * @param  array   $arguments
+     * 
+     * @return mixed
+     */
+    public function __call(string $name, array $arguments = []): mixed
+    {
+        if (!method_exists($this->toArray()['results'], $name)) throw new BadMethodCallException("There was no method called [{$name}] on the Collection class!");
+
+        return $this->toArray()['results']->{$name}(...$arguments);
     }
 }

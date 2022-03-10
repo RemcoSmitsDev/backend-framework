@@ -101,7 +101,7 @@ function dd(mixed ...$values)
     Debug::add('dumps', $values);
 
     // echo dump
-    echo "<pre style='width:auto;overflow:auto;'>".collection($values)->map(fn ($value) => clearInjections(print_r($value, true)))->toString('<br>').'</pre>';
+    echo "<pre style='width:auto;overflow:auto;'>" . collection($values)->map(fn ($value) => clearInjections(print_r($value, true)))->toString('<br>') . '</pre>';
 }
 
 /**
@@ -173,7 +173,7 @@ function abort(int $code = 404): never
     ob_get_clean();
 
     if (str_contains(request()->headers('Accept', ''), 'json')) {
-        response()->json(['message' => 'Aborted with code: '.$code])->code($code)->exit();
+        response()->json(['message' => 'Aborted with code: ' . $code])->code($code)->exit();
     } else {
         response()->view('responseView')->code($code)->exit();
     }
@@ -283,7 +283,8 @@ function app(object|string|null $class = null)
 function ray(mixed ...$data)
 {
     if (!app()->rayIsEnabled()) {
-        return new class() {
+        return new class()
+        {
             public function __call(string $name, array $arguments): self
             {
                 return $this;
@@ -291,7 +292,8 @@ function ray(mixed ...$data)
         };
     }
 
-    return new class($data, debug_backtrace()) extends Ray {
+    return new class($data, debug_backtrace()) extends Ray
+    {
         public function __construct(private array $_data, array $trace)
         {
             // call parent constructor
@@ -381,4 +383,16 @@ function arrayWithout(array $data, string ...$without): array
     }
 
     return $data;
+}
+
+/**
+ * @param  bool   $baseOn
+ * @param  mixed  $value
+ * @param  mixed  $default
+ * 
+ * @return mixed
+ */
+function tap(bool $basedOn, mixed $value, mixed $default): mixed
+{
+    return $basedOn ? $value : $default;
 }

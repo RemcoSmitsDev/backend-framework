@@ -3,6 +3,7 @@
 namespace Framework\Collection;
 
 use ArrayIterator;
+use Closure;
 use Countable;
 use Exception;
 use IteratorAggregate;
@@ -22,9 +23,9 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     protected array $items = [];
 
     /**
-     * @param array<int|string, mixed>|Traversable|Collection $collection
+     * @param array<int|string, mixed>|Traversable|Collection|Closure $collection
      */
-    public function __construct(array|Traversable|Collection $collection)
+    public function __construct(array|Traversable|Collection|Closure $collection = [])
     {
         $this->items = $this->getCollection($collection);
     }
@@ -44,11 +45,11 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     /**
      * This method will return the right format for the collection to apply to.
      *
-     * @param array<int|string, mixed>|Traversable|Collection $collection
+     * @param array<int|string, mixed>|Traversable|Collection|Closure $collection
      *
      * @return array<int|string, mixed>
      */
-    private function getCollection(array|Traversable|Collection $collection): array
+    private function getCollection(array|Traversable|Collection|Closure $collection): array
     {
         if ($collection instanceof Collection) {
             return $collection->toArray();
@@ -56,9 +57,11 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
             return $collection;
         } elseif ($collection instanceof Traversable) {
             return iterator_to_array($collection);
+        } elseif ($collection instanceof Closure) {
+            return iterator_to_array($collection());
         }
 
-        throw new Exception('You must pass in a valid collection type! (array|Traversable|Collection)');
+        throw new Exception('You must pass in a valid collection type! (array|Traversable|Collection|Closure)');
     }
 
     /**
@@ -69,6 +72,16 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     public function toArray(): array
     {
         return $this->items;
+    }
+
+    /**
+     * This method will return array of items from the collection.
+     * 
+     * @return array
+     */
+    public function all(): array
+    {
+        return $this->toArray();
     }
 
     /**
@@ -88,7 +101,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
      */
     public function toString(string $separator = ', '): string
     {
-        return implode($separator, $this->toArray());
+        return implode($separator, $this->all());
     }
 
     /**
@@ -98,7 +111,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
      */
     public function jsonSerialize(): array
     {
-        return $this->toArray();
+        return $this->all();
     }
 
     /**
@@ -108,7 +121,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
      */
     public function getIterator(): ArrayIterator
     {
-        return new ArrayIterator($this->toArray());
+        return new ArrayIterator($this->all());
     }
 
     /**
@@ -118,6 +131,6 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
      */
     public function count(): int
     {
-        return count($this->toArray());
+        return count($this->all());
     }
 }

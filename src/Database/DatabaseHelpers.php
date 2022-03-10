@@ -2,13 +2,13 @@
 
 namespace Framework\Database;
 
+use Framework\Collection\Collection;
 use Framework\Database\QueryBuilder\QueryBuilder;
+use Framework\Model\BaseModel;
 
 trait DatabaseHelpers
 {
     /**
-     * function formatColumnNames.
-     *
      * @param string $columnName
      *
      * @return string
@@ -23,8 +23,6 @@ trait DatabaseHelpers
     }
 
     /**
-     * function selectFormat.
-     *
      * @param mixed $selectColumn
      *
      * @return array
@@ -52,13 +50,34 @@ trait DatabaseHelpers
     /**
      * @param QueryBuilder $mainQuery
      * @param QueryBuilder $mergeQuery
+     *
+     * @return void
      */
-    public function mergeBindings(QueryBuilder $mainQuery, QueryBuilder $mergeQuery)
+    public function mergeBindings(QueryBuilder $mainQuery, QueryBuilder $mergeQuery): void
     {
         // loop through all bindings
         foreach ($mergeQuery->bindings as $key => $binding) {
             // merge binding
             $mainQuery->bindings[$key] = array_merge($mainQuery->bindings[$key], $binding);
         }
+    }
+
+    /**
+     * @param Collection|BaseModel|array|bool $result
+     * 
+     * @return Collection|BaseModel|array|bool
+     */
+    protected function mergeRelations($result)
+    {
+        if (empty($relations) || is_bool($result) || is_array($result)) return $result;
+
+        foreach ($this->withRelations as $relation) {
+            $result = $relation->mergeRelation(
+                $result,
+                $relation->getData($result instanceof BaseModel ? collection([$result])->all() : $result->all())
+            );
+        }
+
+        return $result;
     }
 }

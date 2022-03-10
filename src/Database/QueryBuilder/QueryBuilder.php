@@ -5,12 +5,14 @@ namespace Framework\Database\QueryBuilder;
 use ArrayIterator;
 use Closure;
 use Exception;
+use Framework\Collection\Collection;
 use Framework\Database\Connection\Connection;
 use Framework\Database\DatabaseHelpers;
 use Framework\Database\Grammar\Grammar;
 use Framework\Database\QueryBuilder\JoinClause\JoinClause;
 use Framework\Database\QueryBuilder\Paginator\Paginator;
 use Framework\Database\QueryBuilder\SubQuery\SubQuery;
+use Framework\Model\BaseModel;
 use IteratorAggregate;
 
 class QueryBuilder extends Grammar implements IteratorAggregate
@@ -29,7 +31,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
      *
      * @var int
      */
-    protected int $fetchMode = \PDO::FETCH_OBJ;
+    public int $fetchMode = \PDO::FETCH_OBJ;
 
     /**
      * builder parts for making database query.
@@ -122,6 +124,16 @@ class QueryBuilder extends Grammar implements IteratorAggregate
     public array $rawQuery = [];
 
     /**
+     * @var BaseModel|class-string|null
+     */
+    public BaseModel|string|null $fromModel = null;
+
+    /**
+     * @var array
+     */
+    public array $withRelations = [];
+
+    /**
      * @param Connection $connection
      */
     public function __construct(Connection $connection)
@@ -144,6 +156,42 @@ class QueryBuilder extends Grammar implements IteratorAggregate
     }
 
     /**
+     * @param string ...$relations
+     * 
+     * @throws Exception
+     * 
+     * @return self
+     */
+    public function withRelations(string ...$relations): self
+    {
+        if (!$this->fromModel) throw new Exception('This method can only be called from a model!');
+
+        $this->fromModel->initRelations();
+
+        foreach ($relations as $relation) {
+            $this->withRelations[$relation] = $this->fromModel->getRelation($relation);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the base model if QueryBUilder was called from a model
+     * 
+     * @param BaseModel|class-string $model
+     * 
+     * @return self
+     */
+    public function setFromModel(BaseModel|string $model): self
+    {
+        $this->fromModel = is_string($model) ? new $model : $model;
+
+        return $this;
+    }
+
+    /**
+     * Allows logging SQL information
+     * 
      * @return $this
      */
     public function logSql(): self
@@ -204,7 +252,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
                 // make subSelect
                 $this->columns[] = $this->subQuery(
                     $column,
-                    after: (is_string($as) ? ' as '.$as : '')
+                    after: (is_string($as) ? ' as ' . $as : '')
                 );
             } elseif ($column instanceof SubQuery) {
                 $this->columns[] = $column->setAfter(is_string($as) ? $as : $column->getAfter());
@@ -408,15 +456,21 @@ class QueryBuilder extends Grammar implements IteratorAggregate
             // add to where statement
             $this->wheres[] = $this->subQuery($value, before: "{$column} IN", isWhereClause: false, boolean: $boolean);
         } else {
+            // make prepared placeholders
+            $placeholders = rtrim(str_repeat('?,', count($value)), ',');
+
             // add to where statement
             $this->wheres[] = [
                 'type'    => 'raw',
-                'query'   => "{$column} IN (?)",
+                'query'   => "{$column} IN ({$placeholders})",
                 'boolean' => $boolean,
             ];
 
             // add values to where bindings
-            $this->bindings['where'][] = implode(',', $value);
+            $this->bindings['where'] = array_merge(
+                $this->bindings['where'],
+                $value
+            );
         }
 
         // return self
@@ -564,18 +618,15 @@ class QueryBuilder extends Grammar implements IteratorAggregate
      *
      * @throws Exception
      *
-     * @return mixed
+     * @return Collection
      */
-    public function all(mixed $fallbackReturnValue = [], int $fetchMode = null): mixed
+    public function all(mixed $fallbackReturnValue = [], int $fetchMode = null): Collection
     {
-        // handle execution
-        $connection = $this->connection->handleExecution(
-            $this,
-            ...($this->isRaw ? $this->rawQuery : $this->selectToSql($this))
+        return $this->mergeRelations(
+            collection(
+                $this->connection->runSelect($this, $fetchMode)->fetchAll() ?: $fallbackReturnValue
+            )
         );
-
-        // return fallback return value
-        return ($connection->failed() || !$connection->hasEffectedRows()) ? $fallbackReturnValue : $connection->statement->fetchAll($fetchMode ?: $this->fetchMode);
     }
 
     /**
@@ -590,14 +641,9 @@ class QueryBuilder extends Grammar implements IteratorAggregate
      */
     public function one(mixed $fallbackReturnValue = false, int $fetchMode = null): mixed
     {
-        // handle execution
-        $connection = $this->connection->handleExecution(
-            $this->limit(1),
-            ...($this->isRaw ? $this->rawQuery : $this->selectToSql($this))
+        return $this->mergeRelations(
+            $this->connection->runSelect($this->limit(1), $fetchMode)->fetch() ?: $fallbackReturnValue
         );
-
-        // return fallback return value
-        return ($connection->failed() || !$connection->hasEffectedRows()) ? $fallbackReturnValue : $connection->statement->fetch($fetchMode ?: $this->fetchMode);
     }
 
     /**
@@ -774,9 +820,9 @@ class QueryBuilder extends Grammar implements IteratorAggregate
      *
      * @throws Exception
      *
-     * @return array
+     * @return Paginator
      */
-    public function paginate(int $currentPage, int $perPage = 15): array
+    public function paginate(int $currentPage = 1, int $perPage = 15): Paginator
     {
         // clone current query
         $clone = clone $this;
@@ -788,7 +834,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
         $totalResults = intval($clone->column(0));
 
         // return new instance of paginator
-        return Paginator::make($this, $totalResults, $perPage, $currentPage)->toArray();
+        return Paginator::make($this, $totalResults, $perPage, $currentPage);
     }
 
     /**

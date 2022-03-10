@@ -13,7 +13,7 @@ class Connection
     /**
      * @var PDO|null
      */
-    private ?PDO $pdo;
+    private ?PDO $pdo = null;
 
     /**
      * @var PDOStatement|bool
@@ -28,7 +28,7 @@ class Connection
     /**
      * @var bool
      */
-    private bool $failed;
+    private bool $failed = false;
 
     /**
      * function __construct.
@@ -53,9 +53,9 @@ class Connection
     /**
      * function start.
      *
-     * @return Connection
+     * @return self
      */
-    public function start(): self
+    private function start(): self
     {
         // check if there already exists an connection
         if (isset($this->pdo)) {
@@ -84,15 +84,47 @@ class Connection
     }
 
     /**
+     * @param  QueryBuilder  $query
+     * @param  int|null      $fetchMode
+     * 
+     * @return PDOStatement
+     */
+    public function runSelect(QueryBuilder $query, ?int $fetchMode = null): PDOStatement
+    {
+        $this->handleExecution($query, ...$query->selectToSql($query));
+
+        $this->statement->setFetchMode(...$this->getFetchModeArguments($query, $fetchMode));
+
+        return $this->statement;
+    }
+
+    /**
+     * @param  QueryBuilder  $query
+     * @param  int|null      $fetchMode
+     * 
+     * @return array
+     */
+    private function getFetchModeArguments(QueryBuilder $query, ?int $fetchMode = null): array
+    {
+        $fetchMode = $query->fromModel ? \PDO::FETCH_CLASS : ($fetchMode ?: $query->fetchMode);
+
+        $args = [
+            $fetchMode | \PDO::FETCH_PROPS_LATE,
+        ];
+
+        return $query->fromModel ? array_merge($args, [$query->fromModel::class]) : $args;
+    }
+
+    /**
      * This method will handle query execution.
      *
      * @param QueryBuilder $queryBuilder
      * @param string       $query
      * @param array        $bindings
      *
-     * @return mixed
+     * @return self
      */
-    public function handleExecution(QueryBuilder $queryBuilder, string $query, array $bindings = []): mixed
+    public function handleExecution(QueryBuilder $queryBuilder, string $query, array $bindings = []): self
     {
         // set failed to false
         $this->failed = false;
@@ -127,22 +159,18 @@ class Connection
             'bindings'        => $bindings,
             'executionTime'   => $this->executionTime(),
             'failed'          => $this->failed(),
-            'effectedRows'    => (int) $this->statement?->rowCount() ?? 0,
+            'effectedRows'    => (int) ($this->statement?->rowCount() ?? 0),
             'hasEffectedRows' => $this->hasEffectedRows(),
             'error'           => $this->failed() ? $th->getMessage() : false,
         ]);
 
-        // reset all props
-        $queryBuilder->reset();
-
-        // return query builder
         return $this;
     }
 
     /**
      * @param string $query
      *
-     * @return Connection
+     * @return self
      */
     public function prepare(string $query): self
     {
@@ -186,7 +214,7 @@ class Connection
      */
     public function hasEffectedRows(): bool
     {
-        return (int) $this->statement?->rowCount() > 0;
+        return ((int) $this->statement?->rowCount()) > 0;
     }
 
     /**

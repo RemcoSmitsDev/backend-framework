@@ -16,6 +16,8 @@ class Grammar
      */
     public function selectToSql(QueryBuilder $query): array
     {
+        if($query->isRaw) return $query->rawQuery;
+        
         // format select columns into string
         $select = implode(', ', $query->columns ?: ['*']);
 

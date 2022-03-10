@@ -14,7 +14,7 @@ trait CollectionHelpers
     public function each(callable $callback): Collection
     {
         // loop over all the items
-        foreach ($this->toArray() as $key => $item) {
+        foreach ($this as $key => $item) {
             // check if need to break loop
             if ($callback($item, $key) === false) {
                 break;
@@ -33,6 +33,11 @@ trait CollectionHelpers
      */
     public function map(callable $callback): Collection
     {
+        // return new Collection(function () use ($callback) {
+        //     foreach ($this as $key => $value) {
+        //         yield $key => $callback($value, $key);
+        //     }
+        // });
         // get all keys
         $keys = array_keys($this->toArray());
 
@@ -54,10 +59,16 @@ trait CollectionHelpers
     {
         // check if there was a callable set
         if (is_null($callback)) {
-            return new Collection(array_filter($this->toArray()));
+            return Collection::make(array_filter($this->toArray()));
         }
 
-        // execute callable
+        // return new Collection(function () use ($callback) {
+        //     foreach ($this as $key => $value) {
+        //         if ($callback($value, $key)) {
+        //             yield $key => $value;
+        //         }
+        //     }
+        // });
         return new Collection(array_filter($this->toArray(), $callback, ARRAY_FILTER_USE_BOTH));
     }
 
@@ -86,7 +97,7 @@ trait CollectionHelpers
         }
 
         // loop over the collection values
-        foreach ($this->toArray() as $key => $item) {
+        foreach ($this as $key => $item) {
             // when there is no callback function
             if (is_null($callback)) {
                 return $item;
@@ -138,9 +149,19 @@ trait CollectionHelpers
      */
     public function keys(mixed $keys = null): Collection
     {
-        return Collection::make(
+        return new Collection(
             $keys ? array_keys($this->toArray(), $keys) : array_keys($this->toArray())
         );
+    }
+
+    /**
+     * @param string $name
+     * 
+     * @return Collection
+     */
+    public function column(string $column): Collection
+    {
+        return new Collection(array_column($this->toArray(), $column));
     }
 
     /**
@@ -152,11 +173,19 @@ trait CollectionHelpers
      */
     public function combine(array|Collection $keys): Collection
     {
-        return Collection::make(
+        return new Collection(
             array_combine(
                 $keys instanceof Collection ? array_values($keys->toArray()) : $keys,
                 $this->toArray(),
             )
         );
+    }
+
+    /**
+     * @return Collection
+     */
+    public function unique(): Collection
+    {
+        return new Collection(array_unique($this->toArray()));
     }
 }

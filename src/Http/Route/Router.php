@@ -113,7 +113,7 @@ class Router
                 }
 
                 // append data to model
-                $parameter->setOriginal($bindingData);
+                $parameter->setOriginal($bindingData->getOriginal());
             })->toArray();
         }
 

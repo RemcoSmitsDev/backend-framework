@@ -4,11 +4,14 @@ namespace Framework\Model;
 
 use Exception;
 use Framework\Database\QueryBuilder\QueryBuilder;
+use Framework\Model\Relation\HasRelations;
 use JsonSerializable;
 use stdClass;
+use Stringable;
 
 /**
  * @method static \Framework\Database\QueryBuilder\QueryBuilder logSql()
+ * @method static \Framework\Database\QueryBuilder\QueryBuilder withRelations(string ...$relations)
  * @method static \Framework\Database\QueryBuilder\QueryBuilder table(string $table, string|array $select = ['*'])
  * @method static \Framework\Database\QueryBuilder\QueryBuilder select(string|array $select)
  * @method static \Framework\Database\QueryBuilder\QueryBuilder subQuery(Closure $query, string $before = '', string $after = '', bool $isWhereClause = false, string $boolean = 'AND')
@@ -22,8 +25,8 @@ use stdClass;
  * @method static \Framework\Database\QueryBuilder\QueryBuilder join(string $table, string|Closure $first, ?string $operator = null, ?string $value = null, string $type = 'INNER')
  * @method static \Framework\Database\QueryBuilder\QueryBuilder leftJoin(string $table, string|Closure $first, ?string $operator = null, ?string $value = null)
  * @method static \Framework\Database\QueryBuilder\QueryBuilder rightJoin(string $table, string|Closure $first, ?string $operator = null, ?string $value = null)
- * @method static \Framework\Database\QueryBuilder\QueryBuilder all(mixed $fallbackReturnValue = false, int $fetchMode = null)
- * @method static \Framework\Database\QueryBuilder\QueryBuilder one(mixed $fallbackReturnValue = false, int $fetchMode = null)
+ * @method static \Framework\Collection\Collection all(mixed $fallbackReturnValue = false, int $fetchMode = null)
+ * @method static one(mixed $fallbackReturnValue = false, int $fetchMode = null)
  * @method static \Framework\Database\QueryBuilder\QueryBuilder column(mixed $fallbackReturnValue = false, int $column = 0)
  * @method static \Framework\Database\QueryBuilder\QueryBuilder insert(array $insertData)
  * @method static \Framework\Database\QueryBuilder\QueryBuilder update(array $updateData)
@@ -38,8 +41,10 @@ use stdClass;
  *
  * @see \Framework\Database\QueryBuilder\QueryBuilder
  */
-abstract class BaseModel implements JsonSerializable
+abstract class BaseModel implements JsonSerializable, Stringable
 {
+    use HasRelations;
+
     /**
      * @var string
      */
@@ -56,14 +61,26 @@ abstract class BaseModel implements JsonSerializable
     private ?object $original = null;
 
     /**
+     * @param array|object
+     */
+    public function __construct(array|object $original = [])
+    {
+        $this->setOriginal((object) $original);
+    }
+
+    /**
+     * Returns a new instance of QueryBuilder
+     * 
      * @return QueryBuilder
      */
     final public function query(): QueryBuilder
     {
-        return QueryBuilder::new()->table($this->getTableFromModel());
+        return QueryBuilder::new()->setFromModel($this)->table($this->getTable());
     }
 
     /**
+     * Shorthand for finding a single result.
+     * 
      * @param mixed       $find
      * @param string|null $key
      *
@@ -73,10 +90,12 @@ abstract class BaseModel implements JsonSerializable
      */
     public function find(mixed $find, ?string $key = null): ?object
     {
-        return $this->query()->where($key ?: $this->primaryKey, '=', $find)->one(null);
+        return $this->query()->where($key ?: $this->getPrimaryKey(), '=', $find)->one(null);
     }
 
     /**
+     * Handles finding a single result for route model binding
+     * 
      * @param string $field
      * @param mixed  $value
      * @param array  $dynamicData
@@ -89,13 +108,25 @@ abstract class BaseModel implements JsonSerializable
     }
 
     /**
+     * Set's the original model data
+     * 
      * @param object|null $original
      *
      * @return void
      */
-    public function setOriginal(?object $original): void
+    final public function setOriginal(?object $original): void
     {
         $this->original = $original;
+    }
+
+    /**
+     * Get's the original model data
+     * 
+     * @return object|null
+     */
+    final public function getOriginal():?object
+    {
+        return $this->original;
     }
 
     /**
@@ -105,7 +136,7 @@ abstract class BaseModel implements JsonSerializable
      *
      * @return string
      */
-    public function setTable(string $table): string
+    final public function setTable(string $table): string
     {
         return $this->table = $table;
     }
@@ -115,28 +146,20 @@ abstract class BaseModel implements JsonSerializable
      *
      * @return string
      */
-    public function getPrimaryKey(): string
+    final public function getPrimaryKey(): string
     {
         return $this->primaryKey;
     }
 
     /**
-     * This will get the table name.
-     *
-     * @return string
-     */
-    public function getTable(): string
-    {
-        return $this->getTableFromModel();
-    }
-
-    /**
+     * Get table name from model name
+     * 
      * @throws ReflectionException
      *
      * @return string
      * @return string
      */
-    private function getTableFromModel(): string
+    final public function getTable(): string
     {
         // when there is already a table set
         if (!empty($this->table)) {
@@ -147,16 +170,18 @@ abstract class BaseModel implements JsonSerializable
         $table = str_replace(
             'controller',
             '',
-            strtolower(getClassName(get_class($this)))
+            strtolower(
+                preg_replace('/(.)(?=[A-Z])/u', '$1_', getClassName(get_class($this)))
+            )
         );
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1).'ie';
+            $table = substr($table, 0, -1) . 'ie';
         }
 
         // set table name
-        return $this->setTable($table.'s');
+        return $this->setTable($table . 's');
     }
 
     /**
@@ -167,10 +192,6 @@ abstract class BaseModel implements JsonSerializable
      */
     public function __set(string $name, mixed $value): void
     {
-        if (!is_object($this->original)) {
-            $this->original = new stdClass();
-        }
-
         $this->original->{$name} = $value;
     }
 
@@ -191,7 +212,13 @@ abstract class BaseModel implements JsonSerializable
      */
     public function __get(string $name): mixed
     {
-        return $this->original->{$name};
+        if (property_exists($this->original, $name)) return $this->original->{$name};
+
+        $this->initRelations();
+
+        if (method_exists($this, $name)) return $this->original->{$name} = $this->getRelationData($name);
+
+        throw new Exception("Propery [{$name}] doesn't exists!");
     }
 
     /**
@@ -203,7 +230,7 @@ abstract class BaseModel implements JsonSerializable
     public function __call(string $name, array $arguments = []): mixed
     {
         return call_user_func_array([
-            $this->query()->table($this->getTableFromModel()),
+            $this->query(),
             $name,
         ], $arguments);
     }
@@ -224,6 +251,14 @@ abstract class BaseModel implements JsonSerializable
      */
     public function jsonSerialize(): string
     {
-        return json_encode($this->original);
+        return json_encode($this->original, JSON_FORCE_OBJECT);
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->jsonSerialize();
     }
 }

@@ -1,6 +1,9 @@
 # PHP Backend Framework
 
-[![PHP tests](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml/badge.svg?branch=master)](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml)
+![build](https://github.com/RemcoSmitsDev/backend-framework/actions/workflows/php.yml/badge.svg?branch=master)
+[![Total Downloads](http://poser.pugx.org/remcosmits/backend-framework/downloads)](https://packagist.org/packages/remcosmits/backend-framework)
+[![Latest Stable Version](http://poser.pugx.org/remcosmits/backend-framework/v)](https://packagist.org/packages/remcosmits/backend-framework)
+[![License](http://poser.pugx.org/remcosmits/backend-framework/license)](https://packagist.org/packages/remcosmits/backend-framework)
 
 Lightweight PHP Backend Framework. Includes fast and secure [Database QueryBuilder](#querybuilder),
 Advanced Routing with [dynamic routing](#dynamic-routing) ([middlewares](#route-middlewares), [groups](#route-group), [prefixes](#route-prefix), [named routes](#named-routes))
