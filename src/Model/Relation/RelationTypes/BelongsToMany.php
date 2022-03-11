@@ -13,117 +13,120 @@ use Framework\Model\BaseModel;
 use Framework\Model\Relation\BaseRelation;
 
 /**
- * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
- * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
  *
  * @author     Remco Smits <djsmits12@gmail.com>
  * @copyright  2021 Remco Smits
  * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ *
  * @link       https://github.com/RemcoSmitsDev/backend-framework/
  */
 class BelongsToMany extends BaseRelation
 {
-	/**
-	 * @var BaseModel
-	 */
-	private BaseModel $baseModelInstance;
+    /**
+     * @var BaseModel
+     */
+    private BaseModel $baseModelInstance;
 
-	/**
-	 * @param class-string $relation
-	 * @param BaseRelation $fromModel
-	 * @param string       $table
-	 * @param string|null  $foreignKey
-	 * @param string|null  $relationForeignKey
-	 * @param Closure|null $query
-	 */
-	public function __construct(
-		public string  $relation,
-		protected BaseModel $fromModel,
-		public string  $table,
-		public ?string $foreignKey = null,
-		public ?string $relationForeignKey = null,
-		public ?Closure $query = null
-	) {
-	}
+    /**
+     * @param class-string $relation
+     * @param BaseRelation $fromModel
+     * @param string       $table
+     * @param string|null  $foreignKey
+     * @param string|null  $relationForeignKey
+     * @param Closure|null $query
+     */
+    public function __construct(
+        public string $relation,
+        protected BaseModel $fromModel,
+        public string $table,
+        public ?string $foreignKey = null,
+        public ?string $relationForeignKey = null,
+        public ?Closure $query = null
+    ) {
+    }
 
-	/**
-	 * @param array $results
-	 * 
-	 * @return Collection|Paginator
-	 */
-	public function getData(array $results = []): Collection|Paginator
-	{
-		// when there where no ids found
-		if (empty($results)) {
-			return collection([]);
-		}
+    /**
+     * @param array $results
+     *
+     * @return Collection|Paginator
+     */
+    public function getData(array $results = []): Collection|Paginator
+    {
+        // when there where no ids found
+        if (empty($results)) {
+            return collection([]);
+        }
 
-		$fromModel = $this->getFromModel();
+        $fromModel = $this->getFromModel();
 
-		// get belongs to many relation class
-		$belongsToMany = $this->getBelongsToManyRelation($fromModel);
-		$this->baseModelInstance = $baseModelInstance = new $belongsToMany->relation;
+        // get belongs to many relation class
+        $belongsToMany = $this->getBelongsToManyRelation($fromModel);
+        $this->baseModelInstance = $baseModelInstance = new $belongsToMany->relation();
 
-		// get the foreignKeys
-		$relationForeignKey = $this->relationForeignKey ?: $this->getForeignKeyByModel($baseModelInstance);
-		$baseModelForeignKey = $this->foreignKey ?: $this->getForeignKeyByModel($belongsToMany->getFromModel());
+        // get the foreignKeys
+        $relationForeignKey = $this->relationForeignKey ?: $this->getForeignKeyByModel($baseModelInstance);
+        $baseModelForeignKey = $this->foreignKey ?: $this->getForeignKeyByModel($belongsToMany->getFromModel());
 
-		// build query
-		$query = $baseModelInstance->select(
-			$baseModelInstance->getTable() . '.*',
-			$this->table . '.' . $baseModelForeignKey . ' as pivot_' . $baseModelForeignKey,
-			$this->table . '.' . $relationForeignKey . ' as pivot_' . $relationForeignKey
-		)
-			->join(
-				$belongsToMany->table,
-				$baseModelInstance->getTable() . '.' . $baseModelInstance->getPrimaryKey(),
-				'=',
-				$belongsToMany->table . '.' . $relationForeignKey
-			)
-			->whereIn(
-				$belongsToMany->table . '.' . $baseModelForeignKey,
-				array_column($results, $fromModel->getPrimaryKey())
-			);
+        // build query
+        $query = $baseModelInstance->select(
+            $baseModelInstance->getTable().'.*',
+            $this->table.'.'.$baseModelForeignKey.' as pivot_'.$baseModelForeignKey,
+            $this->table.'.'.$relationForeignKey.' as pivot_'.$relationForeignKey
+        )
+            ->join(
+                $belongsToMany->table,
+                $baseModelInstance->getTable().'.'.$baseModelInstance->getPrimaryKey(),
+                '=',
+                $belongsToMany->table.'.'.$relationForeignKey
+            )
+            ->whereIn(
+                $belongsToMany->table.'.'.$baseModelForeignKey,
+                array_column($results, $fromModel->getPrimaryKey())
+            );
 
-		$query = $this->query ? ($this->query)($query) : $query;
+        $query = $this->query ? ($this->query)($query) : $query;
 
-		return $query instanceof QueryBuilder ? $query->all() : $query;
-	}
+        return $query instanceof QueryBuilder ? $query->all() : $query;
+    }
 
-	/**
-	 * @param  BaseModel
-	 * 
-	 * @return BaseRelation
-	 */
-	private function getBelongsToManyRelation(BaseModel $fromModel): BaseRelation
-	{
-		$belongsToMany = collection($fromModel->initRelations()->getRelations())->filter(fn ($relation) => $this->relation === $relation->relation)->first();
+    /**
+     * @param  BaseModel
+     *
+     * @return BaseRelation
+     */
+    private function getBelongsToManyRelation(BaseModel $fromModel): BaseRelation
+    {
+        $belongsToMany = collection($fromModel->initRelations()->getRelations())->filter(fn ($relation) => $this->relation === $relation->relation)->first();
 
-		if (!$belongsToMany) throw new Exception('There was no relation found for [' . $fromModel::class . ']!');
+        if (!$belongsToMany) {
+            throw new Exception('There was no relation found for ['.$fromModel::class.']!');
+        }
 
-		return $belongsToMany;
-	}
+        return $belongsToMany;
+    }
 
-	public function mergeRelation(
-		BaseModel|Collection|Paginator $baseData,
-		BaseModel|Collection|Paginator $relationData
-	): BaseModel|Collection|Paginator {
+    public function mergeRelation(
+        BaseModel|Collection|Paginator $baseData,
+        BaseModel|Collection|Paginator $relationData
+    ): BaseModel|Collection|Paginator {
+        if ($baseData instanceof Collection) {
+            return $baseData->each(function (&$item) use ($relationData) {
+                $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{'pivot_post_id'} == $item->{$item->getPrimaryKey()});
+            });
+        }
 
-		if ($baseData instanceof Collection) {
-			return $baseData->each(function (&$item) use ($relationData) {
-				$item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{'pivot_post_id'} == $item->{$item->getPrimaryKey()});
-			});
-		}
+        if ($baseData instanceof BaseModel) {
+            $baseData->{$this->getName()} = $relationData;
+        }
 
-		if ($baseData instanceof BaseModel) {
-			$baseData->{$this->getName()} = $relationData;
-		}
+        if ($baseData instanceof Paginator) {
+            dd('fail');
 
-		if ($baseData instanceof Paginator) {
-			dd('fail');
-			throw new Exception('paginator not implemented yet');
-		}
+            throw new Exception('paginator not implemented yet');
+        }
 
-		return $baseData;
-	}
+        return $baseData;
+    }
 }

@@ -11,12 +11,13 @@ use PDO;
 use PDOStatement;
 
 /**
- * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
- * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
  *
  * @author     Remco Smits <djsmits12@gmail.com>
  * @copyright  2021 Remco Smits
  * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ *
  * @link       https://github.com/RemcoSmitsDev/backend-framework/
  */
 class Connection
@@ -95,9 +96,9 @@ class Connection
     }
 
     /**
-     * @param  QueryBuilder  $query
-     * @param  int|null      $fetchMode
-     * 
+     * @param QueryBuilder $query
+     * @param int|null     $fetchMode
+     *
      * @return PDOStatement
      */
     public function runSelect(QueryBuilder $query, ?int $fetchMode = null): PDOStatement
@@ -110,9 +111,9 @@ class Connection
     }
 
     /**
-     * @param  QueryBuilder  $query
-     * @param  int|null      $fetchMode
-     * 
+     * @param QueryBuilder $query
+     * @param int|null     $fetchMode
+     *
      * @return array
      */
     private function getFetchModeArguments(QueryBuilder $query, ?int $fetchMode = null): array

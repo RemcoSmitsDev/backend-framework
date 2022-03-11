@@ -11,12 +11,13 @@ use JsonSerializable;
 use Stringable;
 
 /**
- * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
- * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
  *
  * @author     Remco Smits <djsmits12@gmail.com>
  * @copyright  2021 Remco Smits
  * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ *
  * @link       https://github.com/RemcoSmitsDev/backend-framework/
  *
  * @method static \Framework\Database\QueryBuilder\QueryBuilder logSql()
@@ -78,8 +79,8 @@ abstract class BaseModel implements JsonSerializable, Stringable
     }
 
     /**
-     * Returns a new instance of QueryBuilder
-     * 
+     * Returns a new instance of QueryBuilder.
+     *
      * @return QueryBuilder
      */
     final public function query(): QueryBuilder
@@ -89,7 +90,7 @@ abstract class BaseModel implements JsonSerializable, Stringable
 
     /**
      * Shorthand for finding a single result.
-     * 
+     *
      * @param mixed       $find
      * @param string|null $key
      *
@@ -103,8 +104,8 @@ abstract class BaseModel implements JsonSerializable, Stringable
     }
 
     /**
-     * Handles finding a single result for route model binding
-     * 
+     * Handles finding a single result for route model binding.
+     *
      * @param string $field
      * @param mixed  $value
      * @param array  $dynamicData
@@ -117,8 +118,8 @@ abstract class BaseModel implements JsonSerializable, Stringable
     }
 
     /**
-     * Set's the original model data
-     * 
+     * Set's the original model data.
+     *
      * @param object|null $original
      *
      * @return void
@@ -129,11 +130,11 @@ abstract class BaseModel implements JsonSerializable, Stringable
     }
 
     /**
-     * Get's the original model data
-     * 
+     * Get's the original model data.
+     *
      * @return object|null
      */
-    final public function getOriginal():?object
+    final public function getOriginal(): ?object
     {
         return $this->original;
     }
@@ -161,8 +162,8 @@ abstract class BaseModel implements JsonSerializable, Stringable
     }
 
     /**
-     * Get table name from model name
-     * 
+     * Get table name from model name.
+     *
      * @throws ReflectionException
      *
      * @return string
@@ -186,11 +187,11 @@ abstract class BaseModel implements JsonSerializable, Stringable
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1) . 'ie';
+            $table = substr($table, 0, -1).'ie';
         }
 
         // set table name
-        return $this->setTable($table . 's');
+        return $this->setTable($table.'s');
     }
 
     /**
@@ -221,11 +222,15 @@ abstract class BaseModel implements JsonSerializable, Stringable
      */
     public function __get(string $name): mixed
     {
-        if (property_exists($this->original, $name)) return $this->original->{$name};
+        if (property_exists($this->original, $name)) {
+            return $this->original->{$name};
+        }
 
         $this->initRelations();
 
-        if (method_exists($this, $name)) return $this->original->{$name} = $this->getRelationData($name);
+        if (method_exists($this, $name)) {
+            return $this->original->{$name} = $this->getRelationData($name);
+        }
 
         throw new Exception("Propery [{$name}] doesn't exists!");
     }
