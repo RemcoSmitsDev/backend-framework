@@ -18,12 +18,13 @@ use Framework\Model\BaseModel;
 use IteratorAggregate;
 
 /**
- * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
- * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
  *
  * @author     Remco Smits <djsmits12@gmail.com>
  * @copyright  2021 Remco Smits
  * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ *
  * @link       https://github.com/RemcoSmitsDev/backend-framework/
  */
 class QueryBuilder extends Grammar implements IteratorAggregate
@@ -168,14 +169,16 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 
     /**
      * @param string ...$relations
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @return self
      */
     public function withRelations(string ...$relations): self
     {
-        if (!$this->fromModel) throw new Exception('This method can only be called from a model!');
+        if (!$this->fromModel) {
+            throw new Exception('This method can only be called from a model!');
+        }
 
         $this->fromModel->initRelations();
 
@@ -187,22 +190,22 @@ class QueryBuilder extends Grammar implements IteratorAggregate
     }
 
     /**
-     * Set the base model if QueryBUilder was called from a model
-     * 
+     * Set the base model if QueryBUilder was called from a model.
+     *
      * @param BaseModel|class-string $model
-     * 
+     *
      * @return self
      */
     public function setFromModel(BaseModel|string $model): self
     {
-        $this->fromModel = is_string($model) ? new $model : $model;
+        $this->fromModel = is_string($model) ? new $model() : $model;
 
         return $this;
     }
 
     /**
-     * Allows logging SQL information
-     * 
+     * Allows logging SQL information.
+     *
      * @return $this
      */
     public function logSql(): self
@@ -263,7 +266,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
                 // make subSelect
                 $this->columns[] = $this->subQuery(
                     $column,
-                    after: (is_string($as) ? ' as ' . $as : '')
+                    after: (is_string($as) ? ' as '.$as : '')
                 );
             } elseif ($column instanceof SubQuery) {
                 $this->columns[] = $column->setAfter(is_string($as) ? $as : $column->getAfter());

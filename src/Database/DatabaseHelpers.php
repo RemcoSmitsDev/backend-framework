@@ -9,12 +9,13 @@ use Framework\Database\QueryBuilder\QueryBuilder;
 use Framework\Model\BaseModel;
 
 /**
- * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
- * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
  *
  * @author     Remco Smits <djsmits12@gmail.com>
  * @copyright  2021 Remco Smits
  * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ *
  * @link       https://github.com/RemcoSmitsDev/backend-framework/
  */
 trait DatabaseHelpers
@@ -75,12 +76,14 @@ trait DatabaseHelpers
 
     /**
      * @param mixed $result
-     * 
+     *
      * @return Collection|BaseModel|array|bool
      */
     protected function mergeRelations($result)
     {
-        if (empty($relations) || !$result instanceof BaseModel && !$result instanceof Collection) return $result;
+        if (empty($relations) || !$result instanceof BaseModel && !$result instanceof Collection) {
+            return $result;
+        }
 
         foreach ($this->withRelations as $relation) {
             $result = $relation->mergeRelation(

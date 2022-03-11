@@ -12,12 +12,13 @@ use IteratorAggregate;
 use JsonSerializable;
 
 /**
- * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
- * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
  *
  * @author     Remco Smits <djsmits12@gmail.com>
  * @copyright  2021 Remco Smits
  * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ *
  * @link       https://github.com/RemcoSmitsDev/backend-framework/
  */
 class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
@@ -142,8 +143,8 @@ class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
     }
 
     /**
-     * @param  string  $name
-     * 
+     * @param string $name
+     *
      * @return mixed
      */
     public function __get(string $name): mixed
@@ -152,8 +153,8 @@ class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
     }
 
     /**
-     * @param  mixed  $offset
-     * 
+     * @param mixed $offset
+     *
      * @return mixed
      */
     public function offsetGet(mixed $offset): mixed
@@ -166,8 +167,8 @@ class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
     }
 
     /**
-     * @param  mixed  $offset
-     * 
+     * @param mixed $offset
+     *
      * @return bool
      */
     public function offsetExists(mixed $offset): bool
@@ -176,9 +177,9 @@ class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
     }
 
     /**
-     * @param  mixed  $offset
-     * @param  mixed  $value
-     * 
+     * @param mixed $offset
+     * @param mixed $value
+     *
      * @return void
      */
     public function offsetSet(mixed $offset, mixed $value): void
@@ -187,8 +188,8 @@ class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
     }
 
     /**
-     * @param  mixed  $offset
-     * 
+     * @param mixed $offset
+     *
      * @return void
      */
     public function offsetUnset(mixed $offset): void
@@ -199,14 +200,16 @@ class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
     }
 
     /**
-     * @param  string  $name
-     * @param  array   $arguments
-     * 
+     * @param string $name
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function __call(string $name, array $arguments = []): mixed
     {
-        if (!method_exists($this->toArray()['results'], $name)) throw new BadMethodCallException("There was no method called [{$name}] on the Collection class!");
+        if (!method_exists($this->toArray()['results'], $name)) {
+            throw new BadMethodCallException("There was no method called [{$name}] on the Collection class!");
+        }
 
         return $this->toArray()['results']->{$name}(...$arguments);
     }
