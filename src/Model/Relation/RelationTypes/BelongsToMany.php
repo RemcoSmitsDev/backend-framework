@@ -110,20 +110,16 @@ class BelongsToMany extends BaseRelation
      * 
      * @return TValue
      */
-    public function mergeRelation($baseData, $relationData): BaseModel|Collection|Paginator
+    public function mergeRelation($baseData, $relationData): BaseModel|Collection
     {
         if ($baseData instanceof Collection) {
             return $baseData->each(function (&$item) use ($relationData) {
-                $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{'pivot_post_id'} == $item->{$item->getPrimaryKey()});
+                $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{'pivot_' . $this->getForeignKeyByModel($this->getFromModel())} === $item->{$item->getPrimaryKey()});
             });
         }
 
         if ($baseData instanceof BaseModel) {
             $baseData->{$this->getName()} = $relationData;
-        }
-
-        if ($baseData instanceof Paginator) {
-            throw new Exception('paginator not implemented yet');
         }
 
         return $baseData;

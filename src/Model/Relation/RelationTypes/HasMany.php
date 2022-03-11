@@ -81,7 +81,7 @@ class HasMany extends BaseRelation
      * @template TValue
      * 
      * @param  TValue $baseData
-     * @param  BaseModel|Collection|Paginator $relationData
+     * @param  BaseModel|Collection $relationData
      * 
      * @return TValue
      */
@@ -95,7 +95,7 @@ class HasMany extends BaseRelation
 
         if ($baseData instanceof Collection) {
             return $baseData->each(function (&$item) use ($relationData) {
-                $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{$this->foreignKey} == $item->{$item->getPrimaryKey()});
+                $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{$this->foreignKey} === $item->{$item->getPrimaryKey()});
             });
         }
 
