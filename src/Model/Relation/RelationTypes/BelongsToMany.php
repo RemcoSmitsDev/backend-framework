@@ -25,11 +25,6 @@ use Framework\Model\Relation\BaseRelation;
 class BelongsToMany extends BaseRelation
 {
     /**
-     * @var BaseModel
-     */
-    private BaseModel $baseModelInstance;
-
-    /**
      * @param class-string $relation
      * @param BaseRelation $fromModel
      * @param string       $table
@@ -48,14 +43,14 @@ class BelongsToMany extends BaseRelation
     }
 
     /**
-     * @param array $results
+     * @param Collection|BaseModel $result
      *
      * @return Collection|Paginator
      */
-    public function getData(array $results = []): Collection|Paginator
+    public function getData(Collection|BaseModel $result): Collection|Paginator
     {
         // when there where no ids found
-        if (empty($results)) {
+        if (empty($result)) {
             return collection([]);
         }
 
@@ -63,7 +58,7 @@ class BelongsToMany extends BaseRelation
 
         // get belongs to many relation class
         $belongsToMany = $this->getBelongsToManyRelation($fromModel);
-        $this->baseModelInstance = $baseModelInstance = new $belongsToMany->relation();
+        $baseModelInstance = new $belongsToMany->relation();
 
         // get the foreignKeys
         $relationForeignKey = $this->relationForeignKey ?: $this->getForeignKeyByModel($baseModelInstance);
@@ -71,19 +66,19 @@ class BelongsToMany extends BaseRelation
 
         // build query
         $query = $baseModelInstance->select(
-            $baseModelInstance->getTable().'.*',
-            $this->table.'.'.$baseModelForeignKey.' as pivot_'.$baseModelForeignKey,
-            $this->table.'.'.$relationForeignKey.' as pivot_'.$relationForeignKey
+            $baseModelInstance->getTable() . '.*',
+            $this->table . '.' . $baseModelForeignKey . ' as pivot_' . $baseModelForeignKey,
+            $this->table . '.' . $relationForeignKey . ' as pivot_' . $relationForeignKey
         )
             ->join(
                 $belongsToMany->table,
-                $baseModelInstance->getTable().'.'.$baseModelInstance->getPrimaryKey(),
+                $baseModelInstance->getTable() . '.' . $baseModelInstance->getPrimaryKey(),
                 '=',
-                $belongsToMany->table.'.'.$relationForeignKey
+                $belongsToMany->table . '.' . $relationForeignKey
             )
             ->whereIn(
-                $belongsToMany->table.'.'.$baseModelForeignKey,
-                array_column($results, $fromModel->getPrimaryKey())
+                $belongsToMany->table . '.' . $baseModelForeignKey,
+                $result instanceof BaseModel ? [$result->getOriginal()->{$fromModel->getPrimaryKey()}] : $result->column($fromModel->getPrimaryKey())->all()
             );
 
         $query = $this->query ? ($this->query)($query) : $query;
@@ -101,16 +96,22 @@ class BelongsToMany extends BaseRelation
         $belongsToMany = collection($fromModel->initRelations()->getRelations())->filter(fn ($relation) => $this->relation === $relation->relation)->first();
 
         if (!$belongsToMany) {
-            throw new Exception('There was no relation found for ['.$fromModel::class.']!');
+            throw new Exception('There was no relation found for [' . $fromModel::class . ']!');
         }
 
         return $belongsToMany;
     }
 
-    public function mergeRelation(
-        BaseModel|Collection|Paginator $baseData,
-        BaseModel|Collection|Paginator $relationData
-    ): BaseModel|Collection|Paginator {
+    /**
+     * @template TValue
+     * 
+     * @param  TValue $baseData
+     * @param  BaseModel|Collection|Paginator $relationData
+     * 
+     * @return TValue
+     */
+    public function mergeRelation($baseData, $relationData): BaseModel|Collection|Paginator
+    {
         if ($baseData instanceof Collection) {
             return $baseData->each(function (&$item) use ($relationData) {
                 $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{'pivot_post_id'} == $item->{$item->getPrimaryKey()});
@@ -122,8 +123,6 @@ class BelongsToMany extends BaseRelation
         }
 
         if ($baseData instanceof Paginator) {
-            dd('fail');
-
             throw new Exception('paginator not implemented yet');
         }
 

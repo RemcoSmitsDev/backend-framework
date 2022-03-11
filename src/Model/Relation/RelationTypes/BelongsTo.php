@@ -33,39 +33,50 @@ class BelongsTo extends BaseRelation
     public function __construct(
         public string $relation,
         protected BaseModel $fromModel,
-        public string $foreignKey,
+        public ?string $foreignKey = null,
         public ?string $primaryKey = null,
         public ?Closure $query = null
     ) {
+        $this->primaryKey = $this->primaryKey ?: $this->getFromModel()->getPrimaryKey();
+        $this->foreignKey = $this->foreignKey ?: $this->getForeignKeyByModel($this->getFromModel());
     }
 
     /**
-     * @param array $results
+     * @param Collection|BaseModel  $result
      *
      * @throws Exception
      *
      * @return BaseModel
      */
-    public function getData(array $results = []): BaseModel
+    public function getData(Collection|BaseModel $result): BaseModel
     {
-        $fromModel = $this->getFromModel();
-
-        if (!property_exists($fromModel->getOriginal(), $this->foreignKey)) {
+        if (!property_exists($this->getFromModel()->getOriginal(), $this->foreignKey)) {
             throw new Exception("There doesn't exists a property called [{$this->foreignKey}]!");
         }
 
-        $query = $this->buildWhereInQuery($this->primaryKey, [$fromModel->getOriginal()->{$this->foreignKey}]);
+        $query = $this->buildQuery(
+            $this->primaryKey,
+            [$this->getFromModel()->getOriginal()->{$this->foreignKey}]
+        );
 
         $query = $this->query ? ($this->query)($query) : $query;
 
         return $query->one();
     }
 
-    public function mergeRelation($baseData, $relationData): BaseModel|Collection|Paginator
+    /**
+     * @template TValue
+     * 
+     * @param  TValue $baseData
+     * @param  BaseModel|Collection|Paginator $relationData
+     * 
+     * @return TValue
+     */
+    public function mergeRelation($baseData, $relationData)
     {
         // when fetched with `one()`
         if ($baseData instanceof BaseModel) {
-            $baseData->{$this->getName()} = $this->getData();
+            $baseData->{$this->getName()} = $relationData;
 
             return $baseData;
         }

@@ -25,42 +25,38 @@ use Framework\Model\Relation\BaseRelation;
 class HasMany extends BaseRelation
 {
     /**
-     * @param string       $relation
+     * @param class-string $relation
      * @param BaseModel    $fromModel
-     * @param string       $foreignKey
+     * @param string|null  $foreignKey
      * @param string|null  $primaryKey
      * @param Closure|null $query
      */
     public function __construct(
         public string $relation,
         protected BaseModel $fromModel,
-        public string $foreignKey,
+        public ?string $foreignKey = null,
         public ?string $primaryKey = null,
         public ?Closure $query = null
     ) {
+        $this->primaryKey = $this->primaryKey ?: $this->getFromModel()->getPrimaryKey();
+        $this->foreignKey = $this->foreignKey ?: $this->getHasManyRelation($this->getFromModel())->foreignKey;
     }
 
     /**
-     * @param array $results
+     * @param Collection|BaseModel $result
      *
      * @return Collection|Paginator
      */
-    public function getData(array $results = []): Collection|Paginator
+    public function getData(Collection|BaseModel $result): Collection|Paginator
     {
-        $fromModel = $this->getFromModel();
-
-        $query = $this->buildWhereInQuery(
-            $this->getHasManyRelation($fromModel)->foreignKey,
-            [$fromModel->getOriginal()->{$this->primaryKey}]
+        $query = $this->buildQuery(
+            $this->foreignKey,
+            $result instanceof Collection ? $result->column($this->primaryKey)->all() : [$result->getOriginal()->{$this->primaryKey}]
         );
 
         $query = $this->query ? ($this->query)($query) : $query;
 
-        if ($query instanceof QueryBuilder) {
-            return $query->all();
-        }
-
-        return $query;
+        return $query instanceof QueryBuilder ? $query->all() : $query;
     }
 
     /**
@@ -75,14 +71,34 @@ class HasMany extends BaseRelation
             ->first();
 
         if (!$hasMany) {
-            throw new Exception('There was no relation found for ['.$fromModel::class.']!');
+            throw new Exception('There was no relation found for [' . $fromModel::class . ']!');
         }
 
         return $hasMany;
     }
 
-    public function mergeRelation($baseData, $relationData): BaseModel|Collection|Paginator
+    /**
+     * @template TValue
+     * 
+     * @param  TValue $baseData
+     * @param  BaseModel|Collection|Paginator $relationData
+     * 
+     * @return TValue
+     */
+    public function mergeRelation($baseData, $relationData)
     {
+        if ($baseData instanceof BaseModel) {
+            $baseData->{$this->getName()} = $relationData;
+
+            return $baseData;
+        }
+
+        if ($baseData instanceof Collection) {
+            return $baseData->each(function (&$item) use ($relationData) {
+                $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{$this->foreignKey} == $item->{$item->getPrimaryKey()});
+            });
+        }
+
         return $baseData;
     }
 }

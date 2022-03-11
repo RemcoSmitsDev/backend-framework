@@ -39,7 +39,7 @@ trait HasRelations
 
     /**
      * @param string       $relation
-     * @param string       $foreignKey
+     * @param string|null  $foreignKey
      * @param string|null  $primaryKey
      * @param Closure|null $query
      *
@@ -47,7 +47,7 @@ trait HasRelations
      */
     protected function belongsTo(
         string $relation,
-        string $foreignKey,
+        ?string $foreignKey = null,
         ?string $primaryKey = null,
         ?Closure $query = null
     ): BelongsTo {
@@ -75,7 +75,7 @@ trait HasRelations
 
     /**
      * @param string       $relation
-     * @param string       $foreignKey
+     * @param string|null  $foreignKey
      * @param string|null  $primaryKey
      * @param Closure|null $query
      *
@@ -83,7 +83,7 @@ trait HasRelations
      */
     protected function hasMany(
         string $relation,
-        string $foreignKey,
+        ?string $foreignKey = null,
         ?string $primaryKey = null,
         ?Closure $query = null
     ): HasMany {
@@ -152,6 +152,6 @@ trait HasRelations
     {
         $relation = $this->getRelation($name);
 
-        return $relation->getData([$relation->getFromModel()]);
+        return $relation->getData($relation->getFromModel());
     }
 }

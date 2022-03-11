@@ -89,7 +89,7 @@ class Paginator implements IteratorAggregate, JsonSerializable, ArrayAccess
      */
     private function calcTotalPages(): int
     {
-        return ceil($this->paginate['total_results'] / $this->paginate['per_page']);
+        return (int) ceil($this->paginate['total_results'] / $this->paginate['per_page']);
     }
 
     /**

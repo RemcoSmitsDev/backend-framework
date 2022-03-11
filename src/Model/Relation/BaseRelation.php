@@ -38,7 +38,7 @@ abstract class BaseRelation
      */
     final public function getForeignKeyByModel(BaseModel $model): string
     {
-        return rtrim($model->getTable(), 's').'_'.$model->getPrimaryKey();
+        return preg_replace('/ie$/', 'y', rtrim($model->getTable(), 's')) . '_' . $model->getPrimaryKey();
     }
 
     /**
@@ -95,12 +95,25 @@ abstract class BaseRelation
      *
      * @return QueryBuilder
      */
-    final public function buildWhereInQuery(string $key, array $values): QueryBuilder
+    final public function buildQuery(string $key, array $values): QueryBuilder
     {
-        return $this->getRelationInstance()->query()->whereIn($key, $values);
+        return $this->getRelationInstance()->query()->{count($values) > 1 ? 'whereIn' : 'where'}($key, count($values) > 1 ? $values : $values[0]);
     }
 
-    abstract public function getData();
+    /**
+     * @param  Collection|BaseModel  $result
+     * 
+     * @return BaseModel|Collection|Paginator
+     */
+    abstract public function getData(Collection|BaseModel $result): BaseModel|Collection|Paginator;
 
-    abstract public function mergeRelation(BaseModel|Collection|Paginator $baseData, BaseModel|Collection|Paginator $relationData): BaseModel|Collection|Paginator;
+    /**
+     * @template TValue
+     * 
+     * @param  TValue $baseData
+     * @param  Paginator $relationData
+     * 
+     * @return TValue
+     */
+    abstract public function mergeRelation(BaseModel|Collection $baseData, BaseModel|Collection|Paginator $relationData);
 }

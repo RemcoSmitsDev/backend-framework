@@ -81,14 +81,14 @@ trait DatabaseHelpers
      */
     protected function mergeRelations($result)
     {
-        if (empty($relations) || !$result instanceof BaseModel && !$result instanceof Collection) {
+        if (empty($this->withRelations) || !$result instanceof BaseModel && !$result instanceof Collection) {
             return $result;
         }
 
         foreach ($this->withRelations as $relation) {
             $result = $relation->mergeRelation(
                 $result,
-                $relation->getData($result instanceof BaseModel ? collection([$result])->all() : $result->all())
+                $relation->getData($result)
             );
         }
 
