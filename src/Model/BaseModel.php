@@ -1,15 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Model;
 
 use Exception;
 use Framework\Database\QueryBuilder\QueryBuilder;
 use Framework\Model\Relation\HasRelations;
 use JsonSerializable;
-use stdClass;
 use Stringable;
 
 /**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ *
  * @method static \Framework\Database\QueryBuilder\QueryBuilder logSql()
  * @method static \Framework\Database\QueryBuilder\QueryBuilder withRelations(string ...$relations)
  * @method static \Framework\Database\QueryBuilder\QueryBuilder table(string $table, string|array $select = ['*'])

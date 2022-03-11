@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Debug;
 
 use Curl\CaseInsensitiveArray;
@@ -7,6 +9,15 @@ use ErrorException;
 use Framework\Content\Content;
 use Framework\Http\Api;
 
+/**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ */
 class Debug
 {
     /**
@@ -35,8 +46,8 @@ class Debug
     public static function register(): void
     {
         // set show errors base on development mode
-        ini_set('display_errors', IS_DEVELOPMENT_MODE);
-        ini_set('display_startup_errors', IS_DEVELOPMENT_MODE);
+        ini_set('display_errors', (string) IS_DEVELOPMENT_MODE);
+        ini_set('display_startup_errors', (string) IS_DEVELOPMENT_MODE);
 
         // shows errors when debug mode is on
         if (!IS_DEVELOPMENT_MODE) {
@@ -237,11 +248,11 @@ class Debug
      * This method will get the url to the editor(file, line).
      *
      * @param string $path
-     * @param string $line
+     * @param int    $line
      *
      * @return string
      */
-    public static function getCodeEditorUrl(string $path, string $line): string
+    public static function getCodeEditorUrl(string $path, int $line): string
     {
         // fix forward slashes
         $path = preg_quote($path);

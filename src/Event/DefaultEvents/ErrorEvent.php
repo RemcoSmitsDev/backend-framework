@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Event\DefaultEvents;
 
 use Error;
@@ -8,9 +10,24 @@ use Framework\Debug\Debug;
 use Framework\Event\BaseEvent;
 use Framework\Event\Interfaces\BaseEventInterface;
 
+/**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ */
 class ErrorEvent extends BaseEvent
 {
-    public function handle(BaseEventInterface $event, mixed $data)
+    /**
+     * @param  BaseEventInterface $event
+     * @param  mixed              $data 
+     * 
+     * @return  void             
+     */
+    public function handle(BaseEventInterface $event, mixed $data): void
     {
         if (!IS_DEVELOPMENT_MODE) {
             return;

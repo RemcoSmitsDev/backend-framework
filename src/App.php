@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework;
 
 use Exception;
@@ -10,6 +12,15 @@ use Framework\Event\DefaultEvents\QueryEvent;
 use Framework\Event\Event;
 use Framework\Http\Api;
 
+/**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ */
 final class App
 {
     /**
@@ -113,9 +124,9 @@ final class App
     private function setSession(): void
     {
         // voeg http only session.cookie toe als de app niet op development mode staat
-        ini_set('session.cookie_httponly', !IS_DEVELOPMENT_MODE);
+        ini_set('session.cookie_httponly', (string) !IS_DEVELOPMENT_MODE);
         // voeg secure session.cookie toe als de app niet op development mode staat
-        ini_set('session.cookie_secure', !IS_DEVELOPMENT_MODE);
+        ini_set('session.cookie_secure', (string) !IS_DEVELOPMENT_MODE);
         // set session cookie duration time (2 days)
         session_set_cookie_params(3600 * 24 * 2);
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Database\Connection;
 
 use Framework\Database\QueryBuilder\QueryBuilder;
@@ -8,6 +10,15 @@ use Framework\Event\Event;
 use PDO;
 use PDOStatement;
 
+/**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ */
 class Connection
 {
     /**
@@ -244,9 +255,9 @@ class Connection
     /**
      * This method will return the execution time.
      *
-     * @return int|float
+     * @return int|float|string
      */
-    public function executionTime(): int|float
+    public function executionTime(): int|float|string
     {
         return $this->executionTime;
     }

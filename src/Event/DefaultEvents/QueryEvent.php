@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Event\DefaultEvents;
 
 use Framework\Database\SqlFormatter;
@@ -7,21 +9,28 @@ use Framework\Debug\Debug;
 use Framework\Event\BaseEvent;
 use Framework\Event\Interfaces\BaseEventInterface;
 
+/**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ */
 class QueryEvent extends BaseEvent
 {
     /**
-     * This method will handle all incoming databaseQuery events.
-     *
      * @param BaseEventInterface $event
      * @param array|null         $data
      *
      * @return void
      */
-    public function handle(BaseEventInterface $event, $data)
+    public function handle(BaseEventInterface $event, $data): void
     {
         // check if can show error message
         if (!defined('IS_DEVELOPMENT_MODE') || !IS_DEVELOPMENT_MODE) {
-            return false;
+            return;
         }
 
         // append query to debug state

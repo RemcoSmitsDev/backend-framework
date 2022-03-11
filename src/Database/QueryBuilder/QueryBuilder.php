@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Database\QueryBuilder;
 
 use ArrayIterator;
@@ -15,6 +17,15 @@ use Framework\Database\QueryBuilder\SubQuery\SubQuery;
 use Framework\Model\BaseModel;
 use IteratorAggregate;
 
+/**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ */
 class QueryBuilder extends Grammar implements IteratorAggregate
 {
     use DatabaseHelpers;
@@ -611,8 +622,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
     //
 
     /**
-     * function all.
-     *
      * @param mixed    $fallbackReturnValue
      * @param int|null $fetchMode
      *
@@ -630,8 +639,6 @@ class QueryBuilder extends Grammar implements IteratorAggregate
     }
 
     /**
-     * function one.
-     *
      * @param mixed    $fallbackReturnValue
      * @param int|null $fetchMode
      *
@@ -642,7 +649,10 @@ class QueryBuilder extends Grammar implements IteratorAggregate
     public function one(mixed $fallbackReturnValue = false, int $fetchMode = null): mixed
     {
         return $this->mergeRelations(
-            $this->connection->runSelect($this->limit(1), $fetchMode)->fetch() ?: $fallbackReturnValue
+            $this->connection->runSelect(
+                $this->limit ? $this : $this->limit(1),
+                $fetchMode
+            )->fetch() ?: $fallbackReturnValue
         );
     }
 
@@ -658,14 +668,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
      */
     public function column(mixed $fallbackReturnValue = false, int $column = 0): mixed
     {
-        // handle execution
-        $connection = $this->connection->handleExecution(
-            $this,
-            ...($this->isRaw ? $this->rawQuery : $this->selectToSql($this))
-        );
-
-        // return fallback return value
-        return $connection->failed() ? $fallbackReturnValue : $connection->statement->fetchColumn($column);
+        return $this->connection->runSelect($this)->fetchColumn($column) ?: $fallbackReturnValue;
     }
 
     //

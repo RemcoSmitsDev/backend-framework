@@ -1,20 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Parallel;
 
 use Generator;
 
+/**
+ * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, 
+ * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).  
+ *
+ * @author     Remco Smits <djsmits12@gmail.com>
+ * @copyright  2021 Remco Smits
+ * @license    https://github.com/RemcoSmitsDev/backend-framework/blob/master/LICENSE
+ * @link       https://github.com/RemcoSmitsDev/backend-framework/
+ */
 class SocketConnection
 {
     /**
-     * @var int
+     * @var int|float
      */
-    protected int $timeoutSeconds;
+    protected int|float $timeoutSeconds;
 
     /**
-     * @var int
+     * @var int|float
      */
-    protected int $timeoutMicroseconds;
+    protected int|float $timeoutMicroseconds;
 
     /**
      * @var int
@@ -68,7 +79,7 @@ class SocketConnection
         $read = null;
         $except = null;
 
-        return socket_select($read, $write, $except, $this->timeoutSeconds, $this->timeoutMicroseconds);
+        return socket_select($read, $write, $except, (int) $this->timeoutSeconds, (int) $this->timeoutMicroseconds);
     }
 
     /**
