@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Framework\Model\Relation\RelationTypes;
 
 use Closure;
-use Exception;
 use Framework\Collection\Collection;
 use Framework\Database\QueryBuilder\Paginator\Paginator;
 use Framework\Database\QueryBuilder\QueryBuilder;
