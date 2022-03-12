@@ -71,7 +71,7 @@ class HasMany extends BaseRelation
             ->first();
 
         if (!$hasMany) {
-            throw new Exception('There was no relation found for [' . $fromModel::class . ']!');
+            throw new Exception('There was no relation found for ['.$fromModel::class.']!');
         }
 
         return $hasMany;
@@ -79,10 +79,10 @@ class HasMany extends BaseRelation
 
     /**
      * @template TValue
-     * 
-     * @param  TValue $baseData
-     * @param  BaseModel|Collection $relationData
-     * 
+     *
+     * @param TValue               $baseData
+     * @param BaseModel|Collection $relationData
+     *
      * @return TValue
      */
     public function mergeRelation($baseData, $relationData)

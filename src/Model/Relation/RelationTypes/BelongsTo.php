@@ -42,7 +42,7 @@ class BelongsTo extends BaseRelation
     }
 
     /**
-     * @param Collection|BaseModel  $result
+     * @param Collection|BaseModel $result
      *
      * @throws Exception
      *
@@ -66,10 +66,10 @@ class BelongsTo extends BaseRelation
 
     /**
      * @template TValue
-     * 
-     * @param  TValue $baseData
-     * @param  BaseModel|Collection|Paginator $relationData
-     * 
+     *
+     * @param TValue                         $baseData
+     * @param BaseModel|Collection|Paginator $relationData
+     *
      * @return TValue
      */
     public function mergeRelation($baseData, $relationData)
