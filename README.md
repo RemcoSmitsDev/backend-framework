@@ -709,5 +709,5 @@ $singlePost = $post->find(find: 'some_title', key: 'title');
 $posts = $post->all([]);
 
 // This will get all posts with pagination that where orderd by `created_at` ASC
-$paginatedPosts = $post->paginate(currentPage: 1, perPage: 25);
+$paginatedPosts = $post->paginatePosts(currentPage: 1, perPage: 25);
 ```
