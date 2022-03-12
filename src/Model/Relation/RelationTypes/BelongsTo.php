@@ -38,7 +38,7 @@ class BelongsTo extends BaseRelation
         public ?Closure $query = null
     ) {
         $this->primaryKey = $this->primaryKey ?: $this->getFromModel()->getPrimaryKey();
-        $this->foreignKey = $this->foreignKey ?: $this->getForeignKeyByModel($this->getFromModel());
+        $this->foreignKey = $this->foreignKey ?: $this->getForeignKeyByModel(new $this->relation);
     }
 
     /**
@@ -50,13 +50,13 @@ class BelongsTo extends BaseRelation
      */
     public function getData(Collection|BaseModel $result): BaseModel
     {
-        if (!property_exists($this->getFromModel()->getOriginal(), $this->foreignKey)) {
+        if (!property_exists(($result instanceof BaseModel ? $result : $result->first())->getOriginal(), $this->foreignKey)) {
             throw new Exception("There doesn't exists a property called [{$this->foreignKey}]!");
         }
 
         $query = $this->buildQuery(
             $this->primaryKey,
-            [$this->getFromModel()->getOriginal()->{$this->foreignKey}]
+            $result instanceof BaseModel ? [$result->{$this->foreignKey}] : $result->column($this->foreignKey)->all()
         );
 
         $query = $this->query ? ($this->query)($query) : $query;
