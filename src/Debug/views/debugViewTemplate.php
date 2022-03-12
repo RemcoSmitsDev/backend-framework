@@ -216,7 +216,7 @@ use Framework\Debug\Debug;
                             <?= clearInjections($query['executionTime']); ?> ms
                         </span>
                     </span>
-                    <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-gray-500 whitespace-nowrap overflow-x-auto">
+                    <span class="px-2 py-1 inline-flex items-center bg-gray-900 text-sm text-gray-500 whitespace-nowrap">
                         <?= clearInjections($query['effectedRows']); ?> Row(s)
                     </span>
                     <?php if ($query['failed']) { ?>
