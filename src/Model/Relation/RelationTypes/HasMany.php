@@ -39,7 +39,7 @@ class HasMany extends BaseRelation
         public ?Closure $query = null
     ) {
         $this->primaryKey = $this->primaryKey ?: $this->getFromModel()->getPrimaryKey();
-        $this->foreignKey = $this->foreignKey ?: $this->getHasManyRelation($this->getFromModel())->foreignKey;
+        $this->foreignKey = $this->foreignKey ?: $this->getForeignKeyByModel($this->getFromModel());
     }
 
     /**
@@ -57,24 +57,6 @@ class HasMany extends BaseRelation
         $query = $this->query ? ($this->query)($query) : $query;
 
         return $query instanceof QueryBuilder ? $query->all() : $query;
-    }
-
-    /**
-     * @param BaseModel $fromModel
-     *
-     * @return BaseRelation
-     */
-    private function getHasManyRelation(BaseModel $fromModel): BaseRelation
-    {
-        $hasMany = collection($this->getRelationInstance()->initRelations()->getRelations())
-            ->filter(fn ($relation) => $relation->relation === $fromModel::class)
-            ->first();
-
-        if (!$hasMany) {
-            throw new Exception('There was no relation found for ['.$fromModel::class.']!');
-        }
-
-        return $hasMany;
     }
 
     /**

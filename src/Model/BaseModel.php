@@ -66,14 +66,19 @@ abstract class BaseModel implements JsonSerializable, Stringable
     protected string $table = '';
 
     /**
-     * @var object|null
+     * @var string[]
      */
-    private ?object $original = null;
+    protected array $withRelations = [];
 
     /**
-     * @param array|object
+     * @var object|null
      */
-    public function __construct(array|object $original = [])
+    protected ?object $original = null;
+
+    /**
+     * @param array|object $original
+     */
+    final public function __construct(array|object $original = [])
     {
         $this->setOriginal((object) $original);
     }
@@ -85,7 +90,10 @@ abstract class BaseModel implements JsonSerializable, Stringable
      */
     final public function query(): QueryBuilder
     {
-        return QueryBuilder::new()->setFromModel($this)->table($this->getTable());
+        return QueryBuilder::new()
+            ->setFromModel($this)
+            ->table($this->getTable())
+            ->withRelations(...$this->withRelations);
     }
 
     /**
@@ -187,11 +195,11 @@ abstract class BaseModel implements JsonSerializable, Stringable
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1).'ie';
+            $table = substr($table, 0, -1) . 'ie';
         }
 
         // set table name
-        return $this->setTable($table.'s');
+        return $this->setTable($table . 's');
     }
 
     /**

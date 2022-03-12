@@ -75,9 +75,11 @@ trait DatabaseHelpers
     }
 
     /**
-     * @param mixed $result
+     * @template TValue
+     * 
+     * @param TValue $result
      *
-     * @return Collection|BaseModel|array|bool
+     * @return TValue
      */
     protected function mergeRelations($result)
     {
