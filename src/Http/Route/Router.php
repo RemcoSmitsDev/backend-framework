@@ -371,8 +371,10 @@ class Router
             // set currentRoute
             $this->currentRoute = $route;
 
+            $data = $data ?? [];
+
             // call needed function
-            $this->handleRouteAction($route, $data ?? []);
+            $this->handleRouteAction($route, is_array($data) ? $data : []);
 
             // break foreach
             break;
