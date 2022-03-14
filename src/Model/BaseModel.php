@@ -188,7 +188,7 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
 
         // get table base on model name
         $table = str_replace(
-            'controller',
+            ['controller', 'model'],
             '',
             strtolower(
                 preg_replace('/(.)(?=[A-Z])/u', '$1_', getClassName(get_class($this)))
@@ -232,14 +232,12 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
      */
     public function __get(string $name): mixed
     {
-        if (property_exists($this->original, $name)) {
-            return $this->original->{$name};
+        if (property_exists($this->getOriginal(), $name)) {
+            return $this->getOriginal()->{$name};
         }
 
-        $this->initRelations();
-
         if (method_exists($this, $name)) {
-            return $this->original->{$name} = $this->getRelationData($name);
+            return $this->original->{$name} = $this->initRelations()->getRelationData($name);
         }
 
         throw new Exception("Propery [{$name}] doesn't exists on [".$this::class.']!');
@@ -275,7 +273,7 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
      */
     public function jsonSerialize(): string
     {
-        return json_encode($this->toArray());
+        return json_encode($this->toArray(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
     }
 
     /**
