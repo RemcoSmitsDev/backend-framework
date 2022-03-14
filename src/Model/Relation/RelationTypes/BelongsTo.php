@@ -8,7 +8,6 @@ use Closure;
 use Exception;
 use Framework\Collection\Collection;
 use Framework\Database\QueryBuilder\Paginator\Paginator;
-use Framework\Debug\Debug;
 use Framework\Model\BaseModel;
 use Framework\Model\Relation\BaseRelation;
 
@@ -39,11 +38,11 @@ class BelongsTo extends BaseRelation
         public ?Closure $query = null
     ) {
         $this->primaryKey = $this->primaryKey ?: $this->getFromModel()->getPrimaryKey();
-        $this->foreignKey = $this->foreignKey ?: $this->getForeignKeyByModel(new $this->relation);
+        $this->foreignKey = $this->foreignKey ?: $this->getForeignKeyByModel(new $this->relation());
     }
 
     /**
-     * @param Collection|BaseModel  $result
+     * @param Collection|BaseModel $result
      *
      * @throws Exception
      *
@@ -67,10 +66,10 @@ class BelongsTo extends BaseRelation
 
     /**
      * @template TValue
-     * 
-     * @param  TValue $baseData
-     * @param  BaseModel|Collection|Paginator $relationData
-     * 
+     *
+     * @param TValue                         $baseData
+     * @param BaseModel|Collection|Paginator $relationData
+     *
      * @return TValue
      */
     public function mergeRelation($baseData, $relationData)

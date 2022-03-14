@@ -197,11 +197,11 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1) . 'ie';
+            $table = substr($table, 0, -1).'ie';
         }
 
         // set table name
-        return $this->setTable($table . 's');
+        return $this->setTable($table.'s');
     }
 
     /**
@@ -242,7 +242,7 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
             return $this->original->{$name} = $this->getRelationData($name);
         }
 
-        throw new Exception("Propery [{$name}] doesn't exists on [" . $this::class . "]!");
+        throw new Exception("Propery [{$name}] doesn't exists on [".$this::class.']!');
     }
 
     /**
@@ -294,7 +294,7 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
         $original = [];
 
         foreach ($this->getOriginal() as $key => $value) {
-            $original[$key] = ($value instanceof BaseModel || $value instanceof Collection) ? $value->toArray()  : $value;
+            $original[$key] = ($value instanceof BaseModel || $value instanceof Collection) ? $value->toArray() : $value;
         }
 
         return $original;

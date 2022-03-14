@@ -83,10 +83,10 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
      */
     public function toArray(): array
     {
-         $items = [];
+        $items = [];
 
         foreach ($this->all() as $key => $value) {
-            $items[] = ($value instanceof BaseModel || $value instanceof Collection) ? $value->toArray()  : $value;
+            $items[] = ($value instanceof BaseModel || $value instanceof Collection) ? $value->toArray() : $value;
         }
 
         return $items;
@@ -153,8 +153,8 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     }
 
     /**
-     * @param  mixed  $offset
-     * 
+     * @param mixed $offset
+     *
      * @return bool
      */
     public function offsetExists(mixed $offset): bool
@@ -163,8 +163,8 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     }
 
     /**
-     * @param  mixed  $offset
-     * 
+     * @param mixed $offset
+     *
      * @return mixed
      */
     public function offsetGet(mixed $offset): mixed
@@ -173,9 +173,9 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     }
 
     /**
-     * @param  mixed  $offset
-     * @param  mixed  $value 
-     * 
+     * @param mixed $offset
+     * @param mixed $value
+     *
      * @return void
      */
     public function offsetSet(mixed $offset, mixed $value): void
@@ -184,8 +184,8 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     }
 
     /**
-     * @param  mixed  $offset
-     * 
+     * @param mixed $offset
+     *
      * @return void
      */
     public function offsetUnset(mixed $offset): void
