@@ -387,17 +387,17 @@ function arrayWithout(array $data, string ...$without): array
 
 /**
  * Get an array with value that has key.
- * 
- * @param  array     $data  
+ *
+ * @param array $data
  * @param  ...string $except
- * 
- * @return array    
+ *
+ * @return array
  */
 function arrayExcept(array $data, string ...$except): array
 {
     return arrayWithout(
-        $data, 
-        ...array_filter(array_keys($data), fn($key) => !in_array($key, $except))
+        $data,
+        ...array_filter(array_keys($data), fn ($key) => !in_array($key, $except))
     );
 }
 

@@ -60,10 +60,10 @@ class HasMany extends BaseRelation
 
     /**
      * @template TValue
-     * 
-     * @param  TValue $baseData
-     * @param  BaseModel|Collection $relationData
-     * 
+     *
+     * @param TValue               $baseData
+     * @param BaseModel|Collection $relationData
+     *
      * @return TValue
      */
     public function mergeRelation($baseData, $relationData)

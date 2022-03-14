@@ -66,18 +66,18 @@ class BelongsToMany extends BaseRelation
 
         // build query
         $query = $baseModelInstance->select(
-            $baseModelInstance->getTable() . '.*',
-            $this->table . '.' . $baseModelForeignKey . ' as pivot_' . $baseModelForeignKey,
-            $this->table . '.' . $relationForeignKey . ' as pivot_' . $relationForeignKey
+            $baseModelInstance->getTable().'.*',
+            $this->table.'.'.$baseModelForeignKey.' as pivot_'.$baseModelForeignKey,
+            $this->table.'.'.$relationForeignKey.' as pivot_'.$relationForeignKey
         )
             ->join(
                 $belongsToMany->table,
-                $baseModelInstance->getTable() . '.' . $baseModelInstance->getPrimaryKey(),
+                $baseModelInstance->getTable().'.'.$baseModelInstance->getPrimaryKey(),
                 '=',
-                $belongsToMany->table . '.' . $relationForeignKey
+                $belongsToMany->table.'.'.$relationForeignKey
             )
             ->whereIn(
-                $belongsToMany->table . '.' . $baseModelForeignKey,
+                $belongsToMany->table.'.'.$baseModelForeignKey,
                 $result instanceof BaseModel ? [$result->getOriginal()->{$fromModel->getPrimaryKey()}] : $result->column($fromModel->getPrimaryKey())->all()
             );
 
@@ -96,7 +96,7 @@ class BelongsToMany extends BaseRelation
         $belongsToMany = collection($fromModel->initRelations()->getRelations())->filter(fn ($relation) => $this->relation === $relation->relation)->first();
 
         if (!$belongsToMany) {
-            throw new Exception('There was no relation found for [' . $fromModel::class . ']!');
+            throw new Exception('There was no relation found for ['.$fromModel::class.']!');
         }
 
         return $belongsToMany;
@@ -104,17 +104,17 @@ class BelongsToMany extends BaseRelation
 
     /**
      * @template TValue
-     * 
-     * @param  TValue $baseData
-     * @param  BaseModel|Collection|Paginator $relationData
-     * 
+     *
+     * @param TValue                         $baseData
+     * @param BaseModel|Collection|Paginator $relationData
+     *
      * @return TValue
      */
     public function mergeRelation($baseData, $relationData): BaseModel|Collection
     {
         if ($baseData instanceof Collection) {
             return $baseData->each(function (&$item) use ($relationData) {
-                $item->{$this->getName()} = $relationData instanceof BaseModel ? $relationData : $relationData->filter(fn ($value) => $value->{'pivot_' . $this->getForeignKeyByModel($this->getFromModel())} === $item->{$item->getPrimaryKey()});
+                $item->{$this->getName()} = $relationData instanceof BaseModel ? $relationData : $relationData->filter(fn ($value) => $value->{'pivot_'.$this->getForeignKeyByModel($this->getFromModel())} === $item->{$item->getPrimaryKey()});
             });
         }
 

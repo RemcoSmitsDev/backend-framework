@@ -180,14 +180,15 @@ class QueryBuilder extends Grammar implements IteratorAggregate
             throw new Exception('This method can only be called from a model!');
         }
 
-        if (empty($relations)) return $this;
+        if (empty($relations)) {
+            return $this;
+        }
 
         $fromModel = clone $this->fromModel;
 
         $fromModel->initRelations();
 
         foreach ($relations as $relation) {
-
             if (str_contains($relation, '.')) {
                 $nestedRelations = explode('.', $relation);
 
@@ -195,7 +196,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
 
                 $firstRelation = new ($fromModel->getRelation($relation)->relation);
 
-                $nested = collection($firstRelation->initRelations()->getRelations())->filter(fn($item, $key) => in_array($key, $nestedRelations))->all();
+                $nested = collection($firstRelation->initRelations()->getRelations())->filter(fn ($item, $key) => in_array($key, $nestedRelations))->all();
             }
 
             $this->withRelations[$relation] = $fromModel->getRelation($relation)->setNestedRelations($nested ?? []);
@@ -281,7 +282,7 @@ class QueryBuilder extends Grammar implements IteratorAggregate
                 // make subSelect
                 $this->columns[] = $this->subQuery(
                     $column,
-                    after: (is_string($as) ? ' as ' . $as : '')
+                    after: (is_string($as) ? ' as '.$as : '')
                 );
             } elseif ($column instanceof SubQuery) {
                 $this->columns[] = $column->setAfter(is_string($as) ? $as : $column->getAfter());

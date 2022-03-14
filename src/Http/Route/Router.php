@@ -156,7 +156,7 @@ class Router
     protected function addRoute(array $methods, string $uri, Closure|array $action): self
     {
         // replace alle dubbele slashes
-        $uri = preg_replace("/\/+/", '/', '/' . $this->prefix . '/' . $uri);
+        $uri = preg_replace("/\/+/", '/', '/'.$this->prefix.'/'.$uri);
 
         // kijk of er nog wat overblijf als je laatste slash verwijder
         // anders is '/' -> ''
@@ -170,7 +170,7 @@ class Router
         // voeg de route toe aan bij het request type
         $this->routes[] = [
             'uri'         => $uri,
-            'isDynamic'   => preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $uri),
+            'isDynamic'   => preg_match('/'.self::DYNAMIC_ROUTE_PATTERN.'/', $uri),
             'methods'     => $methods,
             'name'        => '',
             'action'      => $action,
@@ -210,7 +210,7 @@ class Router
         }
 
         // make regex string and replace other patterns
-        return '/^' . preg_replace('/' . self::DYNAMIC_ROUTE_PATTERN . '/', "([^\/]+)", str_replace('/', '\/', $uri)) . '(?!.)/';
+        return '/^'.preg_replace('/'.self::DYNAMIC_ROUTE_PATTERN.'/', "([^\/]+)", str_replace('/', '\/', $uri)).'(?!.)/';
     }
 
     /**
@@ -242,7 +242,7 @@ class Router
         // loop trough all url parts
         foreach ($explodeRouteURL as $key => $part) {
             // check if dynamic parameter was found
-            if (preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $part)) {
+            if (preg_match('/'.self::DYNAMIC_ROUTE_PATTERN.'/', $part)) {
                 // add data to globals
                 $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
             }
@@ -265,14 +265,14 @@ class Router
     protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = []): string
     {
         // check if there are dynamic params in route url
-        if (!preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $route)) {
+        if (!preg_match('/'.self::DYNAMIC_ROUTE_PATTERN.'/', $route)) {
             return $route;
         }
 
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams) . '!');
+            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: ".json_encode($wrongParams).'!');
         }
 
         // loop trough all params and replace params

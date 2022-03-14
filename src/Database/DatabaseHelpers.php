@@ -76,7 +76,7 @@ trait DatabaseHelpers
 
     /**
      * @template TValue
-     * 
+     *
      * @param TValue $result
      *
      * @return TValue
