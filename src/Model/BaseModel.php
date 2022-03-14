@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Framework\Model;
 
 use Exception;
+use Framework\Collection\Collection;
 use Framework\Database\QueryBuilder\QueryBuilder;
 use Framework\Model\Relation\HasRelations;
+use Framework\Support\Contracts\Arrayable;
 use JsonSerializable;
 use Stringable;
 
@@ -51,7 +53,7 @@ use Stringable;
  *
  * @see \Framework\Database\QueryBuilder\QueryBuilder
  */
-abstract class BaseModel implements JsonSerializable, Stringable
+abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
 {
     use HasRelations;
 
@@ -240,7 +242,7 @@ abstract class BaseModel implements JsonSerializable, Stringable
             return $this->original->{$name} = $this->getRelationData($name);
         }
 
-        throw new Exception("Propery [{$name}] doesn't exists!");
+        throw new Exception("Propery [{$name}] doesn't exists on [" . $this::class . "]!");
     }
 
     /**
@@ -273,7 +275,7 @@ abstract class BaseModel implements JsonSerializable, Stringable
      */
     public function jsonSerialize(): string
     {
-        return json_encode($this->original, JSON_FORCE_OBJECT);
+        return json_encode($this->toArray());
     }
 
     /**
@@ -282,5 +284,19 @@ abstract class BaseModel implements JsonSerializable, Stringable
     public function __toString(): string
     {
         return $this->jsonSerialize();
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        $original = [];
+
+        foreach ($this->getOriginal() as $key => $value) {
+            $original[$key] = ($value instanceof BaseModel || $value instanceof Collection) ? $value->toArray()  : $value;
+        }
+
+        return $original;
     }
 }

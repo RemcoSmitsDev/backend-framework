@@ -51,7 +51,7 @@ final class RequestCookie extends GetAble
         });
 
         // flatten to one layer
-        $this->cookies = collection(array_merge(...$cookies))->filter()->toArray();
+        $this->cookies = collection(array_merge(...$cookies))->filter()->all();
     }
 
     /**

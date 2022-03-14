@@ -13,7 +13,7 @@ class CollectionTest extends TestCase
     {
         $collection = Collection::make(['test']);
 
-        $this->assertEquals(['test'], $collection->toArray());
+        $this->assertEquals(['test'], $collection->all());
     }
 
     public function testLoopEachItem()
@@ -22,7 +22,7 @@ class CollectionTest extends TestCase
             return "test{$index}";
         });
 
-        $this->assertEquals(['test0', 'test1'], $collection->toArray());
+        $this->assertEquals(['test0', 'test1'], $collection->all());
 
         foreach ($collection as $key => $item) {
             $this->assertEquals("test{$key}", $item);
@@ -35,13 +35,13 @@ class CollectionTest extends TestCase
             return $value === 'test';
         });
 
-        $this->assertEquals(['test'], $collection->toArray());
+        $this->assertEquals(['test'], $collection->all());
 
         $collection = Collection::make(['test', 'ajsdfkjasldkfjkl'])->filter(function ($value, $index) {
             return true;
         });
 
-        $this->assertEquals(['test', 'ajsdfkjasldkfjkl'], $collection->toArray());
+        $this->assertEquals(['test', 'ajsdfkjasldkfjkl'], $collection->all());
     }
 
     public function testFirstFromArray()
@@ -62,7 +62,7 @@ class CollectionTest extends TestCase
     {
         $collection = Collection::make(['test', 'ajsdfkjasldkfjkl']);
 
-        $this->assertEquals(['test'], $collection->slice(0, 1)->toArray());
+        $this->assertEquals(['test'], $collection->slice(0, 1)->all());
     }
 
     public function testCombine()
@@ -75,6 +75,6 @@ class CollectionTest extends TestCase
             3 => 'c',
             2 => 'd',
             1 => 'e',
-        ], $collection->toArray());
+        ], $collection->all());
     }
 }

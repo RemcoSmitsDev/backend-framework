@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Framework\Collection;
 
+use ArrayAccess;
 use ArrayIterator;
 use Closure;
 use Countable;
 use Exception;
+use Framework\Model\BaseModel;
 use IteratorAggregate;
 use JsonSerializable;
 use Stringable;
@@ -23,7 +25,7 @@ use Traversable;
  *
  * @link       https://github.com/RemcoSmitsDev/backend-framework/
  */
-class Collection implements IteratorAggregate, Countable, JsonSerializable, Stringable
+class Collection implements IteratorAggregate, Countable, JsonSerializable, Stringable, ArrayAccess
 {
     use CollectionHelpers;
 
@@ -64,7 +66,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     private function getCollection(array|Traversable|Collection|Closure $collection): array
     {
         if ($collection instanceof Collection) {
-            return $collection->toArray();
+            return $collection->all();
         } elseif (is_array($collection)) {
             return $collection;
         } elseif ($collection instanceof Traversable) {
@@ -77,13 +79,17 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     }
 
     /**
-     * This method will return array of items from the collection.
-     *
      * @return array<int|string, mixed>
      */
     public function toArray(): array
     {
-        return $this->items;
+         $items = [];
+
+        foreach ($this->all() as $key => $value) {
+            $items[] = ($value instanceof BaseModel || $value instanceof Collection) ? $value->toArray()  : $value;
+        }
+
+        return $items;
     }
 
     /**
@@ -93,7 +99,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
      */
     public function all(): array
     {
-        return $this->toArray();
+        return $this->items;
     }
 
     /**
@@ -123,7 +129,7 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
      */
     public function jsonSerialize(): array
     {
-        return $this->all();
+        return $this->toArray();
     }
 
     /**
@@ -144,5 +150,46 @@ class Collection implements IteratorAggregate, Countable, JsonSerializable, Stri
     public function count(): int
     {
         return count($this->all());
+    }
+
+    /**
+     * @param  mixed  $offset
+     * 
+     * @return bool
+     */
+    public function offsetExists(mixed $offset): bool
+    {
+        return isset($this->items[$offset]);
+    }
+
+    /**
+     * @param  mixed  $offset
+     * 
+     * @return mixed
+     */
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->items[$offset];
+    }
+
+    /**
+     * @param  mixed  $offset
+     * @param  mixed  $value 
+     * 
+     * @return void
+     */
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        $this->items[$offset] = $value;
+    }
+
+    /**
+     * @param  mixed  $offset
+     * 
+     * @return void
+     */
+    public function offsetUnset(mixed $offset): void
+    {
+        unset($this->items[$offset]);
     }
 }

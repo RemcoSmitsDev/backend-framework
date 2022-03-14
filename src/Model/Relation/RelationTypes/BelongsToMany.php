@@ -114,7 +114,7 @@ class BelongsToMany extends BaseRelation
     {
         if ($baseData instanceof Collection) {
             return $baseData->each(function (&$item) use ($relationData) {
-                $item->{$this->getName()} = $relationData->filter(fn ($value) => $value->{'pivot_' . $this->getForeignKeyByModel($this->getFromModel())} === $item->{$item->getPrimaryKey()});
+                $item->{$this->getName()} = $relationData instanceof BaseModel ? $relationData : $relationData->filter(fn ($value) => $value->{'pivot_' . $this->getForeignKeyByModel($this->getFromModel())} === $item->{$item->getPrimaryKey()});
             });
         }
 

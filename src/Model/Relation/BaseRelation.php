@@ -32,6 +32,11 @@ abstract class BaseRelation
     protected ?BaseModel $instance = null;
 
     /**
+     * @var array
+     */
+    public $nestedRelations = [];
+
+    /**
      * @param BaseModel $model
      *
      * @return string
@@ -90,6 +95,26 @@ abstract class BaseRelation
     }
 
     /**
+     * @param array $relations
+     *
+     * @return self
+     */
+    public function setNestedRelations(array $relations): self
+    {
+        $this->nestedRelations = $relations;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getNestedRelations(): array
+    {
+        return $this->nestedRelations;
+    }
+
+    /**
      * @param string $key
      * @param array  $values
      *
@@ -97,7 +122,7 @@ abstract class BaseRelation
      */
     final public function buildQuery(string $key, array $values): QueryBuilder
     {
-        return $this->getRelationInstance()->query()->{count($values) > 1 ? 'whereIn' : 'where'}($key, count($values) > 1 ? $values : $values[0]);
+        return $this->getRelationInstance()->query()->{count($values) > 1 ? 'whereIn' : 'where'}($this->getRelationInstance()->getTable() . '.' . $key, count($values) > 1 ? $values : $values[0]);
     }
 
     /**

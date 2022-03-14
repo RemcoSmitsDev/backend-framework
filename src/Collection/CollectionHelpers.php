@@ -51,10 +51,10 @@ trait CollectionHelpers
         //     }
         // });
         // get all keys
-        $keys = array_keys($this->toArray());
+        $keys = array_keys($this->all());
 
         // map over the items and keep the keys
-        $items = array_map($callback, $this->toArray(), $keys);
+        $items = array_map($callback, $this->all(), $keys);
 
         // combine new array with old keys
         return new Collection(array_combine($keys, $items));
@@ -71,7 +71,7 @@ trait CollectionHelpers
     {
         // check if there was a callable set
         if (is_null($callback)) {
-            return Collection::make(array_filter($this->toArray()));
+            return Collection::make(array_filter($this->all()));
         }
 
         // return new Collection(function () use ($callback) {
@@ -81,7 +81,7 @@ trait CollectionHelpers
         //         }
         //     }
         // });
-        return new Collection(array_filter($this->toArray(), $callback, ARRAY_FILTER_USE_BOTH));
+        return new Collection(array_filter($this->all(), $callback, ARRAY_FILTER_USE_BOTH));
     }
 
     /**
@@ -91,7 +91,7 @@ trait CollectionHelpers
      */
     public function flatten(): Collection
     {
-        return new Collection(flattenArray($this->toArray()));
+        return new Collection(flattenArray($this->all()));
     }
 
     /**
@@ -104,7 +104,7 @@ trait CollectionHelpers
     public function first(?callable $callback = null): mixed
     {
         // when there is no data found
-        if (empty($this->toArray())) {
+        if (empty($this->all())) {
             return false;
         }
 
@@ -135,7 +135,7 @@ trait CollectionHelpers
     public function last(?callable $callback = null): mixed
     {
         return Collection::make(
-            array_reverse($this->toArray(), true)
+            array_reverse($this->all(), true)
         )->first($callback);
     }
 
@@ -149,7 +149,7 @@ trait CollectionHelpers
      */
     public function slice(int $offset, int $length): Collection
     {
-        return new Collection(array_slice($this->toArray(), $offset, $length, true));
+        return new Collection(array_slice($this->all(), $offset, $length, true));
     }
 
     /**
@@ -162,7 +162,7 @@ trait CollectionHelpers
     public function keys(mixed $keys = null): Collection
     {
         return new Collection(
-            $keys ? array_keys($this->toArray(), $keys) : array_keys($this->toArray())
+            $keys ? array_keys($this->all(), $keys) : array_keys($this->all())
         );
     }
 
@@ -173,7 +173,7 @@ trait CollectionHelpers
      */
     public function column(string $column): Collection
     {
-        return new Collection(array_column($this->toArray(), $column));
+        return new Collection(array_column($this->all(), $column));
     }
 
     /**
@@ -187,8 +187,8 @@ trait CollectionHelpers
     {
         return new Collection(
             array_combine(
-                $keys instanceof Collection ? array_values($keys->toArray()) : $keys,
-                $this->toArray(),
+                $keys instanceof Collection ? array_values($keys->all()) : $keys,
+                $this->all(),
             )
         );
     }
@@ -198,6 +198,6 @@ trait CollectionHelpers
      */
     public function unique(): Collection
     {
-        return new Collection(array_unique($this->toArray()));
+        return new Collection(array_unique($this->all()));
     }
 }

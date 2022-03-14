@@ -79,7 +79,7 @@ function clearInjections(mixed $value)
     // kijk of input value een array is
     if (is_array($value)) {
         // ga door alle keys/values heen
-        return collection($value)->map(fn ($item) => clearInjections($item))->toArray();
+        return collection($value)->map(fn ($item) => clearInjections($item))->all();
     }
 
     return htmlspecialchars($value);
@@ -365,7 +365,7 @@ function isMultidimensional(mixed $value): bool
 }
 
 /**
- * This method will get an array without value that has key.
+ * Get an array without value that has key.
  *
  * @param array  $data
  * @param string ...$without
@@ -383,6 +383,22 @@ function arrayWithout(array $data, string ...$without): array
     }
 
     return $data;
+}
+
+/**
+ * Get an array with value that has key.
+ * 
+ * @param  array     $data  
+ * @param  ...string $except
+ * 
+ * @return array    
+ */
+function arrayExcept(array $data, string ...$except): array
+{
+    return arrayWithout(
+        $data, 
+        ...array_filter(array_keys($data), fn($key) => !in_array($key, $except))
+    );
 }
 
 /**

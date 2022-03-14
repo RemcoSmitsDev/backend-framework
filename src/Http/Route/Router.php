@@ -76,7 +76,7 @@ class Router
      *
      * @return mixed
      */
-    protected function handleRouteAction(array $route, array $dynamicData = []): mixed
+    public function handleRouteAction(array $route, array $dynamicData = []): mixed
     {
         $this->currentRoute = $route;
 
@@ -102,10 +102,10 @@ class Router
             $parts = explode(':', $key, 2);
 
             // loop through all the parameters
-            $parameters = collection($parameters)->each(function (&$parameter) use ($parts, $value, $route, $dynamicData) {
+            $parameters = collection($parameters)->map(function ($parameter) use ($parts, $value, $route, $dynamicData) {
                 // when is not a model
                 if (!$parameter instanceof BaseModel) {
-                    return;
+                    return $parameter;
                 }
 
                 // get classname
@@ -126,7 +126,9 @@ class Router
 
                 // append data to model
                 $parameter->setOriginal($bindingData->getOriginal());
-            })->toArray();
+
+                return $parameter;
+            })->all();
         }
 
         return $parameters;
@@ -154,7 +156,7 @@ class Router
     protected function addRoute(array $methods, string $uri, Closure|array $action): self
     {
         // replace alle dubbele slashes
-        $uri = preg_replace("/\/+/", '/', '/'.$this->prefix.'/'.$uri);
+        $uri = preg_replace("/\/+/", '/', '/' . $this->prefix . '/' . $uri);
 
         // kijk of er nog wat overblijf als je laatste slash verwijder
         // anders is '/' -> ''
@@ -168,7 +170,7 @@ class Router
         // voeg de route toe aan bij het request type
         $this->routes[] = [
             'uri'         => $uri,
-            'isDynamic'   => preg_match('/'.self::DYNAMIC_ROUTE_PATTERN.'/', $uri),
+            'isDynamic'   => preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $uri),
             'methods'     => $methods,
             'name'        => '',
             'action'      => $action,
@@ -208,7 +210,7 @@ class Router
         }
 
         // make regex string and replace other patterns
-        return '/^'.preg_replace('/'.self::DYNAMIC_ROUTE_PATTERN.'/', "([^\/]+)", str_replace('/', '\/', $uri)).'(?!.)/';
+        return '/^' . preg_replace('/' . self::DYNAMIC_ROUTE_PATTERN . '/', "([^\/]+)", str_replace('/', '\/', $uri)) . '(?!.)/';
     }
 
     /**
@@ -240,7 +242,7 @@ class Router
         // loop trough all url parts
         foreach ($explodeRouteURL as $key => $part) {
             // check if dynamic parameter was found
-            if (preg_match('/'.self::DYNAMIC_ROUTE_PATTERN.'/', $part)) {
+            if (preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $part)) {
                 // add data to globals
                 $data[preg_replace('/\{|\}|^[0-9]+/', '', $part)] = clearInjections($explodeCurrentURL[$key]);
             }
@@ -263,14 +265,14 @@ class Router
     protected function replaceDynamicRoute(string $route, array $params = [], array $wrongParams = []): string
     {
         // check if there are dynamic params in route url
-        if (!preg_match('/'.self::DYNAMIC_ROUTE_PATTERN.'/', $route)) {
+        if (!preg_match('/' . self::DYNAMIC_ROUTE_PATTERN . '/', $route)) {
             return $route;
         }
 
         // check if params are empty
         // there must be params bc route has dynamic params
         if (empty($params)) {
-            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: ".json_encode($wrongParams).'!');
+            throw new Exception("You must pass in params based on the dynamic route! \n\n Route: {$route}, Wrong params: " . json_encode($wrongParams) . '!');
         }
 
         // loop trough all params and replace params
@@ -316,7 +318,7 @@ class Router
             response()->code(403);
 
             // call function with dependencies injection
-            // DependencyInjector::resolve($this->onMiddlewareFailCallback)->with(['route' => $failedRoute])->getContent();
+            DependencyInjector::resolve($this->onMiddlewareFailCallback)->with(['route' => $failedRoute])->getContent();
 
             // stop other actions
             response()->exit();
@@ -350,47 +352,30 @@ class Router
             }
 
             // when is not dynamic and found match
-            if (!$route['isDynamic']) {
+            if (!$route['isDynamic'] && $route['uri'] !== $uri) {
                 // when uri is not the same as current uri go to the next in the array
-                if ($route['uri'] !== $uri) {
-                    continue;
-                }
-
-                // check if middleware is valid
-                if (!Middleware::validate($route, $route['middlewares'])) {
-                    // handle response when the middleware was not success
-                    $this->handleOnMiddlewareFail($route);
-                }
-
-                // set currentRoute
-                $this->currentRoute = $route;
-
-                // call needed function
-                $this->handleRouteAction($route);
-
-                // break foreach
-                break;
-            } else {
-                // check if a dynamic route match the current url
-                if (($data = $this->validateDynamicUri($route)) === false) {
-                    continue;
-                }
-
-                // check if middleware is valid
-                if (!Middleware::validate($route, $route['middlewares'])) {
-                    // handle response when the middleware was not success
-                    $this->handleOnMiddlewareFail($route);
-                }
-
-                // set currentRoute
-                $this->currentRoute = $route;
-
-                // call needed function
-                $this->handleRouteAction($route, $data);
-
-                // break foreach
-                break;
+                continue;
             }
+
+            // check if a dynamic route match the current url
+            if ($route['isDynamic'] && ($data = $this->validateDynamicUri($route)) === false) {
+                continue;
+            }
+
+            // check if middleware is valid
+            if (!Middleware::validate($route, $route['middlewares'])) {
+                // handle response when the middleware was not success
+                $this->handleOnMiddlewareFail($route);
+            }
+
+            // set currentRoute
+            $this->currentRoute = $route;
+
+            // call needed function
+            $this->handleRouteAction($route, $data ?? []);
+
+            // break foreach
+            break;
         }
 
         // where there is no route

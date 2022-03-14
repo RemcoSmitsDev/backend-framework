@@ -8,6 +8,7 @@ use Closure;
 use Exception;
 use Framework\Collection\Collection;
 use Framework\Database\QueryBuilder\Paginator\Paginator;
+use Framework\Debug\Debug;
 use Framework\Model\BaseModel;
 use Framework\Model\Relation\BaseRelation;
 
@@ -48,20 +49,20 @@ class BelongsTo extends BaseRelation
      *
      * @return BaseModel
      */
-    public function getData(Collection|BaseModel $result): BaseModel
+    public function getData(Collection|BaseModel $result): BaseModel|Collection
     {
         if (!property_exists(($result instanceof BaseModel ? $result : $result->first())->getOriginal(), $this->foreignKey)) {
             throw new Exception("There doesn't exists a property called [{$this->foreignKey}]!");
         }
 
         $query = $this->buildQuery(
-            $this->primaryKey,
-            $result instanceof BaseModel ? [$result->{$this->foreignKey}] : $result->column($this->foreignKey)->all()
+            key: $this->primaryKey,
+            values: $result instanceof BaseModel ? [$result->{$this->foreignKey}] : $result->column($this->foreignKey)->unique()->all()
         );
 
         $query = $this->query ? ($this->query)($query) : $query;
 
-        return $query->one();
+        return $result === $this->getFromModel() ? $query->one() : $query->all();
     }
 
     /**
@@ -74,11 +75,16 @@ class BelongsTo extends BaseRelation
      */
     public function mergeRelation($baseData, $relationData)
     {
-        // when fetched with `one()`
         if ($baseData instanceof BaseModel) {
-            $baseData->{$this->getName()} = $relationData;
+            $baseData->{$this->getName()} = $relationData instanceof BaseModel ? $relationData : $relationData->first();
 
             return $baseData;
+        }
+
+        if ($baseData instanceof Collection) {
+            return $baseData->each(function (&$item) use ($relationData) {
+                $item->{$this->getName()} = $relationData instanceof BaseModel ? $relationData : $relationData->filter(fn ($value) => $value->{$this->primaryKey} === $item->{$this->foreignKey})->first();
+            });
         }
 
         return $baseData;

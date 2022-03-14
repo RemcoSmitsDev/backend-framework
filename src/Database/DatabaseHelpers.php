@@ -81,16 +81,18 @@ trait DatabaseHelpers
      *
      * @return TValue
      */
-    protected function mergeRelations($result)
+    protected function mergeRelations($result, $relations = [])
     {
-        if (empty($this->withRelations) || !$result instanceof BaseModel && !$result instanceof Collection) {
+        if (empty($this->withRelations) && !empty($relations) || !$result instanceof BaseModel && !$result instanceof Collection) {
             return $result;
         }
 
-        foreach ($this->withRelations as $relation) {
+        foreach ($relations ?: $this->withRelations as $relation) {
             $result = $relation->mergeRelation(
                 $result,
-                $relation->getData($result)
+                $relation->getNestedRelations() ?
+                    $this->mergeRelations($relation->getData($result), $relation->getNestedRelations()) :
+                    $relation->getData($result)
             );
         }
 

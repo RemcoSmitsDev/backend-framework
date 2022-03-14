@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Framework\Content;
 
+use Exception;
+use Framework\Http\Route\Route;
+
 /**
  * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
  * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
@@ -53,9 +56,9 @@ class Content
     public function __construct(?string $viewPath = null, string|bool $defaultLayout = false)
     {
         $this->viewPath = rtrim(
-            $viewPath ?: SERVER_ROOT.'/../templates',
+            $viewPath ?: SERVER_ROOT . '/../templates',
             '/'
-        ).'/';
+        ) . '/';
         $this->defaultLayout = $defaultLayout;
     }
 
@@ -72,6 +75,7 @@ class Content
     {
         // merge old data into deeper view
         $this->data = array_merge($this->data, $data);
+
         // set template as content wrapper
         $this->template = $template;
 
@@ -109,7 +113,7 @@ class Content
         $this->data = array_merge($this->data, $data);
 
         // kijk of een template part bestaat
-        if (file_exists($view = $this->viewPath.$view.'.php')) {
+        if (file_exists($view = $this->viewPath . $view . '.php')) {
             // compact array
             extract($this->data);
 
@@ -157,9 +161,11 @@ class Content
         if ($this->layout !== false && $this->layout === '' && $this->defaultLayout) {
             $this->layout($this->defaultLayout);
         }
+
         // check if content wrapper exists
-        if (file_exists($path = $this->viewPath."{$this->layout}.php")) {
+        if (file_exists($path = $this->viewPath . "{$this->layout}.php")) {
             // require wrapper template
+            ob_start();
             require_once $path;
         }
     }
@@ -173,7 +179,5 @@ class Content
     {
         // view main template
         $this->view($this->template);
-        // reset template
-        $this->template = '';
     }
 }
