@@ -6,6 +6,8 @@ namespace tests\Model;
 
 use Framework\Database\Connection\Connection;
 use Framework\Model\BaseModel;
+use Framework\Model\Relation\RelationTypes\BelongsTo;
+use Framework\Model\Relation\RelationTypes\HasOne;
 use PHPUnit\Framework\TestCase;
 
 class Category extends BaseModel
@@ -13,9 +15,17 @@ class Category extends BaseModel
 }
 class User extends BaseModel
 {
+    public function account(): HasOne
+    {
+        return $this->hasOne(UserAccount::class);
+    }
 }
 class UserAccount extends BaseModel
 {
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }
 
 class ModelTest extends TestCase
@@ -33,5 +43,21 @@ class ModelTest extends TestCase
         $model = new UserAccount;
 
         $this->assertEquals('user_accounts', $model->getTable());
+    }
+
+    public function test_get_relations()
+    {
+        $model = new User();
+
+        $relations = $model->getRelations();
+
+        $this->assertCount(1, $relations);
+        $this->assertArrayHasKey('account', $relations);
+
+        // test HasOne relationship
+        $this->assertInstanceOf(HasOne::class, $relations['account']);
+        $this->assertInstanceOf(User::class, $relations['account']->getFromModel());
+        $this->assertEquals('user_id', $relations['account']->foreignKey);
+        $this->assertEquals('id', $relations['account']->primaryKey);
     }
 }

@@ -12,6 +12,7 @@ use Framework\Model\BaseModel;
 use Framework\Model\Relation\RelationTypes\BelongsTo;
 use Framework\Model\Relation\RelationTypes\BelongsToMany;
 use Framework\Model\Relation\RelationTypes\HasMany;
+use Framework\Model\Relation\RelationTypes\HasOne;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -51,7 +52,7 @@ trait HasRelations
         ?string $primaryKey = null,
         ?Closure $query = null
     ): BelongsTo {
-        return new BelongsTo($relation, $this, $foreignKey, $primaryKey ?: $this->getPrimaryKey(), $query);
+        return new BelongsTo($relation, $this, $foreignKey, $primaryKey, $query);
     }
 
     /**
@@ -79,6 +80,23 @@ trait HasRelations
      * @param string|null  $primaryKey
      * @param Closure|null $query
      *
+     * @return HasOne
+     */
+    protected function hasOne(
+        string $relation,
+        ?string $foreignKey = null,
+        ?string $primaryKey = null,
+        ?Closure $query = null
+    ): HasOne {
+        return new HasOne($relation, $this, $foreignKey, $primaryKey, $query);
+    }
+
+    /**
+     * @param string       $relation
+     * @param string|null  $foreignKey
+     * @param string|null  $primaryKey
+     * @param Closure|null $query
+     *
      * @return HasMany
      */
     protected function hasMany(
@@ -87,7 +105,7 @@ trait HasRelations
         ?string $primaryKey = null,
         ?Closure $query = null
     ): HasMany {
-        return new HasMany($relation, $this, $foreignKey, $primaryKey ?: $this->getPrimaryKey(), $query);
+        return new HasMany($relation, $this, $foreignKey, $primaryKey, $query);
     }
 
     /**
@@ -126,6 +144,8 @@ trait HasRelations
      */
     public function getRelations(): array
     {
+        $this->initRelations();
+
         return $this->relations;
     }
 
@@ -137,7 +157,9 @@ trait HasRelations
     public function getRelation(string $name): BaseRelation
     {
         if (!isset($this->getRelations()[$name])) {
-            throw new Exception("There was no relation named [{$name}] found!");
+            throw new Exception(
+                sprintf('There was no relation named [%s] found on [%s]!', $name, static::class)
+            );
         }
 
         return $this->getRelations()[$name];
