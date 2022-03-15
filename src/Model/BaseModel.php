@@ -130,11 +130,11 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
     /**
      * Set's the original model data.
      *
-     * @param object|null $original
+     * @param object $original
      *
      * @return void
      */
-    final public function setOriginal(?object $original): void
+    final public function setOriginal(object $original): void
     {
         $this->original = $original;
     }
@@ -197,11 +197,11 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
 
         // when ending with y replace with ie for the plural
         if (str_ends_with($table, 'y')) {
-            $table = substr($table, 0, -1).'ie';
+            $table = substr($table, 0, -1) . 'ie';
         }
 
         // set table name
-        return $this->setTable($table.'s');
+        return $this->setTable($table . 's');
     }
 
     /**
@@ -240,7 +240,7 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
             return $this->original->{$name} = $this->initRelations()->getRelationData($name);
         }
 
-        throw new Exception("Propery [{$name}] doesn't exists on [".$this::class.']!');
+        throw new Exception("Propery [{$name}] doesn't exists on [" . $this::class . ']!');
     }
 
     /**

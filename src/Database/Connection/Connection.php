@@ -28,9 +28,9 @@ class Connection
     private ?PDO $pdo = null;
 
     /**
-     * @var PDOStatement|bool
+     * @var PDOStatement|null
      */
-    public PDOStatement|bool $statement;
+    public ?PDOStatement $statement = null;
 
     /**
      * @var int|float|string
@@ -43,8 +43,6 @@ class Connection
     private bool $failed = false;
 
     /**
-     * function __construct.
-     *
      * @param string $username
      * @param string $password
      * @param string $databaseName
