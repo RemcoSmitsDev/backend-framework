@@ -43,7 +43,7 @@ abstract class BaseRelation
      */
     final public function getForeignKeyByModel(BaseModel $model): string
     {
-        return preg_replace('/ie$/', 'y', rtrim($model->getTable(), 's')).'_'.$model->getPrimaryKey();
+        return preg_replace('/ie$/', 'y', rtrim($model->getTable(), 's')) . '_' . $model->getPrimaryKey();
     }
 
     /**
@@ -122,15 +122,15 @@ abstract class BaseRelation
      */
     final public function buildQuery(string $key, array $values): QueryBuilder
     {
-        return $this->getRelationInstance()->query()->{count($values) > 1 ? 'whereIn' : 'where'}($this->getRelationInstance()->getTable().'.'.$key, count($values) > 1 ? $values : $values[0]);
+        return $this->getRelationInstance()->query()->{count($values) > 1 ? 'whereIn' : 'where'}($this->getRelationInstance()->getTable() . '.' . $key, count($values) > 1 ? $values : $values[0]);
     }
 
     /**
      * @param Collection|BaseModel $result
      *
-     * @return BaseModel|Collection|Paginator
+     * @return Collection|Paginator|BaseModel
      */
-    abstract public function getData(Collection|BaseModel $result): BaseModel|Collection|Paginator;
+    abstract public function getData(Collection|BaseModel $result): Collection|Paginator|BaseModel
 
     /**
      * @template TValue
@@ -140,5 +140,5 @@ abstract class BaseRelation
      *
      * @return TValue
      */
-    abstract public function mergeRelation(BaseModel|Collection $baseData, BaseModel|Collection|Paginator $relationData);
+    abstract public function mergeRelation(Collection|BaseModel $baseData, Collection|Paginator|BaseModel $relationData);
 }
