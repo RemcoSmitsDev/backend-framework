@@ -130,7 +130,7 @@ abstract class BaseRelation
      *
      * @return Collection|Paginator|BaseModel
      */
-    abstract public function getData(Collection|BaseModel $result): Collection|Paginator|BaseModel
+    abstract public function getData(Collection|BaseModel $result): Collection|Paginator|BaseModel;
 
     /**
      * @template TValue
