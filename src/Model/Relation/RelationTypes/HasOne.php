@@ -51,7 +51,6 @@ class HasOne extends BaseRelation
     public function getData(Collection|BaseModel $result): BaseModel|Collection
     {
         if (!property_exists(($result instanceof BaseModel ? $result : $result->first())->getOriginal(), $this->primaryKey)) {
-            dd(($result instanceof BaseModel ? $result : $result->first()));
             throw new Exception("There doesn't exists a property called [{$this->foreignKey}]!");
         }
 
@@ -68,7 +67,7 @@ class HasOne extends BaseRelation
     /**
      * @template TValue
      *
-     * @param TValue                         $baseData
+     * @param TValue    $baseData
      * @param BaseModel $relationData
      *
      * @return TValue

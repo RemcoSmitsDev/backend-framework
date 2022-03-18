@@ -144,9 +144,7 @@ trait HasRelations
      */
     public function getRelations(): array
     {
-        $this->initRelations();
-
-        return $this->relations;
+        return $this->initRelations()->relations;
     }
 
     /**

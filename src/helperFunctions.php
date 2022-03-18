@@ -109,7 +109,7 @@ function dd(mixed ...$values)
 /**
  * This function will get the short name of a class(without namespace).
  *
- * @param object|class-string<object> $class
+ * @param object|class-string $class
  *
  * @throws ReflectionException
  *
@@ -404,13 +404,16 @@ function arrayExcept(array $data, string ...$except): array
 }
 
 /**
- * @param bool  $baseOn
- * @param mixed $value
- * @param mixed $default
+ * @template TValue
  *
- * @return mixed
+ * @param  Closure $callback
+ * @param  TValue   $return
+ *
+ * @return TValue
  */
-function tap(bool $basedOn, mixed $value, mixed $default): mixed
+function tap(Closure $callback, $return)
 {
-    return $basedOn ? $value : $default;
+    $callback();
+
+    return $return;
 }
