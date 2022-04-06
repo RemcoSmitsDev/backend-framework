@@ -3,24 +3,22 @@
     "description": "Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations, Advanced Routing with dynamic routes(middleware, grouping, prefix, names).",
     "autoload": {
         "psr-4": {
-            "Framework\\": "src/"
+            "Framework\\": "src/",
+            "Framework\\tests\\": "tests/"
         },
         "files": [
             "src/helperFunctions.php"
         ]
     },
-    "autoload-dev":{
+    "autoload-dev": {
         "psr-4": {
             "Framework\\tests\\": "tests/"
         }
     },
-    "authors": [
-        {
-            "name": "Remco Smits",
-            "email": "djsmits12@gmail.com",
-            "role": "Developer"
-        }
-    ],
+    "authors": [{
+        "name": "Remco Smits",
+        "email": "djsmits12@gmail.com"
+    }],
     "scripts": {
         "test": "./vendor/bin/phpunit tests"
     },

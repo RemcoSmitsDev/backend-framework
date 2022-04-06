@@ -16,6 +16,7 @@ use Framework\Http\Redirect\Redirect;
 use Framework\Http\Request;
 use Framework\Http\Response;
 use Framework\Http\Route\Route;
+use Framework\Support\Helpers\Arr;
 
 /**
  * This function will clear accents.
@@ -348,10 +349,7 @@ function collection(array|Traversable|Collection $collection): Collection
  */
 function flattenArray(array $array): array
 {
-    return array_reduce($array, function ($array, $item) {
-        // merge flatten array with new value
-        return array_merge($array, is_array($item) ? flattenArray($item) : [$item]);
-    }, []);
+    return Arr::flatten($array);
 }
 
 /**
@@ -363,7 +361,7 @@ function flattenArray(array $array): array
  */
 function isMultidimensional(mixed $value): bool
 {
-    return is_array($value) && is_array($value[array_key_first($value)]);
+    return Arr::isMultidimensional($value);
 }
 
 /**
@@ -376,44 +374,18 @@ function isMultidimensional(mixed $value): bool
  */
 function arrayWithout(array $data, string ...$without): array
 {
-    $without = flattenArray($without);
-
-    foreach ($data as $key => $value) {
-        if (in_array($key, $without)) {
-            unset($data[$key]);
-        }
-    }
-
-    return $data;
+    return Arr::without($data, $without);
 }
 
 /**
  * Get an array with value that has key.
  *
- * @param array $data
+ * @param array $array
  * @param  ...string $except
  *
  * @return array
  */
-function arrayExcept(array $data, string ...$except): array
+function arrayExcept(array $array, string ...$except): array
 {
-    return arrayWithout(
-        $data,
-        ...array_filter(array_keys($data), fn ($key) => !in_array($key, $except))
-    );
-}
-
-/**
- * @template TValue
- *
- * @param  Closure $callback
- * @param  TValue   $return
- *
- * @return TValue
- */
-function tap(Closure $callback, $return)
-{
-    $callback();
-
-    return $return;
+    return Arr::except($array, $except);
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Framework\Collection;
 
+use Framework\Support\Helpers\Arr;
+
 /**
  * Lightweight PHP Framework. Includes fast and secure Database QueryBuilder, Models with relations,
  * Advanced Routing with dynamic routes(middleware, grouping, prefix, names).
@@ -81,7 +83,13 @@ trait CollectionHelpers
         //         }
         //     }
         // });
-        return new Collection(array_filter($this->all(), $callback, ARRAY_FILTER_USE_BOTH));
+        return new Collection(
+            array_filter(
+                $this->all(),
+                $callback,
+                ARRAY_FILTER_USE_BOTH
+            )
+        );
     }
 
     /**
@@ -91,7 +99,11 @@ trait CollectionHelpers
      */
     public function flatten(): Collection
     {
-        return new Collection(flattenArray($this->all()));
+        return new Collection(
+            Arr::flatten(
+                $this->all()
+            )
+        );
     }
 
     /**
@@ -109,20 +121,7 @@ trait CollectionHelpers
         }
 
         // loop over the collection values
-        foreach ($this as $key => $item) {
-            // when there is no callback function
-            if (is_null($callback)) {
-                return $item;
-            }
-
-            // when callback returns true
-            if ($callback($item, $key)) {
-                return $item;
-            }
-        }
-
-        // when there was no data found (when the closure failed)
-        return false;
+        return Arr::first($this->all(), $callback);
     }
 
     /**
@@ -134,9 +133,7 @@ trait CollectionHelpers
      */
     public function last(?callable $callback = null): mixed
     {
-        return Collection::make(
-            array_reverse($this->all(), true)
-        )->first($callback);
+        return Arr::last($this->all(), $callback);
     }
 
     /**
@@ -149,7 +146,14 @@ trait CollectionHelpers
      */
     public function slice(int $offset, int $length): Collection
     {
-        return new Collection(array_slice($this->all(), $offset, $length, true));
+        return new Collection(
+            array_slice(
+                $this->all(),
+                $offset,
+                $length,
+                true
+            )
+        );
     }
 
     /**
@@ -173,7 +177,12 @@ trait CollectionHelpers
      */
     public function column(string $column): Collection
     {
-        return new Collection(array_column($this->all(), $column));
+        return new Collection(
+            array_column(
+                $this->all(),
+                $column
+            )
+        );
     }
 
     /**
