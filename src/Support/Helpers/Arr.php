@@ -40,7 +40,7 @@ final class Arr
     public static function last(array $array, ?Closure $callback = null): mixed
     {
         return self::first(
-            $this->all()
+            $this->all(),
             array_reverse($this->all(), true)
         );
     }
