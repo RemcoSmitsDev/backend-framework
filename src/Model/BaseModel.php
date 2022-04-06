@@ -136,7 +136,9 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
      */
     final public function setOriginal(object $original): self
     {
-        return tap(fn () => $this->original = $original, $this);
+        $this->original = $original;
+
+        return $this;
     }
 
     /**
