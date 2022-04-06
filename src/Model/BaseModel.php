@@ -55,7 +55,8 @@ use Stringable;
  */
 abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
 {
-    use HasRelations;
+    use HasRelations,
+        HasCastings;
 
     /**
      * @var string
@@ -214,7 +215,7 @@ abstract class BaseModel implements JsonSerializable, Stringable, Arrayable
      */
     public function __set(string $name, mixed $value): void
     {
-        $this->original->{$name} = $value;
+        $this->original->{$name} = $this->handleCast($name, $value);
     }
 
     /**
